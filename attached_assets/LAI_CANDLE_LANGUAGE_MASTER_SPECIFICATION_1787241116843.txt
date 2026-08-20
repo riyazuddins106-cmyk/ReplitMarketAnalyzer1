@@ -1,0 +1,1886 @@
+MLAI CANDLE LANGUAGE — MASTER PROJECT SPECIFICATION
+===================================================
+
+VERSION: 1.0
+DATE: 2026-08-20
+
+PURPOSE
+=======
+
+The purpose of this project is to build MLAI as a market-language intelligence
+system.
+
+The central idea is:
+
+    A candlestick is not merely a number.
+
+    A sequence of candlesticks represents a language.
+
+Just as human language has:
+
+    alphabet
+    -> letters
+    -> words
+    -> phrases
+    -> sentences
+    -> grammar
+    -> meaning
+    -> context
+    -> understanding
+
+MLAI should have:
+
+    OHLC data
+    -> candle anatomy
+    -> candle vocabulary
+    -> candle patterns
+    -> candle sequences
+    -> market structure
+    -> context
+    -> market meaning
+    -> historical experience
+    -> prediction
+    -> human-language explanation
+
+The final objective is for MLAI to behave like an experienced market analyst
+who can read a chart, understand what the candles are communicating, explain
+what is happening, identify possible future scenarios, and provide
+probabilities based on historical experience.
+
+IMPORTANT PRINCIPLE
+===================
+
+The system must NOT simply memorize future market data and then pretend to
+predict it.
+
+MLAI must learn chronologically.
+
+The fundamental learning cycle is:
+
+    OBSERVE
+       |
+       v
+    UNDERSTAND
+       |
+       v
+    PREDICT
+       |
+       v
+    REVEAL FUTURE
+       |
+       v
+    COMPARE PREDICTION WITH REALITY
+       |
+       v
+    LEARN FROM RESULT
+       |
+       v
+    CONTINUE
+
+This cycle must be enforced throughout testing.
+
+===================================================
+1. THE FOUR MAJOR KNOWLEDGE COMPONENTS
+===================================================
+
+The system should distinguish four different types of information.
+
+1. RAW MARKET DATA
+------------------
+
+File:
+
+    market_data.bin
+
+Purpose:
+
+    Store the actual market candles.
+
+Contains, where available:
+
+    timestamp
+    open
+    high
+    low
+    close
+    volume
+    instrument
+    timeframe
+    source metadata
+
+This is the market's actual historical record.
+
+It must remain traceable to the original candle.
+
+No derived interpretation should destroy the original OHLC information.
+
+
+2. CANDLE LANGUAGE KNOWLEDGE
+----------------------------
+
+File:
+
+    candle_language.bin
+
+Purpose:
+
+    Store the foundational knowledge required to understand candlesticks as
+    a language.
+
+This is equivalent to the teacher's textbook.
+
+It should contain definitions and relationships for:
+
+    candle anatomy
+    OHLC
+    body
+    upper wick
+    lower wick
+    range
+    bullish candle
+    bearish candle
+    neutral candle
+    doji
+    hammer
+    inverted hammer
+    shooting-star-like structures
+    marubozu-like structures
+    engulfing structures
+    inside bars
+    outside bars
+    rejection
+    compression
+    expansion
+    momentum
+    hesitation
+    continuation
+    reversal conditions
+
+It must also contain knowledge about sequences and structures.
+
+Examples:
+
+    higher high
+    higher low
+    lower high
+    lower low
+    trend
+    range
+    breakout
+    breakdown
+    BOS
+    CHoCH
+    support
+    resistance
+    liquidity/context
+    volatility
+    momentum
+
+The knowledge book is not the same as historical experience.
+
+
+3. HISTORICAL EXPERIENCE
+------------------------
+
+File:
+
+    market_experience.bin
+
+Purpose:
+
+    Store what MLAI has actually learned from chronological historical
+    experience.
+
+This is equivalent to the teacher's years of experience.
+
+Example:
+
+    Pattern:
+        hammer-like candle
+
+    Context:
+        after a strong downtrend near a recent low
+
+    Historical observations:
+        1000 examples
+
+    Outcomes:
+        continuation upward: 63%
+        continuation downward: 25%
+        neutral: 12%
+
+This is experience, not a definition.
+
+
+4. CURRENT MARKET STATE
+-----------------------
+
+The live market data is processed through:
+
+    market_data
+        |
+        v
+    candle language knowledge
+        |
+        v
+    current market state
+        |
+        v
+    historical experience
+        |
+        v
+    prediction
+        |
+        v
+    human-language explanation
+
+
+===================================================
+2. CANDLE AS A LANGUAGE
+===================================================
+
+The system must treat the candle as the smallest meaningful unit.
+
+A candle contains:
+
+    Open
+    High
+    Low
+    Close
+    Volume (if available)
+    Time
+    Instrument
+    Timeframe
+
+From this MLAI derives candle anatomy.
+
+Example:
+
+    Open  = 100
+    High  = 110
+    Low   = 95
+    Close = 108
+
+MLAI should understand:
+
+    bullish candle
+    relatively large body
+    lower wick
+    upper wick
+    total range
+    body-to-range relationship
+    rejection characteristics
+    volatility characteristics
+
+The numerical representation may remain available to the machine.
+
+The system must also produce a human-readable representation.
+
+Example:
+
+    "The candle closed strongly above its open, showing buying pressure.
+     Price rejected lower levels during the candle and finished near the
+     upper part of the range."
+
+Technical representation and human-language representation must coexist.
+
+
+===================================================
+3. CANDLE VOCABULARY
+===================================================
+
+The knowledge system should recognize candle vocabulary such as:
+
+    bullish
+    bearish
+    neutral
+    doji
+    hammer-like
+    inverted-hammer-like
+    shooting-star-like
+    marubozu-like
+    long upper wick
+    long lower wick
+    small body
+    medium body
+    large body
+    compression
+    expansion
+    rejection
+    momentum
+
+The exact classification must be based on measurable OHLC relationships.
+
+MLAI must not claim that a named pattern automatically guarantees a future
+outcome.
+
+A candle pattern is an observation.
+
+Its predictive meaning depends on context and historical experience.
+
+
+===================================================
+4. SEQUENCE LANGUAGE
+===================================================
+
+One candle is equivalent to a word.
+
+Multiple candles form a sequence.
+
+Example:
+
+    bullish large candle
+        ->
+    small bearish candle
+        ->
+    doji
+        ->
+    bullish expansion candle
+
+This becomes a sequence.
+
+The system should be able to translate it into something like:
+
+    "Strong buying pressure was followed by a small pullback and then
+     hesitation. The subsequent bullish expansion suggests that buyers
+     regained control."
+
+The sequence should be represented both technically and in human language.
+
+
+===================================================
+5. MARKET STRUCTURE
+===================================================
+
+MLAI must understand structural relationships.
+
+Examples:
+
+    HH = Higher High
+    HL = Higher Low
+    LH = Lower High
+    LL = Lower Low
+
+Example:
+
+    HH -> HL -> HH -> HL
+
+Human translation:
+
+    "The market is maintaining bullish structure because price continues
+     to form higher highs while pullbacks are holding above previous lows."
+
+Example:
+
+    LH -> LL -> LH -> LL
+
+Human translation:
+
+    "The market is maintaining bearish structure because rallies are failing
+     at lower levels and price continues to form lower lows."
+
+
+===================================================
+6. STRUCTURAL TRANSITIONS
+===================================================
+
+MLAI should recognize transitions such as:
+
+    bullish structure weakening
+    bearish structure weakening
+    breakout
+    failed breakout
+    BOS
+    CHoCH
+    trend continuation
+    potential reversal
+    range formation
+
+Important:
+
+A possible reversal is not the same as a confirmed reversal.
+
+Example:
+
+    HH -> HL -> HH -> failure -> LH
+
+Human interpretation:
+
+    "The previous bullish structure is weakening. Price failed to establish
+     another higher high and has formed a lower high. This indicates a
+     possible structural transition, but confirmation is still required."
+
+
+===================================================
+7. CONTEXT
+===================================================
+
+A candle cannot be interpreted correctly in isolation in every situation.
+
+MLAI must consider context.
+
+Context may include:
+
+    recent trend
+    recent swing structure
+    support
+    resistance
+    range position
+    volatility
+    momentum
+    previous candle sequence
+    breakout status
+    pullback status
+    market regime
+    location relative to recent highs/lows
+
+Example:
+
+The same hammer-like candle can mean different things:
+
+    near major support
+    -> potentially meaningful rejection
+
+    in the middle of a range
+    -> weaker information
+
+    directly below major resistance
+    -> continuation may be less reliable
+
+Therefore:
+
+    candle pattern != automatic prediction
+
+Instead:
+
+    candle pattern
+        +
+    context
+        +
+    structure
+        +
+    historical experience
+        =
+    conditional interpretation
+
+
+===================================================
+8. KNOWLEDGE VS EXPERIENCE
+===================================================
+
+This distinction is fundamental.
+
+KNOWLEDGE:
+
+    "A hammer-like candle has a relatively small body and a long lower
+     rejection wick."
+
+EXPERIENCE:
+
+    "In this specific context, historical hammer-like candles produced
+     bullish continuation 67% of the time."
+
+Knowledge tells MLAI what something means.
+
+Experience tells MLAI how that thing behaved historically.
+
+The final system needs both.
+
+
+===================================================
+9. CHRONOLOGICAL LEARNING
+===================================================
+
+Suppose the system contains:
+
+    2020
+    2021
+    2022
+    2023
+    2024
+    2025
+
+MLAI must not learn from all six years before testing.
+
+Instead it should experience them chronologically.
+
+Example:
+
+    2020
+       |
+       v
+    learn
+       |
+       v
+    2021
+       |
+       v
+    predict / observe / learn
+       |
+       v
+    2022
+       |
+       v
+    predict / observe / learn
+       |
+       v
+    2023
+       |
+       v
+    continue
+       |
+       v
+    2024
+       |
+       v
+    continue
+       |
+       v
+    2025
+
+This simulates the development of experience over time.
+
+
+===================================================
+10. WALK-FORWARD TESTING
+===================================================
+
+At every prediction point:
+
+    STEP 1
+    ------
+    Read only candles available up to current time.
+
+    STEP 2
+    ------
+    Translate the current candles into market language.
+
+    STEP 3
+    ------
+    Consult historical experience that existed BEFORE the prediction point.
+
+    STEP 4
+    ------
+    Generate prediction.
+
+    STEP 5
+    ------
+    Record prediction.
+
+    STEP 6
+    ------
+    Reveal the future candle(s).
+
+    STEP 7
+    ------
+    Compare prediction against actual result.
+
+    STEP 8
+    ------
+    Add the newly revealed experience to experience memory.
+
+    STEP 9
+    ------
+    Move to the next candle.
+
+This process repeats continuously.
+
+
+===================================================
+11. FUTURE LEAKAGE RULE
+===================================================
+
+This is a NON-NEGOTIABLE rule.
+
+At candle T:
+
+Allowed:
+
+    candle T
+    candle T-1
+    candle T-2
+    all previously observed candles
+
+Not allowed:
+
+    candle T+1
+    candle T+4
+    candle T+8
+    candle T+16
+    any future information
+
+Future candles are outcomes.
+
+They are not input features.
+
+Example:
+
+    At 10:00
+
+MLAI may use:
+
+    09:55
+    09:50
+    09:45
+    ...
+    10:00
+
+It may NOT use:
+
+    10:05
+    10:10
+    10:20
+
+when making the 10:00 prediction.
+
+
+===================================================
+12. PREDICTION
+===================================================
+
+MLAI should predict future behavior probabilistically.
+
+Example:
+
+    H+4
+
+    bullish continuation: 67%
+    bearish continuation: 22%
+    neutral: 11%
+
+Human interpretation:
+
+    "Historical experience moderately favors bullish continuation over the
+     next four candles. The evidence is not certain and bearish/neutral
+     outcomes remain possible."
+
+
+===================================================
+13. PROBABILITY RULE
+===================================================
+
+MLAI must NOT automatically output:
+
+    98%
+    99%
+    100%
+
+just because a pattern looks strong.
+
+Probability must come from evidence.
+
+If there are only five historical examples, MLAI must communicate that
+the evidence is weak.
+
+Example:
+
+    "Only five comparable historical cases were found. The estimated
+     probability is therefore unreliable."
+
+A high probability should require sufficient evidence and stable historical
+support.
+
+
+===================================================
+14. HISTORICAL EXPERIENCE
+===================================================
+
+Every revealed prediction result can become experience.
+
+Example:
+
+    State:
+        bullish structure
+        hammer-like candle
+        near recent low
+        normal volatility
+
+    Prediction:
+        bullish = 70%
+
+    Actual:
+        bearish
+
+The system records:
+
+    prediction was wrong
+
+and updates the experience associated with that state.
+
+Over thousands of observations, the system develops conditional statistics.
+
+This is the equivalent of professional experience accumulation.
+
+
+===================================================
+15. EXPERIENCE SHOULD BE CONTEXTUAL
+===================================================
+
+MLAI should not merely count:
+
+    "hammer = bullish"
+
+It should learn:
+
+    hammer
+    +
+    trend
+    +
+    location
+    +
+    volatility
+    +
+    structure
+    +
+    sequence
+    +
+    market regime
+
+Example:
+
+    Hammer at support after downtrend
+    -> bullish continuation historically 71%
+
+    Hammer in middle of range
+    -> bullish continuation historically 49%
+
+    Hammer below major resistance
+    -> bullish continuation historically 34%
+
+The system therefore learns contextual behavior.
+
+
+===================================================
+16. THE EXPERIENCE TEACHER
+===================================================
+
+The desired conceptual architecture is:
+
+    CANDLE KNOWLEDGE
+           +
+    HISTORICAL EXPERIENCE
+           +
+    CURRENT MARKET STATE
+           |
+           v
+    MARKET LANGUAGE UNDERSTANDING
+           |
+           v
+    REASONING
+           |
+           v
+    PROBABILISTIC FORECAST
+           |
+           v
+    HUMAN-LANGUAGE OUTPUT
+
+
+===================================================
+17. HUMAN-LANGUAGE TRANSLATOR
+===================================================
+
+Technical machine representation must remain available.
+
+Example technical representation:
+
+    direction = bullish
+    body = large
+    wick = short
+    structure = short_term_bullish
+    location = near_recent_high
+    volatility = expanded
+
+Human translation:
+
+    "The latest candle shows strong buying pressure. Price is currently
+     in a short-term bullish structure and is trading near the recent high.
+     Volatility has expanded, meaning the current move is stronger than
+     recent average movement."
+
+The user should not need to understand internal variable names.
+
+
+===================================================
+18. EXPLANATION OF PREDICTIONS
+===================================================
+
+A final output should ideally contain:
+
+    CURRENT MARKET
+    --------------
+
+    Market structure:
+        Bullish
+
+    Current candle:
+        Bullish expansion candle
+
+    Context:
+        Near recent resistance
+
+    Historical experience:
+        1,240 comparable situations
+
+    Historical outcomes:
+        bullish continuation: 64%
+        bearish: 24%
+        neutral: 12%
+
+    Interpretation:
+        "The market remains structurally bullish, but price is approaching
+         resistance. Historical experience favors continuation, although
+         resistance creates additional uncertainty."
+
+    Confirmation:
+        "A sustained close above resistance."
+
+    Invalidation:
+        "A break below the recent higher low."
+
+    Probability:
+        "Moderate bullish bias; not a certainty."
+
+
+===================================================
+19. RAW DATA TRACEABILITY
+===================================================
+
+Every derived interpretation should be traceable back to candles.
+
+Example:
+
+    Human statement
+         |
+         v
+    Structure interpretation
+         |
+         v
+    Candle sequence
+         |
+         v
+    Individual candles
+         |
+         v
+    OHLC values
+
+This is necessary for auditing.
+
+
+===================================================
+20. BINARY KNOWLEDGE STORAGE
+===================================================
+
+The user requirement is that foundational candlestick knowledge be stored
+in a binary file rather than a normal database.
+
+The system should therefore create:
+
+    candle_language.bin
+
+and:
+
+    market_experience.bin
+
+Binary storage provides compact machine-readable persistence.
+
+However, binary storage must not mean "unreadable and unauditable."
+
+The project must also provide:
+
+    manifest files
+    version information
+    hashes
+    schema/version identifiers
+    audit/export utilities
+
+so that we can prove what is inside the binary files.
+
+
+===================================================
+21. KNOWLEDGE BOOK CONTENT
+===================================================
+
+candle_language.bin should eventually cover:
+
+    OHLC definitions
+    candle anatomy
+    body classifications
+    wick classifications
+    range classifications
+    bullish/bearish/neutral candles
+    doji families
+    hammer families
+    engulfing patterns
+    inside/outside structures
+    rejection
+    compression
+    expansion
+    momentum
+    candle sequences
+    trend structure
+    HH
+    HL
+    LH
+    LL
+    BOS
+    CHoCH
+    support
+    resistance
+    breakout
+    breakdown
+    pullback
+    continuation
+    reversal conditions
+    volatility
+    market regimes
+    confirmation
+    invalidation
+    uncertainty
+    contextual interpretation
+
+This knowledge should grow carefully and be version controlled.
+
+
+===================================================
+22. EXPERIENCE BOOK CONTENT
+===================================================
+
+market_experience.bin should contain information such as:
+
+    state representation
+    historical occurrence count
+    outcome counts
+    conditional probabilities
+    prediction history
+    actual results
+    prediction errors
+    timestamps
+    model/knowledge version
+    learning chronology
+
+Experience should remain separate from foundational definitions.
+
+
+===================================================
+23. DATA CORPUS FORENSIC AUDIT
+===================================================
+
+Before integrating the new engine, the entire project must be inspected.
+
+Search for:
+
+    market_data.bin
+    CSV
+    JSON
+    JSONL
+    Parquet
+    pickle
+    other BIN files
+    downloaded datasets
+    generated datasets
+    normalized datasets
+
+For each dataset determine:
+
+    file
+    size
+    hash
+    candle count
+    first timestamp
+    last timestamp
+    timestamp order
+    duplicates
+    gaps
+    OHLC validity
+    volume availability
+    instrument
+    timeframe
+    source
+    raw/derived status
+
+The system must NOT guess an unknown binary format.
+
+The actual existing MLAI loader must be inspected if market_data.bin uses
+a project-specific format.
+
+
+===================================================
+24. CANDLE COMPLETENESS
+===================================================
+
+We must determine:
+
+    How many candles should exist?
+
+versus:
+
+    How many candles actually exist?
+
+Example:
+
+    Expected:
+        1309
+
+    Stored:
+        1309
+
+    Missing:
+        0
+
+    Duplicate:
+        0
+
+    Invalid:
+        0
+
+    Status:
+        PASS
+
+If the expected number is not known, the system must report:
+
+    "Expected coverage cannot yet be independently established."
+
+It must not invent an expected candle count.
+
+
+===================================================
+25. EXISTING MLAI MUST NOT BE REPLACED PREMATURELY
+===================================================
+
+The existing MLAI v4.x architecture must remain preserved.
+
+Do NOT immediately replace:
+
+    retrieval
+    structure engine
+    kNN
+    logistic model
+    ensemble
+    causal logic
+
+The new candle-language engine should first be tested independently.
+
+Only after the representation and data audits pass should integration begin.
+
+
+===================================================
+26. TESTING STRATEGY
+===================================================
+
+Testing must occur in stages.
+
+TEST 1 — FILE DISCOVERY
+
+Verify that all relevant datasets are found.
+
+PASS:
+
+    expected files discovered.
+
+FAIL:
+
+    important dataset cannot be located.
+
+
+TEST 2 — DATA VALIDITY
+
+Verify:
+
+    timestamp order
+    duplicates
+    OHLC
+    missing values
+    instrument
+    timeframe
+
+PASS only when the data is valid or every exception is explicitly documented.
+
+
+TEST 3 — KNOWLEDGE BOOK
+
+Verify:
+
+    candle_language.bin exists
+    binary can be reopened
+    version is correct
+    required vocabulary exists
+    definitions are retrievable
+
+PASS:
+
+    knowledge can be loaded without corruption.
+
+
+TEST 4 — LANGUAGE TRANSLATION
+
+Feed known candles.
+
+Verify:
+
+    numerical candle
+        ->
+    technical representation
+        ->
+    human-language interpretation
+
+PASS:
+
+    interpretation is consistent and traceable.
+
+
+TEST 5 — CAUSALITY
+
+For a selected timestamp T:
+
+    remove/hide all future candles.
+
+Run prediction.
+
+Then reveal future candles.
+
+Verify that prediction output before revelation is identical to what would
+have been produced without future access.
+
+PASS:
+
+    no future information was available.
+
+
+TEST 6 — CHRONOLOGICAL LEARNING
+
+Run:
+
+    learn
+    predict
+    reveal
+    update
+
+and verify that experience count increases only after outcomes are revealed.
+
+
+TEST 7 — WALK-FORWARD TEST
+
+Train/learn on earlier data.
+
+Predict later unseen data.
+
+Compare:
+
+    prediction
+    versus
+    actual result
+
+
+TEST 8 — EXPERIENCE IMPROVEMENT
+
+Measure whether accumulated historical experience improves prediction.
+
+Do NOT assume that it must improve.
+
+Measure it.
+
+Compare:
+
+    baseline
+    versus
+    knowledge-only
+    versus
+    knowledge + experience
+
+
+TEST 9 — CALIBRATION
+
+Measure:
+
+    Brier score
+    log loss
+    calibration
+    confidence reliability
+
+Only after retrieval/representation quality has been validated.
+
+
+TEST 10 — UNSEEN PERIOD
+
+Reserve a completely unseen period.
+
+MLAI must not learn from it until predictions have been recorded.
+
+This is the strongest test of chronological integrity.
+
+
+===================================================
+27. BASELINE COMPARISON
+===================================================
+
+Every prediction system should be compared with a simple baseline.
+
+Examples:
+
+    always bullish
+    always bearish
+    previous-candle direction
+    majority historical class
+
+The MLAI system must demonstrate incremental value rather than merely
+producing impressive-looking percentages.
+
+
+===================================================
+28. RETRIEVAL
+===================================================
+
+Retrieval is NOT the first thing to modify.
+
+First validate:
+
+    data
+    candle representation
+    language representation
+    causal timing
+    historical experience
+
+Only then investigate retrieval.
+
+The central retrieval question is:
+
+    "Does MLAI retrieve genuinely comparable market states?"
+
+Not:
+
+    "Can we make the similarity score higher?"
+
+A mathematically similar candle is not necessarily a market-state equivalent.
+
+
+===================================================
+29. MARKET-STATE SIMILARITY
+===================================================
+
+Similarity should eventually consider:
+
+    candle anatomy
+    sequence
+    structure
+    trend
+    volatility
+    location
+    momentum
+    regime
+    context
+
+Example:
+
+Current state:
+
+    bullish structure
+    HH/HL
+    pullback
+    moderate volatility
+    near resistance
+
+A historical state should not be considered highly comparable merely because
+its raw price movement looks similar.
+
+The structural/contextual state must also be comparable.
+
+
+===================================================
+30. PREDICTION PIPELINE
+===================================================
+
+Final intended architecture:
+
+    LIVE MARKET DATA
+          |
+          v
+    Candle Parser
+          |
+          v
+    Candle Anatomy
+          |
+          v
+    Candle Language
+          |
+          v
+    Sequence Recognition
+          |
+          v
+    Structure Engine
+          |
+          v
+    Context / Regime
+          |
+          v
+    Historical Experience Retrieval
+          |
+          v
+    Conditional Outcome Statistics
+          |
+          v
+    Probabilistic Reasoning
+          |
+          v
+    Confirmation / Invalidation
+          |
+          v
+    Human Language Translator
+          |
+          v
+    FINAL MLAI OUTPUT
+
+
+===================================================
+31. EXAMPLE FINAL OUTPUT
+===================================================
+
+TECHNICAL:
+
+    Direction:
+        Bullish
+
+    Structure:
+        HH / HL
+
+    Candle:
+        Bullish expansion
+
+    Location:
+        Near resistance
+
+    Historical sample:
+        1240
+
+    H+4:
+        bullish = 64%
+        bearish = 25%
+        neutral = 11%
+
+
+HUMAN LANGUAGE:
+
+    "The market is currently in a bullish short-term structure, with price
+     continuing to form higher highs and higher lows. The latest candle shows
+     strong buying pressure and expanded range.
+
+     However, price is approaching a recent resistance area. Historical
+     experience from comparable situations moderately favors bullish
+     continuation, but resistance increases uncertainty.
+
+     The bullish scenario becomes stronger if price closes and holds above
+     resistance.
+
+     The bullish interpretation is weakened or invalidated if price breaks
+     below the recent higher low.
+
+     Current historical evidence favors bullish continuation, but it is not
+     a certainty."
+
+
+===================================================
+32. WHAT "100 YEARS OF EXPERIENCE" MEANS
+===================================================
+
+The phrase "100 years of experience" is a conceptual goal.
+
+It should mean:
+
+    extremely large and diverse accumulated experience
+
+not:
+
+    fabricated knowledge
+    guaranteed predictions
+    impossible certainty
+
+The system should gain experience by processing real historical examples
+chronologically.
+
+The more valid experience it accumulates, the more conditional behavior it
+can estimate.
+
+Experience must remain measurable.
+
+
+===================================================
+33. CONTINUOUS LEARNING
+===================================================
+
+When new live market data arrives:
+
+    new candle
+        |
+        v
+    interpret
+        |
+        v
+    predict future
+        |
+        v
+    wait for future outcome
+        |
+        v
+    compare
+        |
+        v
+    learn
+        |
+        v
+    update experience.bin
+
+This creates a continuously growing experience system.
+
+However, updates must be controlled and auditable.
+
+Each learning update should contain:
+
+    timestamp
+    state
+    prediction
+    actual result
+    error
+    knowledge version
+    experience version
+
+
+===================================================
+34. VERSIONING
+===================================================
+
+Every binary knowledge/experience file must have:
+
+    format identifier
+    version
+    creation timestamp
+    source hash
+    schema version
+
+This prevents silent corruption or incompatible changes.
+
+
+===================================================
+35. SAFETY AGAINST FALSE CERTAINTY
+===================================================
+
+MLAI must distinguish:
+
+    observation
+    interpretation
+    historical evidence
+    prediction
+    certainty
+
+Example:
+
+OBSERVATION:
+
+    "Price formed a doji."
+
+INTERPRETATION:
+
+    "The candle indicates short-term hesitation."
+
+HISTORICAL EVIDENCE:
+
+    "Comparable cases favored bullish continuation 58% of the time."
+
+PREDICTION:
+
+    "Bullish continuation is currently the favored scenario."
+
+UNCERTAINTY:
+
+    "The historical edge is modest."
+
+
+===================================================
+36. IMPLEMENTATION ORDER
+===================================================
+
+PHASE 1
+=======
+
+Project/data discovery.
+
+Do not change MLAI.
+
+Output:
+
+    corpus_forensic_report
+
+
+PHASE 2
+=======
+
+Exact market_data.bin schema verification.
+
+Use the existing loader if necessary.
+
+Do not guess.
+
+
+PHASE 3
+=======
+
+Raw candle validation.
+
+Verify:
+
+    OHLC
+    timestamp
+    gaps
+    duplicates
+    completeness
+
+
+PHASE 4
+=======
+
+Build:
+
+    candle_language.bin
+
+
+PHASE 5
+=======
+
+Build candle-language parser.
+
+Input:
+
+    raw candle
+
+Output:
+
+    technical representation
+    human-language meaning
+
+
+PHASE 6
+=======
+
+Build chronological experience memory:
+
+    market_experience.bin
+
+
+PHASE 7
+=======
+
+Implement:
+
+    predict -> reveal -> learn
+
+
+PHASE 8
+=======
+
+Run historical walk-forward tests.
+
+
+PHASE 9
+=======
+
+Measure:
+
+    accuracy
+    baseline accuracy
+    Brier score
+    log loss
+    calibration
+    confidence
+    sample size
+
+
+PHASE 10
+========
+
+Compare knowledge-only versus knowledge + experience.
+
+
+PHASE 11
+========
+
+Investigate existing retrieval.
+
+
+PHASE 12
+========
+
+Only after evidence:
+
+    integrate improved retrieval
+
+
+PHASE 13
+========
+
+Live-data processing.
+
+
+PHASE 14
+========
+
+Continuous experience accumulation.
+
+
+===================================================
+37. ACCEPTANCE CRITERIA
+===================================================
+
+The system is NOT considered complete merely because it runs.
+
+It must prove:
+
+[ ] Raw candles are traceable.
+
+[ ] Data completeness is understood.
+
+[ ] Candle language knowledge can be loaded from binary storage.
+
+[ ] Candle anatomy is correctly extracted.
+
+[ ] Candle sequences can be represented.
+
+[ ] Market structure is represented.
+
+[ ] Human-language translation works.
+
+[ ] Historical experience is stored separately.
+
+[ ] Learning is chronological.
+
+[ ] Prediction occurs before future revelation.
+
+[ ] Future leakage tests PASS.
+
+[ ] Walk-forward evaluation is reproducible.
+
+[ ] Predictions are compared with reality.
+
+[ ] Experience updates occur after outcomes.
+
+[ ] Probability estimates retain uncertainty.
+
+[ ] Baseline comparison exists.
+
+[ ] Unseen-period testing exists.
+
+[ ] Retrieval is validated independently.
+
+[ ] Existing MLAI is not silently broken.
+
+
+===================================================
+38. CURRENT PROJECT STATUS
+===================================================
+
+Existing MLAI:
+
+    PRESERVED
+
+Causal structure foundation:
+
+    EXISTING
+
+Walk-forward testing:
+
+    EXISTING
+
+Retrieval forensic investigation:
+
+    COMPLETED / CURRENT INVESTIGATION
+
+Retrieval incremental predictive evidence:
+
+    NOT DEMONSTRATED
+
+Candle corpus completeness:
+
+    NEXT GATE
+
+Candle-language knowledge book:
+
+    TO IMPLEMENT
+
+Binary knowledge storage:
+
+    TO IMPLEMENT
+
+Chronological experience memory:
+
+    TO IMPLEMENT
+
+Human-language translator:
+
+    TO IMPLEMENT
+
+Chronological learning:
+
+    TO IMPLEMENT
+
+Strict future-leak testing:
+
+    TO IMPLEMENT / VERIFY
+
+Retrieval redesign:
+
+    WAIT
+
+Calibration:
+
+    WAIT
+
+Scenario reasoning:
+
+    WAIT
+
+Live system:
+
+    WAIT
+
+
+===================================================
+39. FINAL ARCHITECTURE
+===================================================
+
+The target system is:
+
+                    +-----------------------+
+                    |  candle_language.bin  |
+                    |  KNOWLEDGE / TEXTBOOK  |
+                    +-----------+-----------+
+                                |
+                                v
++-------------+       +-----------------------+
+| market data | ----> | Candle Language       |
+|  .bin/live  |       | Interpreter           |
++-------------+       +-----------+-----------+
+                                |
+                                v
+                       +----------------+
+                       | Market State   |
+                       +-------+--------+
+                               |
+                               v
+                    +----------------------+
+                    | Historical Experience|
+                    | market_experience.bin|
+                    +----------+-----------+
+                               |
+                               v
+                       +---------------+
+                       | Prediction    |
+                       +-------+-------+
+                               |
+                               v
+                       +---------------+
+                       | Future Result |
+                       +-------+-------+
+                               |
+                               v
+                       +---------------+
+                       | Learn/Update  |
+                       +-------+-------+
+                               |
+                               +-------> experience.bin
+
+                               |
+                               v
+                       +---------------+
+                       | Human-Language|
+                       | Translator    |
+                       +-------+-------+
+                               |
+                               v
+                       +---------------+
+                       | MLAI Output   |
+                       +---------------+
+
+
+===================================================
+40. THE CORE PHILOSOPHY
+===================================================
+
+The final MLAI should not simply answer:
+
+    "BUY"
+
+or:
+
+    "SELL"
+
+It should understand and explain the market.
+
+It should be able to say:
+
+    "This is what the candles are currently communicating."
+
+    "This is the structure being formed."
+
+    "This is the context."
+
+    "These are the historical situations that behaved similarly."
+
+    "This is what happened in those situations."
+
+    "Therefore this scenario currently has the strongest historical support."
+
+    "These conditions would confirm it."
+
+    "These conditions would invalidate it."
+
+    "This is the uncertainty."
+
+The goal is not to manufacture certainty.
+
+The goal is to build a machine that progressively develops:
+
+    KNOWLEDGE
+        +
+    EXPERIENCE
+        +
+    CONTEXT
+        +
+    REASONING
+        +
+    EXPLANATION
+
+
+===================================================
+41. FINAL DEVELOPMENT RULE
+===================================================
+
+DO NOT optimize for an impressive result.
+
+DO NOT change K until accuracy improves.
+
+DO NOT manipulate historical windows until the result looks good.
+
+DO NOT use future information.
+
+DO NOT assume a pattern guarantees an outcome.
+
+DO NOT manufacture probabilities.
+
+DO NOT guess unknown binary formats.
+
+DO NOT replace existing MLAI components before auditing them.
+
+Instead:
+
+    inspect
+    verify
+    measure
+    test
+    document
+    then modify
+
+Every major stage must have a PASS / FAIL / REVIEW result.
+
+The objective is a reproducible, auditable Market Language AI.
+
+
+===================================================
+END OF SPECIFICATION
+===================================================
