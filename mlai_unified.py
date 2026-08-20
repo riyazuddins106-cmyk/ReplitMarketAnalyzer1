@@ -104,6 +104,13 @@ class MarketState:
     volatility: str
     location: str
     sequence: str
+    structure_event: str
+    high_label: str
+    low_label: str
+    momentum: str
+    regime: str
+    returns: tuple[float, ...]
+    path_vector: tuple[tuple[float, float, float, float], ...]
 
     def key(self) -> str:
         """Stable, interpretable key used by the experience memory."""
@@ -116,6 +123,11 @@ class MarketState:
                 self.volatility,
                 self.location,
                 self.sequence,
+                self.structure_event,
+                self.high_label,
+                self.low_label,
+                self.momentum,
+                self.regime,
             )
         )
 
@@ -323,6 +335,58 @@ def classify_candle(candle: Candle, recent: list[Candle]) -> CandleLanguage:
     )
 
 
+def _causal_structure_snapshot(candles: list[Candle], index: int) -> tuple[str, str, str, str]:
+    """Return structure known at index; pivots need two confirming candles."""
+    left = right = 2
+    highs: list[tuple[int, float, str]] = []
+    lows: list[tuple[int, float, str]] = []
+    end = min(index, len(candles) - 1)
+    for pivot in range(left, end - right + 1):
+        window = candles[pivot - left:pivot + right + 1]
+        if candles[pivot].high == max(c.high for c in window):
+            label = "HH" if not highs or candles[pivot].high > highs[-1][1] else "LH"
+            highs.append((pivot, candles[pivot].high, label))
+        if candles[pivot].low == min(c.low for c in window):
+            label = "HL" if not lows or candles[pivot].low > lows[-1][1] else "LL"
+            lows.append((pivot, candles[pivot].low, label))
+    high_label = highs[-1][2] if highs else "UNKNOWN"
+    low_label = lows[-1][2] if lows else "UNKNOWN"
+    last_high = highs[-1] if highs else None
+    last_low = lows[-1] if lows else None
+    event = "NONE"
+    trend = "range"
+    if last_high and index > last_high[0] + right and candles[index].close > last_high[1]:
+        event, trend = "BOS_BULLISH", "bullish"
+    elif last_low and index > last_low[0] + right and candles[index].close < last_low[1]:
+        event, trend = "BOS_BEARISH", "bearish"
+    elif high_label == "HH" and low_label == "HL":
+        trend = "bullish"
+    elif high_label == "LH" and low_label == "LL":
+        trend = "bearish"
+    return trend, event, high_label, low_label
+
+
+def _causal_atr(candles: list[Candle], index: int, period: int = 14) -> float:
+    start = max(0, index - period + 1)
+    ranges = [max(0.0, c.high - c.low) for c in candles[start:index + 1]]
+    return sum(ranges) / max(1, len(ranges))
+
+
+def _causal_path_vector(candles: list[Candle], index: int, length: int = 12) -> tuple[tuple[float, float, float, float], ...]:
+    start = max(0, index - length + 1)
+    rows: list[tuple[float, float, float, float]] = []
+    for i in range(start, index + 1):
+        atr = max(_causal_atr(candles, i), 1e-12)
+        previous = candles[i - 1].close if i else candles[i].close
+        candle = candles[i]
+        rows.append((
+            (candle.close - previous) / atr,
+            (candle.high - candle.low) / atr,
+            1.0 if candle.close > candle.open else -1.0 if candle.close < candle.open else 0.0,
+            abs(candle.close - candle.open) / atr,
+        ))
+    return tuple([(0.0, 0.0, 0.0, 0.0)] * (length - len(rows)) + rows)
+
 def build_state(candles: list[Candle], index: int) -> Optional[MarketState]:
     if index < 20 or index >= len(candles):
         return None
@@ -331,22 +395,39 @@ def build_state(candles: list[Candle], index: int) -> Optional[MarketState]:
     language = classify_candle(current, recent)
     closes = [c.close for c in recent]
     change = closes[-1] / closes[0] - 1.0 if closes[0] else 0.0
-    if change > 0.01:
-        trend = "bullish"
-    elif change < -0.01:
-        trend = "bearish"
-    else:
-        trend = "range"
+    trend, structure_event, high_label, low_label = _causal_structure_snapshot(candles, index)
     ranges = [max(0.0, c.high - c.low) for c in recent]
-    range_ratio = ranges[-1] / (sum(ranges[:-1]) / max(1, len(ranges) - 1))
+    average_range = sum(ranges[:-1]) / max(1, len(ranges) - 1)
+    range_ratio = ranges[-1] / average_range if average_range else 1.0
     volatility = "high" if range_ratio > 1.5 else "low" if range_ratio < 0.6 else "normal"
     recent_high = max(c.high for c in recent)
     recent_low = min(c.low for c in recent)
     position = (current.close - recent_low) / (recent_high - recent_low) if recent_high != recent_low else 0.5
     location = "near_high" if position >= 0.8 else "near_low" if position <= 0.2 else "middle"
+    if high_label in ("HH", "LH") and current.close >= recent_high - _causal_atr(candles, index):
+        location = "near_resistance"
+    elif low_label in ("HL", "LL") and current.close <= recent_low + _causal_atr(candles, index):
+        location = "near_support"
     directions = [classify_candle(c, recent).direction for c in recent[-4:]]
     sequence = " -> ".join(directions)
-    return MarketState(index, current.timestamp, language, trend, volatility, location, sequence)
+    returns = tuple(
+        (current.close / candles[index - lookback].close - 1.0)
+        if index >= lookback and candles[index - lookback].close else 0.0
+        for lookback in (1, 3, 8, 16)
+    )
+    r1, r3, r8, _ = returns
+    momentum = ("bullish_acceleration" if r1 > 0 and r3 > 0 and r8 > 0 else
+                "bearish_acceleration" if r1 < 0 and r3 < 0 and r8 < 0 else
+                "bullish_momentum_loss" if r8 > 0 and r1 < 0 else
+                "bearish_momentum_loss" if r8 < 0 and r1 > 0 else "mixed")
+    regime = ("volatility_expansion" if range_ratio >= 1.35 else
+              "volatility_contraction" if range_ratio <= 0.75 else
+              "trending_up" if trend == "bullish" and r8 > 0 else
+              "trending_down" if trend == "bearish" and r8 < 0 else
+              "ranging" if trend == "range" else "transition")
+    return MarketState(index, current.timestamp, language, trend, volatility, location, sequence,
+                       structure_event, high_label, low_label, momentum, regime, returns,
+                       _causal_path_vector(candles, index))
 
 
 def outcome_at(candles: list[Candle], index: int, horizon: int) -> str:
@@ -370,6 +451,12 @@ def _state_parts(state: MarketState) -> tuple[str, ...]:
         state.trend,
         state.volatility,
         state.location,
+        state.sequence,
+        state.structure_event,
+        state.high_label,
+        state.low_label,
+        state.momentum,
+        state.regime,
     )
 
 
