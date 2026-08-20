@@ -449,7 +449,12 @@ def predict(state: MarketState, buckets: dict[str, ExperienceBucket]) -> dict[st
         probabilities = {outcome: 1.0 / len(OUTCOMES) for outcome in OUTCOMES}
         confidence = "insufficient historical evidence"
     else:
-        probabilities = {outcome: weighted_counts[outcome] / total for outcome in OUTCOMES}
+        # Laplace smoothing prevents one or two observations from becoming
+        # false certainty and keeps every outcome visibly possible.
+        probabilities = {
+            outcome: (weighted_counts[outcome] + 1.0) / (total + len(OUTCOMES))
+            for outcome in OUTCOMES
+        }
         confidence = "weak" if evidence < 20 else "moderate" if evidence < 100 else "strong"
     favored = max(probabilities, key=probabilities.get)
     return {
@@ -551,10 +556,11 @@ def run_walk_forward(
     start: int = 60,
     limit: Optional[int] = None,
     persist: bool = False,
+    initial_buckets: Optional[dict[str, ExperienceBucket]] = None,
 ) -> dict[str, Any]:
     if horizon not in HORIZONS:
         raise ValueError(f"horizon must be one of {HORIZONS}")
-    buckets: dict[str, ExperienceBucket] = {}
+    buckets: dict[str, ExperienceBucket] = dict(initial_buckets or {})
     rows: list[dict[str, Any]] = []
     end = min(len(candles) - horizon, start + limit) if limit else len(candles) - horizon
     for index in range(start, max(start, end)):
@@ -575,6 +581,7 @@ def run_walk_forward(
             "evidence": forecast["evidence"],
             "actual": actual,
             "correct": correct,
+            "scenario": scenario_report(state, forecast),
         })
         # The chronological learning cycle is always part of this in-memory
         # run. Persistence is a separate concern controlled by the caller.
@@ -647,12 +654,14 @@ def print_translation(index: int) -> int:
 
 def print_walk_forward(args: argparse.Namespace) -> int:
     candles, _ = load_market()
+    starting_buckets = load_experience() if args.resume else None
     result = run_walk_forward(
         candles,
         args.horizon,
         args.start,
         args.limit,
         persist=args.persist,
+        initial_buckets=starting_buckets,
     )
     summary = {key: value for key, value in result.items() if key not in ("rows", "buckets")}
     print("MLAI CAUSAL WALK-FORWARD")
@@ -681,6 +690,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--persist",
         action="store_true",
         help="persist the revealed experience after the causal run",
+    )
+    walk.add_argument(
+        "--resume",
+        action="store_true",
+        help="start from the previously persisted experience memory",
     )
     return parser
 

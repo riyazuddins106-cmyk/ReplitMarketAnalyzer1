@@ -8,6 +8,7 @@ Deterministic, evidence-traceable market-state analysis from completed OHLCV can
 - `python mlai_unified.py translate --index 1308` — translate one completed candle using prior context
 - `python mlai_unified.py walk-forward --horizon 4 --start 60 --limit 200` — run causal predict/reveal/learn evaluation
 - Add `--persist` to the walk-forward command to write `data/market_experience.bin`
+- Add `--resume` to use previously persisted experience as historical evidence
 - The console does not require a database, UI, or external service.
 
 ## Stack

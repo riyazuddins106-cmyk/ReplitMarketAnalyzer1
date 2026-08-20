@@ -61,12 +61,18 @@ python mlai_unified.py audit
 python mlai_unified.py translate --index 1308
 python mlai_unified.py walk-forward --horizon 4 --start 60 --limit 200
 python mlai_unified.py walk-forward --horizon 4 --start 60 --limit 200 --persist
+python mlai_unified.py walk-forward --horizon 4 --start 60 --limit 200 --resume --persist
 ```
 
 `audit` is the first gate. It checks the knowledge hash/index, vocabulary
 coverage, candle chronology, duplicates, OHLC validity, and detected gaps.
 The currently imported corpus is valid but reports four timestamp gaps for
 review rather than hiding them.
+
+The walk-forward output also reports similarity retrieval count, smoothed
+probabilities, Brier score, log loss, majority baseline, incremental value,
+and confirmation/invalidation scenarios. `--resume` is explicit so a clean
+evaluation cannot accidentally inherit persisted experience.
 
 ## Integration boundary
 
