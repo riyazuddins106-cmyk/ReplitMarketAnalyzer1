@@ -471,7 +471,9 @@ def retrieve_similar(
     for key, bucket in buckets.items():
         if bucket.count < 1:
             continue
-        parts = tuple(key.split("|")[:6])
+        # State keys now contain the complete causal representation.
+        # Truncating to six fields silently discarded every 12-field match.
+        parts = tuple(key.split("|"))
         if len(parts) != len(current):
             continue
         score = sum(1.0 for a, b in zip(current, parts) if a == b) / len(current)
