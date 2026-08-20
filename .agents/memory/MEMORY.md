@@ -1,1 +1,2 @@
 - [MLAI integration boundary](mlai-integration-boundary.md) — keep the causal unified console path separate from preserved v4.x comparison engines.
+- [Market data import validation](market-data-import-validation.md) — verify imported binary market data matches the console's pickle contract before runtime evaluation.

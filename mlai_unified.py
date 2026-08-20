@@ -113,22 +113,22 @@ class MarketState:
     path_vector: tuple[tuple[float, float, float, float], ...]
 
     def key(self) -> str:
-        """Stable, interpretable key used by the experience memory."""
-        return "|".join(
-            (
-                self.language.direction,
-                self.language.body_size,
-                self.language.wick_profile,
-                self.trend,
-                self.volatility,
-                self.location,
-                self.sequence,
-                self.structure_event,
-                self.high_label,
-                self.low_label,
-                self.momentum,
-                self.regime,
-            )
+        """Stable state signature used by the experience memory.
+
+        The categorical fields remain human-readable, while the numeric returns
+        and causal path are retained so retrieval can distinguish states that
+        happen to share the same labels.
+        """
+        return "MLAI_STATE_V2:" + json.dumps(
+            {
+                "categorical": _state_parts(self),
+                "returns": [round(value, 10) for value in self.returns],
+                "path": [
+                    [round(value, 6) for value in row]
+                    for row in self.path_vector
+                ],
+            },
+            separators=(",", ":"),
         )
 
 
@@ -391,14 +391,16 @@ def build_state(candles: list[Candle], index: int) -> Optional[MarketState]:
     if index < 20 or index >= len(candles):
         return None
     current = candles[index]
-    recent = candles[max(0, index - 20): index + 1]
+    # The current candle is known at prediction time, but must not be part of
+    # the baseline used to decide whether it is unusually large or small.
+    recent = candles[max(0, index - 20): index]
     language = classify_candle(current, recent)
     closes = [c.close for c in recent]
-    change = closes[-1] / closes[0] - 1.0 if closes[0] else 0.0
     trend, structure_event, high_label, low_label = _causal_structure_snapshot(candles, index)
     ranges = [max(0.0, c.high - c.low) for c in recent]
-    average_range = sum(ranges[:-1]) / max(1, len(ranges) - 1)
-    range_ratio = ranges[-1] / average_range if average_range else 1.0
+    average_range = sum(ranges) / max(1, len(ranges))
+    current_range = max(0.0, current.high - current.low)
+    range_ratio = current_range / average_range if average_range else 1.0
     volatility = "high" if range_ratio > 1.5 else "low" if range_ratio < 0.6 else "normal"
     recent_high = max(c.high for c in recent)
     recent_low = min(c.low for c in recent)
@@ -431,11 +433,22 @@ def build_state(candles: list[Candle], index: int) -> Optional[MarketState]:
 
 
 def outcome_at(candles: list[Candle], index: int, horizon: int) -> str:
+    return outcome_at_threshold(candles, index, horizon)
+
+
+def outcome_at_threshold(
+    candles: list[Candle],
+    index: int,
+    horizon: int,
+    threshold_fraction: float = 0.001,
+) -> str:
     if index + horizon >= len(candles):
         raise IndexError("Future outcome is not available")
+    if threshold_fraction < 0:
+        raise ValueError("threshold_fraction must be non-negative")
     start = candles[index].close
     end = candles[index + horizon].close
-    threshold = max(start * 0.001, 1e-9)
+    threshold = max(start * threshold_fraction, 1e-9)
     if end - start > threshold:
         return "bullish"
     if start - end > threshold:
@@ -471,16 +484,66 @@ def retrieve_similar(
     for key, bucket in buckets.items():
         if bucket.count < 1:
             continue
-        # State keys now contain the complete causal representation.
-        # Truncating to six fields silently discarded every 12-field match.
-        parts = tuple(key.split("|"))
-        if len(parts) != len(current):
+        if key == state.key():
             continue
-        score = sum(1.0 for a, b in zip(current, parts) if a == b) / len(current)
+        decoded = _decode_state_key(key)
+        if decoded is None:
+            continue
+        parts, returns, path = decoded
+        categorical_score = sum(
+            1.0 for a, b in zip(current, parts) if a == b
+        ) / len(current)
+        return_score = _numeric_similarity(state.returns, returns)
+        path_score = _path_similarity(state.path_vector, path)
+        score = (
+            0.55 * categorical_score
+            + 0.20 * return_score
+            + 0.25 * path_score
+        )
         if score >= 0.34:
             matches.append((score, bucket))
     matches.sort(key=lambda item: (item[0], item[1].count), reverse=True)
     return matches[:limit]
+
+
+def _decode_state_key(
+    key: str,
+) -> Optional[tuple[tuple[str, ...], tuple[float, ...], tuple[tuple[float, ...], ...]]]:
+    """Decode V2 signatures while retaining compatibility with old buckets."""
+    if not key.startswith("MLAI_STATE_V2:"):
+        legacy = tuple(key.split("|"))
+        if len(legacy) != 12:
+            return None
+        return legacy, (0.0, 0.0, 0.0, 0.0), ((0.0, 0.0, 0.0, 0.0),)
+    try:
+        payload = json.loads(key.removeprefix("MLAI_STATE_V2:"))
+        categorical = tuple(str(value) for value in payload["categorical"])
+        returns = tuple(float(value) for value in payload["returns"])
+        path = tuple(tuple(float(value) for value in row) for row in payload["path"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if len(categorical) != 12 or len(returns) != 4 or not path:
+        return None
+    return categorical, returns, path
+
+
+def _numeric_similarity(left: tuple[float, ...], right: tuple[float, ...]) -> float:
+    if not left or len(left) != len(right):
+        return 0.0
+    return sum(1.0 / (1.0 + abs(a - b) * 25.0) for a, b in zip(left, right)) / len(left)
+
+
+def _path_similarity(
+    left: tuple[tuple[float, ...], ...],
+    right: tuple[tuple[float, ...], ...],
+) -> float:
+    if not left or len(left) != len(right):
+        return 0.0
+    distances = [
+        sum(abs(a - b) for a, b in zip(left_row, right_row)) / max(1, len(left_row))
+        for left_row, right_row in zip(left, right)
+    ]
+    return sum(1.0 / (1.0 + distance) for distance in distances) / len(distances)
 
 
 def load_experience(path: Path = EXPERIENCE_PATH) -> dict[str, ExperienceBucket]:
@@ -646,9 +709,12 @@ def run_walk_forward(
     limit: Optional[int] = None,
     persist: bool = False,
     initial_buckets: Optional[dict[str, ExperienceBucket]] = None,
+    threshold_fraction: float = 0.001,
 ) -> dict[str, Any]:
     if horizon not in HORIZONS:
         raise ValueError(f"horizon must be one of {HORIZONS}")
+    if threshold_fraction < 0:
+        raise ValueError("threshold_fraction must be non-negative")
     buckets: dict[str, ExperienceBucket] = dict(initial_buckets or {})
     rows: list[dict[str, Any]] = []
     end = min(len(candles) - horizon, start + limit) if limit else len(candles) - horizon
@@ -659,7 +725,12 @@ def run_walk_forward(
         # Prediction is made before outcome_at is called.  The current bucket
         # contains only outcomes revealed at earlier prediction points.
         forecast = predict(state, buckets)
-        actual = outcome_at(candles, index, horizon)
+        actual = outcome_at_threshold(
+            candles,
+            index,
+            horizon,
+            threshold_fraction=threshold_fraction,
+        )
         correct = forecast["favored"] == actual
         rows.append({
             "index": index,
@@ -668,6 +739,7 @@ def run_walk_forward(
             "favored": forecast["favored"],
             "probabilities": forecast["probabilities"],
             "evidence": forecast["evidence"],
+            "retrieval_matches": forecast["retrieval_matches"],
             "actual": actual,
             "correct": correct,
             "scenario": scenario_report(state, forecast),
@@ -680,6 +752,7 @@ def run_walk_forward(
     baseline = max(baseline_counts.values()) / len(rows) if rows else 0.0
     return {
         "horizon": horizon,
+        "threshold_fraction": threshold_fraction,
         "predictions": len(rows),
         "accuracy": accuracy,
         "majority_baseline": baseline,
@@ -742,6 +815,11 @@ def print_translation(index: int) -> int:
 
 
 def print_walk_forward(args: argparse.Namespace) -> int:
+    if args.resume and args.mode != "live":
+        raise ValueError(
+            "--resume is only valid with --mode live; research evaluation must "
+            "start with clean in-memory experience"
+        )
     candles, _ = load_market()
     starting_buckets = load_experience() if args.resume else None
     result = run_walk_forward(
@@ -751,6 +829,7 @@ def print_walk_forward(args: argparse.Namespace) -> int:
         args.limit,
         persist=args.persist,
         initial_buckets=starting_buckets,
+        threshold_fraction=args.threshold,
     )
     summary = {key: value for key, value in result.items() if key not in ("rows", "buckets")}
     print("MLAI CAUSAL WALK-FORWARD")
@@ -775,6 +854,18 @@ def build_parser() -> argparse.ArgumentParser:
     walk.add_argument("--horizon", type=int, choices=HORIZONS, default=4)
     walk.add_argument("--start", type=int, default=60)
     walk.add_argument("--limit", type=int)
+    walk.add_argument(
+        "--mode",
+        choices=("research", "live"),
+        default="research",
+        help="research uses clean memory; live permits explicit memory resumption",
+    )
+    walk.add_argument(
+        "--threshold",
+        type=float,
+        default=0.001,
+        help="future return threshold as a fraction (default: 0.001 = 0.10%%)",
+    )
     walk.add_argument(
         "--persist",
         action="store_true",
