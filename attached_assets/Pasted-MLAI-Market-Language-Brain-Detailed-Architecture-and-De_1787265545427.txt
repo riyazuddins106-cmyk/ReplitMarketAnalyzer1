@@ -1,0 +1,1132 @@
+MLAI Market Language Brain
+Detailed Architecture and Development Plan
+Document type: Scientific and engineering roadmap  
+Project: MLAI — Market Language AI  
+Status: Planning document  
+Scope: Architecture, data, learning, validation, reasoning, and future live operation  
+Code changes: None required by this document
+---
+1. Executive goal
+MLAI should eventually receive:
+OHLCV market data
+Instrument
+Timeframe
+Historical context
+Any other available market information
+and produce an evidence-based explanation of the current market state.
+The desired output is not:
+```text
+Pattern = BUY
+Pattern = SELL
+```
+The desired output is:
+```text
+Observation
+→ sequence interpretation
+→ market structure
+→ context and regime
+→ comparable historical situations
+→ historical outcome distribution
+→ probability and uncertainty
+→ alternative scenarios
+→ confirmation conditions
+→ invalidation conditions
+→ explanation in human language
+```
+Example target behavior:
+> “The short-term market is recovering inside a larger bearish structure. The latest candles show rejection of lower prices, but price has not yet broken the previous significant swing high. Similar historical situations produced mixed outcomes. The current evidence moderately supports a continued recovery, but a close below recent support would weaken that interpretation.”
+This system must describe what the data supports. It must not invent hidden orders, trader intentions, certainty, or evidence that is not present.
+---
+2. Current project position
+The current project is a research archive rather than one finished application. It contains:
+Legacy MLAI versions from approximately v0.2 through v3.4.3
+Threshold and directional validation experiments
+Market-representation experiments
+Causal market-structure experiments through v3.8.6
+Sequence and context experiments through v3.9.0
+Serialized market data
+Serialized learning and memory files
+Validation reports and audit files
+Backup and repair scripts
+The strongest existing foundations are:
+Read-only market-data protection
+Candle normalization in newer experiments
+Chronological validation
+Walk-forward validation
+Causal swing confirmation
+Structural-event detection
+ATR-normalized movement outcomes
+MFE and MAE analysis
+Sequence representation
+Permutation/null-testing ideas
+Explicit warnings against treating historical evidence as certainty
+The main gaps are:
+No canonical architecture
+No stable shared data contract
+No single authoritative research pipeline
+No complete historical similarity engine
+No validated experience-retrieval layer
+No complete probability-calibration layer
+No scenario reasoning system
+No robust multi-timeframe reasoning system
+No safe continuous-learning loop
+No live-data pipeline
+No final unseen-chart generalization system
+The existing project should be evolved, not destroyed. Historical versions should be preserved for comparison, while a new controlled research architecture is built around the valid parts.
+---
+3. Non-negotiable scientific rules
+These rules apply to every future phase.
+3.1 Evidence is not certainty
+Historical repetition increases or decreases evidence. It does not guarantee repetition.
+3.2 Patterns are descriptions, not automatic signals
+A hammer, engulfing pattern, BOS, CHoCH, or chart pattern must never directly mean BUY or SELL.
+Every observation must be interpreted with:
+Prior movement
+Location
+Structure
+Volatility
+Momentum
+Regime
+Confirmation
+Failure behavior
+3.3 No invisible facts
+Without order-book or market-depth data, MLAI must not claim:
+Hidden orders
+Exact institutional activity
+Stop locations
+Exact buyer intent
+Exact seller intent
+Use language such as:
+> “Price behavior suggests rejection of lower prices.”
+Do not use:
+> “Institutions are definitely buying.”
+3.4 Causality must be explicit
+Every feature needs a known availability time. A feature may only be used after the market data required to calculate it would have existed.
+3.5 Future outcomes are targets only
+Future returns, future highs, future lows, MFE, MAE, and future structural events must never be inputs to the state being evaluated.
+3.6 The final test must remain untouched
+The locked test period must not be used to:
+Select features
+Adjust thresholds
+Select models
+Change the representation
+Tune explanations
+Decide what to promote
+3.7 Accuracy is not the main success measure
+MLAI must prioritize:
+Calibration
+Generalization
+Stability
+Uncertainty quality
+Evidence traceability
+Scenario quality
+Robustness across regimes
+---
+4. Target architecture
+The completed system should contain these layers:
+```text
+1. Data collection
+2. Raw immutable storage
+3. Data validation and normalization
+4. Feature and market-state representation
+5. Sequence and event understanding
+6. Structure and context engine
+7. Historical experience memory
+8. Similarity retrieval
+9. Outcome and probability engine
+10. Scenario reasoning
+11. Explanation generation
+12. Delayed outcome evaluation
+13. Controlled knowledge updating
+14. Validation and monitoring
+```
+These layers must remain separate.
+In particular:
+```text
+Data collection ≠ Learning
+Learning ≠ Validation
+Validation ≠ Inference
+Inference ≠ Knowledge promotion
+```
+---
+5. Phase P0 — Project audit and protection
+Purpose
+Understand and protect the existing project before implementation.
+What will be added
+5.1 Project inventory
+An inventory will classify every project file as:
+Active research script
+Legacy engine
+Validation experiment
+Data tool
+Memory artifact
+Report
+Backup
+Patch or repair script
+Test
+Unknown
+5.2 Canonical-version map
+The project will identify one preferred branch for each responsibility:
+Data foundation
+Candle representation
+Sequence representation
+Market structure
+Validation
+Historical memory
+Probability
+Explanation
+Older versions will remain available but will not be treated as active automatically.
+5.3 Write-surface audit
+Every script will be checked for whether it:
+Reads market data
+Writes market data
+Reads memory
+Writes memory
+Writes reports
+Updates project status
+Uses external APIs
+Changes other source files
+5.4 File protection record
+The following will have recorded hashes and explicit protection status:
+Raw market data
+Production or legacy learning engine
+Existing memory files
+Important validation artifacts
+Deliverables
+Project architecture report
+File classification table
+Canonical-version map
+Read/write behavior map
+Protected-file manifest
+List of unresolved contradictions
+Gate to continue
+No implementation should proceed until it is clear:
+Which files are historical
+Which files are active research
+Which files are production-sensitive
+Which data files are immutable
+Which results are authoritative
+---
+6. Phase P0 — Canonical data foundation
+Purpose
+Make sure all future learning is based on consistent, traceable, correctly ordered data.
+What will be added
+6.1 Immutable raw-data layer
+Raw data will be stored without modification, including:
+Original record
+Source
+Instrument
+Timeframe
+Retrieval time
+Original timestamp
+Original payload where available
+6.2 Canonical normalized-candle layer
+Every valid candle will use one schema:
+```text
+instrument
+timeframe
+timestamp
+open
+high
+low
+close
+volume
+volume\_type
+source
+```
+6.3 Quality metadata
+Each record or dataset will track:
+Missing fields
+Invalid OHLC relationships
+Duplicate timestamps
+Out-of-order records
+Time gaps
+Timestamp conversion
+Timezone
+Volume availability
+Rejected-record reason
+6.4 Derived-data layer
+Calculated features will be stored separately from raw candles and will include:
+Dataset version
+Feature version
+Calculation configuration
+Causal availability timestamp
+Why this is required
+The current project contains reports with different candle counts. Different scripts also use different extraction rules. Without a canonical data contract, two results may appear to test the same idea while actually using different data.
+Gate to continue
+The data foundation must pass:
+Chronological ordering checks
+Duplicate checks
+Gap checks
+OHLC validity checks
+Timestamp consistency checks
+Reproducibility checks
+Raw-data immutability checks
+---
+7. Phase P0 — Causality contract
+Purpose
+Prevent look-ahead bias across every representation and model.
+What will be added
+A feature-causality registry with entries such as:
+Feature	Required information	First available
+Candle body	Current candle	Candle close
+Current ATR	Current and prior candles	Candle close
+Confirmed swing	Swing plus confirmation candles	Confirmation close
+Future return	Future candles	Target only
+Higher-timeframe state	Completed higher-timeframe candle	Higher-timeframe close
+Every feature will be classified as:
+Causal input
+Delayed causal input
+Future target
+Evaluation-only statistic
+Prohibited input
+Required audits
+Feature timestamp audit
+Swing-confirmation audit
+Label-boundary audit
+Training-boundary audit
+Multi-timeframe synchronization audit
+Future-data access audit
+Gate to continue
+The system must be able to prove, for any evaluated observation:
+Which candles were used
+When each feature became available
+Which future values were used only as targets
+That no future feature entered the input
+---
+8. Phase P1 — Market Language representation
+Purpose
+Represent market behavior as structured meaning instead of isolated labels.
+8.1 Candle-anatomy representation
+Add or standardize:
+Open
+High
+Low
+Close
+Body
+Absolute body
+Upper wick
+Lower wick
+Range
+Body/range ratio
+Wick/body ratios
+Candle direction
+Relative candle size
+Relative body size
+Expansion
+Compression
+Candle location
+8.2 Relative-movement representation
+Add:
+Return over multiple lookbacks
+Movement relative to ATR
+Distance from recent high
+Distance from recent low
+Position inside recent range
+Distance from reaction areas
+Rate of movement
+Acceleration
+Deceleration
+8.3 Sequence representation
+The sequence engine will represent transitions such as:
+```text
+selling
+→ more selling
+→ selling slows
+→ lower rejection
+→ bullish response
+→ follow-through
+→ resistance test
+```
+It will detect:
+Impulse
+Correction
+Pullback
+Retracement
+Rejection
+Recovery
+Momentum loss
+Exhaustion
+Consolidation
+Compression
+Expansion
+Breakout
+Failed breakout
+Retest
+Continuation
+Reversal candidate
+Transition
+The sequence result must include both a machine-readable state and a human-readable description.
+8.4 Market-structure representation
+Preserve and standardize the existing causal structure work:
+Swing high
+Swing low
+HH
+HL
+LH
+LL
+Trend
+Range
+BOS
+CHoCH
+Structural failure
+Structural transition
+Continuation
+Reversal candidate
+8.5 Support and resistance representation
+Add areas rather than exact magical prices:
+Prior swing areas
+Repeated reaction areas
+Previous highs
+Previous lows
+Breakout areas
+Retest areas
+Failed-support areas
+Failed-resistance areas
+Role-reversal areas
+Strong and weak reaction areas
+Each area should contain:
+Price range
+Creation reason
+Number of tests
+Reaction strength
+Freshness
+Break status
+Retest status
+Failure status
+8.6 Supply and demand representation
+Only observable proxies should be represented:
+Strong movement away from an area
+Repeated reaction
+Freshness
+Retesting
+Weakening reaction
+Zone failure
+Return to a prior reaction area
+The system must distinguish measured price behavior from theoretical supply/demand claims.
+8.7 Liquidity representation
+Without market depth, represent only price-derived areas:
+Equal highs
+Equal lows
+Prior highs/lows
+Sweep-like movement through prior levels
+Rejection after a level break
+False-break behavior
+Do not claim to see hidden orders.
+8.8 Momentum representation
+Add:
+Momentum increase
+Momentum decrease
+Acceleration
+Exhaustion
+Directional strength
+Follow-through
+Failed push
+Momentum disagreement
+The representation must distinguish:
+```text
+Price is moving higher
+```
+from:
+```text
+Price is moving higher with increasing strength
+```
+Gate to continue
+The representation must be:
+Causal
+Reproducible
+Machine-readable
+Explainable
+Independent of BUY/SELL labels
+Available across multiple horizons
+---
+9. Phase P1 — Context and regime engine
+Purpose
+Make the same candle interpretable differently depending on its environment.
+What will be added
+Context fields:
+Instrument
+Timeframe
+Session
+Trend
+Range state
+Location
+Previous movement
+Structure
+Volatility
+Momentum
+Volume if available
+Recent reactions
+Higher-timeframe context when available
+Regime fields:
+Trending
+Ranging
+High volatility
+Low volatility
+Volatility expansion
+Volatility contraction
+Transitioning
+Strong directional movement
+Weak directional movement
+Required behavior
+A pattern should not have one fixed interpretation.
+For example:
+```text
+Hammer after a decline near range support
+```
+may be interpreted differently from:
+```text
+Hammer during a strong higher-timeframe bearish trend
+```
+Gate to continue
+Every relationship stored in memory or used for probability must be conditionable on context and regime where enough data exists.
+---
+10. Phase P1 — Target and outcome system
+Purpose
+Define exactly what historical outcomes MLAI is learning.
+What will be added
+Direction outcomes
+Higher
+Lower
+Neutral
+Return outcomes
+Future percentage return
+ATR-normalized return
+Distribution rather than only average return
+Path outcomes
+Immediate continuation
+Initial adverse move followed by recovery
+Breakout followed by failure
+Range persistence
+Recovery followed by rejection
+Excursion outcomes
+MFE
+MAE
+Time to MFE
+Time to MAE
+Event outcomes
+Support broken
+Resistance broken
+Swing level reached
+Retest confirmed
+Structural invalidation
+Label rules
+Labels must be:
+Defined before the experiment
+Chronologically generated
+Separated from inputs
+Consistent across versions
+Volatility-aware where appropriate
+Evaluated at H+4, H+8, H+16, and other predeclared horizons
+Overlapping labels must be handled using purging, dependency-aware reporting, or both.
+Gate to continue
+Every target must have:
+A written definition
+A known completion time
+A causality test
+A class-distribution report
+A baseline definition
+---
+11. Phase P0/P1 — Repair the validation methodology
+Purpose
+Ensure that apparent learning is not the result of selection bias, leakage, or repeated experimentation.
+What will be added
+Chronological splits
+```text
+Training period
+→ validation period
+→ locked final test period
+```
+Walk-forward validation
+Use expanding or rolling windows with fixed, recorded boundaries.
+Purging
+Remove training observations whose outcome windows overlap the validation period.
+Embargo
+Leave a time gap around validation boundaries where necessary.
+Pre-registered experiments
+Before running an experiment, record:
+Hypothesis
+Data version
+Feature version
+Target
+Horizons
+Candidate rules
+Candidate models
+Primary metric
+Secondary metrics
+Acceptance threshold
+Null and permutation testing
+The null test must:
+Keep feature representation fixed
+Shuffle only valid target labels
+Preserve fold boundaries
+Preserve the observed selection procedure
+Compare equivalent statistics
+Report the number of candidate rules
+Report the maximum-null distribution
+Account for multiple testing
+Required v3.4.2 investigation
+The unusually high best-null-rule result must be investigated before trusting later rule-discovery claims.
+The investigation must check:
+Class imbalance
+Baseline correctness
+Number of tested rules
+Maximum-of-many selection
+Horizon overlap
+Label leakage
+Fold leakage
+Quantile-boundary leakage
+Incorrect null aggregation
+Reuse of validation results
+Gate to continue
+The validation system must show that:
+Results beat a correctly defined baseline
+Results remain stable across chronological windows
+Results survive a locked test
+Null results behave as expected
+Selected rules are not simply the best result from a huge search
+---
+12. Phase P1 — Historical experience memory
+Purpose
+Convert historical observations into reusable, statistically qualified knowledge.
+What will be added
+An experience record containing:
+```text
+instrument
+timeframe
+timestamp
+market-state representation
+sequence representation
+structure state
+context state
+regime
+observed events
+future outcome distributions
+sample count
+success count
+failure count
+confidence interval
+validation status
+source dataset version
+feature version
+last verification date
+```
+Separate memory categories
+Raw observations
+Immutable descriptions of what happened.
+Historical aggregates
+Grouped outcome distributions under comparable conditions.
+Validated knowledge
+Relationships that survived chronological tests and calibration checks.
+Failed knowledge
+Relationships that failed under specific contexts or regimes.
+Model artifacts
+Frozen encoders, thresholds, models, and calibration parameters.
+Memory rules
+Do not store everything permanently.
+Store information that supports:
+Retrieval
+Comparison
+Probability estimation
+Failure analysis
+Regime analysis
+Revalidation
+Every memory item must have a quality status such as:
+Candidate
+Under evaluation
+Validated
+Weak evidence
+Failed
+Deprecated
+Gate to continue
+The memory system must answer:
+```text
+What situation was observed?
+Under what context?
+How many comparable examples exist?
+What outcomes occurred?
+How stable were they?
+When was the relationship last verified?
+```
+---
+13. Phase P1/P2 — Historical similarity and experience retrieval
+Purpose
+Allow MLAI to compare the current market state with relevant historical situations without requiring an exact repeated sequence.
+What will be added
+Similarity inputs:
+Candle anatomy
+Relative movement
+Sequence state
+Structure
+Location
+Momentum
+Volatility
+Regime
+Timeframe
+Session
+Instrument
+Recent reaction history
+Retrieval process
+```text
+Current state
+→ find comparable historical states
+→ remove invalid comparisons
+→ weight similarity
+→ adjust for context and regime
+→ aggregate outcomes
+→ calculate uncertainty
+→ identify conflicts
+```
+Retrieval output
+The result must show:
+Number of matches
+Similarity strength
+Closest-match distance
+Regime agreement
+Timeframe agreement
+Outcome distribution
+Conflicting evidence
+Sparse-data warning
+Historical period represented
+Sparse evidence policy
+If only a few comparable situations exist, MLAI must reduce confidence or refuse to provide a strong probability.
+It must not transform three similar examples into a confident rule.
+Gate to continue
+The retrieval system must demonstrate that it can generalize to similar but not identical sequences.
+---
+14. Phase P1/P2 — Probability and calibration engine
+Purpose
+Produce meaningful probabilities rather than uncalibrated scores.
+What will be added
+For each scenario or outcome, provide:
+Probability
+Sample count
+Historical period
+Regime
+Similarity strength
+Confidence interval
+Calibration status
+Baseline
+Conflicting evidence
+Data-sparsity warning
+Example:
+```text
+Higher: 56%
+Lower: 31%
+Neutral: 13%
+
+Evidence strength: Moderate
+Comparable examples: 1,240
+Regime agreement: Partial
+Calibration status: Acceptable
+```
+Required metrics
+Brier score
+Log loss
+Reliability curve
+Calibration slope
+Calibration intercept
+Expected calibration error
+Probability sharpness
+Coverage
+Performance by regime
+Performance by horizon
+Performance by instrument
+Performance by timeframe
+Bayesian or statistical smoothing
+Small samples must be smoothed or widened with uncertainty. Raw percentages must not be treated as reliable when sample counts are low.
+Gate to continue
+A stated probability must correspond reasonably to observed long-run frequency on unseen data.
+---
+15. Phase P2 — Scenario and reasoning engine
+Purpose
+Move from one prediction to competing evidence-based interpretations.
+What will be added
+Each scenario will contain:
+```text
+scenario name
+direction or behavior
+supporting evidence
+contradicting evidence
+historical probability
+confidence
+confirmation conditions
+invalidation conditions
+expected path
+time horizon
+missing evidence
+```
+Example scenarios
+Recovery continuation
+Supporting evidence:
+Lower-price rejection
+Improving short-term momentum
+Support holding
+Confirmation:
+Sustained break above recent swing high
+Invalidation:
+Close below recent support
+Bearish continuation
+Supporting evidence:
+Larger structure remains bearish
+Recovery has not broken resistance
+Bullish follow-through is weak
+Confirmation:
+Rejection at resistance
+Break below recent support
+Invalidation:
+Strong close above structural resistance
+Range continuation
+Supporting evidence:
+Mixed structure
+Low directional strength
+Repeated reversals near both boundaries
+Confirmation:
+Continued rejection from range edges
+Invalidation:
+Sustained range breakout
+Gate to continue
+The reasoning engine must be able to state:
+What it sees
+Why it matters
+What disagrees
+What could happen next
+What would confirm the scenario
+What would invalidate the scenario
+---
+16. Phase P2 — Human-language explanation layer
+Purpose
+Convert structured evidence into clear language without inventing facts.
+What will be added
+The explanation process will be:
+```text
+Structured state
+→ evidence selection
+→ scenario construction
+→ probability summary
+→ confirmation/invalidation
+→ natural-language explanation
+```
+The final explanation should always cover:
+Current observation
+Recent change
+Market structure
+Current context
+Historical evidence
+Evidence strength
+Conflicting evidence
+Leading scenarios
+Confirmation conditions
+Invalidation conditions
+Unknown or unavailable information
+Every sentence must be traceable to structured data or a measured historical result.
+---
+17. Phase P2 — Multi-timeframe reasoning
+Purpose
+Understand that short-term movement can occur inside an opposing higher-timeframe structure.
+What will be added
+Each timeframe will have its own:
+Candle history
+Structure
+Regime
+Sequence state
+Support/resistance
+Confirmation timing
+The combined context may look like:
+```text
+Weekly: bearish
+4H: bearish-to-neutral
+1H: recovery
+5M: bullish impulse
+```
+The explanation must understand:
+```text
+5M recovery ≠ higher-timeframe reversal
+```
+Requirements
+Correct timestamp synchronization
+No use of incomplete higher-timeframe candles
+Independent causality checks per timeframe
+Separate feature histories
+Explicit timeframe conflict handling
+Gate to continue
+The system must explain disagreements between timeframes instead of collapsing them into one direction.
+---
+18. Phase P2 — Generalization testing
+Purpose
+Determine whether MLAI understands reusable concepts or memorizes historical combinations.
+Unseen chronological-chart test
+The system will receive a completely unseen period one candle at a time.
+At each point it must produce:
+Current state
+Context
+Historical comparisons
+Outcome probabilities
+Scenarios
+Confirmation conditions
+Invalidation conditions
+Explanation
+Only afterward will future candles be revealed for scoring.
+Test protections
+The unseen period must not influence:
+Representation design
+Feature selection
+Thresholds
+Model selection
+Memory construction
+Explanation templates
+Evaluation
+Measure:
+Probability calibration
+Brier score
+Log loss
+Scenario ranking
+Structural-event timing
+Invalidation quality
+Stability across regimes
+Factual explanation accuracy
+Performance against simple baselines
+Gate to continue
+MLAI must demonstrate useful behavior on data it has never seen, not merely reproduce historical combinations.
+---
+19. Phase P2 — Cross-regime and cross-instrument testing
+Purpose
+Determine whether learned knowledge is general, instrument-specific, timeframe-specific, or regime-specific.
+Test groups
+Different XAUUSD historical periods
+Trending periods
+Ranging periods
+High-volatility periods
+Low-volatility periods
+Transition periods
+Different sessions
+Additional instruments where data quality permits
+Additional timeframes
+Required reporting
+Every result must identify:
+Instrument
+Timeframe
+Regime
+Dataset period
+Sample size
+Calibration
+Stability
+Failure behavior
+MLAI should retain knowledge as:
+General
+Instrument-specific
+Timeframe-specific
+Regime-specific
+Unsupported outside original conditions
+---
+20. Phase P3 — Live market-data pipeline
+Purpose
+Connect MLAI to current data only after the offline research pipeline is reliable.
+What will be added
+Data collection
+Instrument selection
+Timeframe selection
+Historical backfill
+Incremental candle retrieval
+New-candle detection
+Duplicate handling
+Missing-candle handling
+Timestamp normalization
+Rate-limit management
+Retry behavior
+Reconnection
+API-failure handling
+Persistence
+Append-only raw data
+Dataset versioning
+Source tracking
+Integrity hashes
+Recovery checkpoints
+Live inference
+Current state calculation
+Context update
+Historical retrieval
+Probability update
+Scenario generation
+Explanation output
+Live inference must not automatically modify validated knowledge.
+---
+21. Phase P3 — Controlled continuous learning
+Purpose
+Allow MLAI to gain experience without uncontrolled online overfitting.
+Required loop
+```text
+New data arrives
+→ current interpretation is recorded
+→ outcome horizon completes
+→ interpretation is scored
+→ success/failure is recorded
+→ research aggregates are updated
+→ existing knowledge is re-tested
+→ challenger knowledge is compared
+→ promotion occurs only after validation
+```
+What will be added
+Delayed outcome processing
+Failure tracking
+Drift detection
+Regime-change detection
+Performance-decay monitoring
+Scheduled revalidation
+Champion/challenger model process
+Versioned knowledge
+Rollback capability
+Promotion approval criteria
+What will not be added
+Automatic change after one result
+Unrestricted online training
+Memory updates using incomplete outcomes
+Promotion based only on recent accuracy
+Silent replacement of stable knowledge
+---
+22. Validation and acceptance gates
+Each phase must pass a gate before the next phase begins.
+Gate 1 — Data correctness
+Data schema is consistent
+Raw data is immutable
+Timestamps are correct
+Duplicates and gaps are understood
+Gate 2 — Causality
+No future feature leakage
+Swing timing is causal
+Labels are separated from inputs
+Multi-timeframe timing is correct
+Gate 3 — Representation
+Market states are reproducible
+Sequences are represented
+Context is included
+Labels are not the only representation
+Gate 4 — Validation
+Chronological splits are fixed
+Purging and embargo are applied
+Null testing is correct
+Final test is untouched
+Gate 5 — Historical experience
+Similar states can be retrieved
+Sample counts are tracked
+Outcomes are aggregated
+Failed relationships are retained
+Gate 6 — Probability
+Probabilities are calibrated
+Uncertainty is shown
+Small samples are handled
+Results beat appropriate baselines
+Gate 7 — Reasoning
+Scenarios are explicit
+Conflicting evidence is shown
+Confirmation/invalidation is stated
+Explanations are traceable
+Gate 8 — Generalization
+Unseen chronological data is evaluated
+Performance is stable across relevant regimes
+The system does not require exact sequence repetition
+Gate 9 — Live readiness
+Ingestion is reliable
+Data quality is monitored
+Inference is separated from learning
+Paper evaluation is complete
+---
+23. Recommended implementation order
+The project should be developed in this exact order:
+```text
+1. Full project audit
+2. File and data protection
+3. Canonical data contract
+4. Raw/normalized/derived data separation
+5. Causality registry
+6. v3.4.2 null-test investigation
+7. Unified market-state representation
+8. Sequence and event representation
+9. Context and regime representation
+10. Formal target definitions
+11. Baseline models
+12. Walk-forward validation framework
+13. Historical experience memory
+14. Similarity retrieval
+15. Probability calibration
+16. Scenario reasoning
+17. Human-language explanation
+18. Unseen-chart testing
+19. Cross-regime and cross-instrument testing
+20. Multi-timeframe reasoning
+21. Live data collection
+22. Controlled continuous learning
+23. Paper operation
+24. Production consideration
+```
+Do not begin with live data, deep learning, or language generation.
+---
+24. What must not be done
+Do not:
+Optimize only for historical accuracy
+Treat a stored pickle as proof of learning
+Treat a pattern as a trade signal
+Use future-confirmed structure before it is available
+Reuse the final test period
+Repeatedly alter rules until a desired result appears
+Compare one observed rule against the best of thousands of null rules without correcting selection
+Claim hidden liquidity without market-depth data
+Claim trader intent from OHLCV alone
+Add online learning before delayed validation exists
+Replace the entire current project without first preserving useful components
+Promote a result that does not beat a correct baseline
+---
+25. Final definition of success
+MLAI will be moving toward the intended goal when it can analyze a new chart and produce a structured answer containing:
+What is visibly happening
+What recently changed
+What the candle sequence communicates
+What the market structure communicates
+Where price is located
+What the volatility and momentum conditions are
+What higher timeframes show
+Which historical situations are comparable
+How many comparable situations exist
+What outcomes occurred historically
+How reliable that evidence is
+What evidence conflicts
+Which scenarios are plausible
+What would confirm each scenario
+What would invalidate each scenario
+What information is unavailable
+What the probability and uncertainty are
+A clear explanation in human language
+The final output should be evidence-based and probabilistic, not a rigid command.
+---
+26. Final verdict and path forward
+The current MLAI project has useful foundations, especially in:
+Causal structure
+Sequence representation
+Chronological validation
+Historical experimentation
+It does not yet contain the complete Market Language Brain.
+The largest missing components are:
+Unified representation
+Valid historical experience retrieval
+Calibrated probability
+Scenario reasoning
+Generalization testing
+Controlled knowledge updating
+Reliable live-data separation
+The shortest scientifically valid path is:
+```text
+Audit
+→ protect
+→ normalize data
+→ enforce causality
+→ represent market language
+→ validate chronologically
+→ retrieve historical experience
+→ calibrate probability
+→ reason through scenarios
+→ explain evidence
+→ test unseen charts
+→ add controlled learning
+→ connect live data
+```
+This roadmap is intended to achieve the stated goal through staged, measurable work. Each phase must prove its reliability before the next layer is trusted.
