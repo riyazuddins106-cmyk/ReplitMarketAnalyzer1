@@ -1,0 +1,400 @@
+        )
+
+        print(
+            f"Directional accuracy: "
+            f"{metrics['accuracy']:.2%}"
+        )
+
+        print(
+            f"Coverage: "
+            f"{metrics['coverage']:.2%}"
+        )
+
+        print(
+            f"BUY precision: "
+            f"{metrics['buy_precision']:.2%}"
+        )
+
+        print(
+            f"SELL precision: "
+            f"{metrics['sell_precision']:.2%}"
+        )
+
+        fold_results.append(
+            {
+                "fold": fold_number,
+                "rules": rules,
+                "metrics": metrics,
+            }
+        )
+
+        all_predictions.extend(
+            predictions
+        )
+
+    return fold_results, all_predictions
+
+
+# ============================================================
+# AGGREGATED RESULTS
+# ============================================================
+
+def print_aggregated_rule_result(
+    predictions,
+    total_validation
+):
+
+    print()
+    print("=" * 70)
+    print("AGGREGATED LOCKED OUT-OF-SAMPLE RESULT")
+    print("=" * 70)
+
+    if not predictions:
+
+        print("No locked rules generated predictions.")
+
+        return
+
+    correct = sum(
+        1 for p, y, *_ in predictions
+        if p == y
+    )
+
+    buys = [
+        x for x in predictions
+        if x[0] == "BUY"
+    ]
+
+    sells = [
+        x for x in predictions
+        if x[0] == "SELL"
+    ]
+
+    buy_correct = sum(
+        1 for x in buys
+        if x[0] == x[1]
+    )
+
+    sell_correct = sum(
+        1 for x in sells
+        if x[0] == x[1]
+    )
+
+    print(
+        f"Validation predictions: "
+        f"{len(predictions)}"
+    )
+
+    print(
+        f"Directional accuracy: "
+        f"{safe_div(correct, len(predictions)):.2%}"
+    )
+
+    print(
+        f"Coverage: "
+        f"{safe_div(len(predictions), total_validation):.2%}"
+    )
+
+    print(
+        f"BUY predictions: {len(buys)}"
+    )
+
+    print(
+        f"SELL predictions: {len(sells)}"
+    )
+
+    print(
+        f"BUY precision: "
+        f"{safe_div(buy_correct, len(buys)):.2%}"
+    )
+
+    print(
+        f"SELL precision: "
+        f"{safe_div(sell_correct, len(sells)):.2%}"
+    )
+
+
+# ============================================================
+# CROSS-FOLD STABILITY
+# ============================================================
+
+def stability_analysis(fold_results):
+
+    print()
+    print("=" * 70)
+    print("CROSS-FOLD STABILITY ANALYSIS")
+    print("=" * 70)
+
+    if not fold_results:
+        print("No fold results.")
+        return
+
+    rule_stats = defaultdict(list)
+
+    for fold in fold_results:
+
+        rules = fold["rules"]
+
+        for key, rule in rules.items():
+
+            rule_stats[key].append(
+                {
+                    "fold": fold["fold"],
+                    "direction": rule["direction"],
+                    "confidence": rule["confidence"],
+                    "samples": rule["samples"],
+                }
+            )
+
+    stable = []
+
+    for key, values in rule_stats.items():
+
+        if len(values) < MIN_STABLE_FOLDS:
+            continue
+
+        directions = {
+            x["direction"]
+            for x in values
+        }
+
+        if len(directions) != 1:
+            continue
+
+        avg_confidence = avg(
+            x["confidence"]
+            for x in values
+        )
+
+        total_samples = sum(
+            x["samples"]
+            for x in values
+        )
+
+        stable.append(
+            (
+                key,
+                values,
+                avg_confidence,
+                total_samples,
+            )
+        )
+
+    stable.sort(
+        key=lambda x: (
+            x[2],
+            x[3]
+        ),
+        reverse=True
+    )
+
+    print(
+        f"Stable rules: {len(stable)}"
+    )
+
+    for key, values, confidence, samples in stable[:20]:
+
+        direction = values[0]["direction"]
+
+        print()
+        print(
+            f"STABLE RULE:"
+        )
+
+        print(
+            f"  Structure: {key}"
+        )
+
+        print(
+            f"  Direction: {direction}"
+        )
+
+        print(
+            f"  Folds: {len(values)}"
+        )
+
+        print(
+            f"  Average calibration confidence: "
+            f"{confidence:.2%}"
+        )
+
+        print(
+            f"  Combined samples: {samples}"
+        )
+
+    return stable
+
+
+# ============================================================
+# NEAREST NEIGHBOR TEST
+# ============================================================
+
+def run_neighbor_tests(
+    calibration,
+    validation
+):
+
+    print()
+    print("-" * 70)
+    print("HISTORICAL SIMILARITY TEST")
+    print("-" * 70)
+
+    for k in NEIGHBORS:
+
+        predictions = evaluate_neighbors(
+            calibration,
+            validation,
+            k
+        )
+
+        if not predictions:
+
+            print(
+                f"TOP {k}: no predictions"
+            )
+
+            continue
+
+        correct = sum(
+            1 for p, y, _ in predictions
+            if p == y
+        )
+
+        buys = [
+            x for x in predictions
+            if x[0] == "BUY"
+        ]
+
+        sells = [
+            x for x in predictions
+            if x[0] == "SELL"
+        ]
+
+        buy_correct = sum(
+            1 for x in buys
+            if x[0] == x[1]
+        )
+
+        sell_correct = sum(
+            1 for x in sells
+            if x[0] == x[1]
+        )
+
+        print()
+        print(
+            f"TOP {k} NEIGHBORS"
+        )
+
+        print(
+            f"Predictions: {len(predictions)}"
+        )
+
+        print(
+            f"Accuracy: "
+            f"{safe_div(correct, len(predictions)):.2%}"
+        )
+
+        print(
+            f"Coverage: "
+            f"{safe_div(len(predictions), len(validation)):.2%}"
+        )
+
+        print(
+            f"BUY precision: "
+            f"{safe_div(buy_correct, len(buys)):.2%}"
+        )
+
+        print(
+            f"SELL precision: "
+            f"{safe_div(sell_correct, len(sells)):.2%}"
+        )
+
+
+# ============================================================
+# CURRENT STRUCTURE
+# ============================================================
+
+def print_current_structure(candles):
+
+    print()
+    print("=" * 70)
+    print("CURRENT 60-CANDLE MARKET STRUCTURE")
+    print("=" * 70)
+
+    index = len(candles) - 1
+
+    features = build_structure(
+        candles,
+        index
+    )
+
+    print(
+        f"Latest index: {index}"
+    )
+
+    print(
+        f"Latest candle: "
+        f"{candles[index]['timestamp']}"
+    )
+
+    print(
+        f"Latest price: "
+        f"{candles[index]['close']}"
+    )
+
+    print()
+    print(
+        f"Directional regime: "
+        f"{features['directional_regime']}"
+    )
+
+    print(
+        f"Volatility regime: "
+        f"{features['volatility_regime']}"
+    )
+
+    print(
+        f"Trend consistency: "
+        f"{features['trend_consistency']}"
+    )
+
+    print(
+        f"Location state: "
+        f"{features['location_state']}"
+    )
+
+    print(
+        f"Momentum state: "
+        f"{features['momentum_state']}"
+    )
+
+    print(
+        f"Candle pressure: "
+        f"{features['candle_pressure']}"
+    )
+
+    print(
+        f"Range event: "
+        f"{features['range_event']}"
+    )
+
+    print()
+    print("NUMERIC STRUCTURE FEATURES")
+
+    for key in NUMERIC_FEATURES:
+
+        print(
+            f"{key:25s}: "
+            f"{features[key]:.6f}"
+        )
+
+    return features
+
+
+# ============================================================
+# CURRENT HISTORICAL NEIGHBORS
+# ============================================================
+
+def current_neighbor_evidence(
+    candles,
+    records,

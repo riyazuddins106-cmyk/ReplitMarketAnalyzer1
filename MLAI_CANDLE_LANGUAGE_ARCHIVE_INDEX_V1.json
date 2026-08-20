@@ -1,0 +1,47 @@
+{
+  "archive_name": "MLAI Candle Language Historical Archive V1",
+  "archive_schema_version": "1.2",
+  "builder_version": "1.2.0",
+  "created_utc": "2026-08-20T11:19:07.105150+00:00",
+  "record_count": 1309,
+  "engine_versions": [
+    "2.1.0"
+  ],
+  "source_hashes": {
+    "market_data_sha256": "dd57bccc3526ebaeb900181096adcbf48a84b5a3a334da1f1990a443cde091b5",
+    "kb_json_sha256": "8eefd6c34dd8a70ab24598d6ba39508c14fd6f0e0333b9abb69a437d51c2d12a",
+    "kb_index_sha256": "99ab1e0fb5118861b37ff45e254ebecd96c733aa67264a4aaeeba57e3573c61f",
+    "engine_sha256": "fbb750a3d316991790076d0525f6f38ee6265feb0c74a0aa0513cdb012b04896"
+  },
+  "validation": {
+    "passed": true,
+    "record_count": 1309,
+    "expected_count": 1309,
+    "errors": []
+  },
+  "causal_guarantees": {
+    "completed_candles_only": true,
+    "future_candles_used": false,
+    "future_candles_supplied": false,
+    "historical_context_only": true,
+    "candle_n_uses_only_1_to_n_minus_1": true
+  },
+  "input_summary": {
+    "candle_count": 1309,
+    "first_timestamp": 1786334400,
+    "first_datetime": "2026-08-10T04:00:00+00:00",
+    "last_timestamp": 1786741200,
+    "last_datetime": "2026-08-14T21:00:00+00:00",
+    "timestamp_validation": {
+      "timestamp_count": 1309,
+      "duplicate_count": 0,
+      "ordering_violations": [],
+      "strictly_increasing": true
+    }
+  },
+  "output_files": {
+    "json": "MLAI_CANDLE_LANGUAGE_ARCHIVE_V1.json",
+    "binary": "MLAI_CANDLE_LANGUAGE_ARCHIVE_V1.bin",
+    "index": "MLAI_CANDLE_LANGUAGE_ARCHIVE_INDEX_V1.json"
+  }
+}

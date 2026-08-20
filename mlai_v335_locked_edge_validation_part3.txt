@@ -1,0 +1,400 @@
+        print(
+            f"FOLD {fold_number}"
+        )
+        print("-" * 70)
+
+        print(
+            f"Calibration records: "
+            f"{len(calibration)}"
+        )
+
+        print(
+            f"Validation records:  "
+            f"{len(validation)}"
+        )
+
+        print(
+            "Rule discovery: CALIBRATION ONLY"
+        )
+
+        rules = discover_rules(
+            calibration
+        )
+
+        print(
+            f"Locked directional rules: "
+            f"{len(rules)}"
+        )
+
+        print()
+
+        for key in TARGET_STRUCTURES:
+            if key in rules:
+                r = rules[key]
+
+                print(
+                    f"LOCKED {key[0]} + "
+                    f"{key[1]} -> "
+                    f"{r['prediction']} "
+                    f"({r['confidence']:.2f}% "
+                    f"confidence, "
+                    f"{r['samples']} samples)"
+                )
+            else:
+                print(
+                    f"LOCKED {key[0]} + "
+                    f"{key[1]} -> "
+                    f"NO DIRECTIONAL RULE"
+                )
+
+        print()
+
+        evaluation = evaluate_locked_rule(
+            validation,
+            rules
+        )
+
+        if evaluation is None:
+            print(
+                "No locked rule matched "
+                "the validation period."
+            )
+            continue
+
+        selected = evaluation["selected"]
+
+        all_validation_predictions.extend(
+            selected
+        )
+
+        print(
+            f"Validation matched records: "
+            f"{evaluation['total']}"
+        )
+
+        print(
+            f"Directional accuracy: "
+            f"{evaluation['directional_accuracy']:.2f}%"
+        )
+
+        print(
+            f"Coverage: "
+            f"{evaluation['coverage'] / len(validation) * 100:.2f}%"
+        )
+
+        print(
+            f"BUY precision: "
+            f"{evaluation['buy_precision']:.2f}%"
+        )
+
+        print(
+            f"SELL precision: "
+            f"{evaluation['sell_precision']:.2f}%"
+        )
+
+        fold_results.append(
+            evaluation
+        )
+
+    # --------------------------------------------------------
+    # Aggregate locked validation result
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print("AGGREGATED LOCKED OUT-OF-SAMPLE RESULT")
+    print("=" * 70)
+
+    if not all_validation_predictions:
+        print(
+            "No directional predictions "
+            "survived into validation."
+        )
+        return
+
+    total = len(
+        all_validation_predictions
+    )
+
+    correct = sum(
+        1
+        for x in all_validation_predictions
+        if (
+            (x["prediction"] == "BUY"
+             and x["outcome"] == "bullish")
+            or
+            (x["prediction"] == "SELL"
+             and x["outcome"] == "bearish")
+        )
+    )
+
+    buys = [
+        x for x in all_validation_predictions
+        if x["prediction"] == "BUY"
+    ]
+
+    sells = [
+        x for x in all_validation_predictions
+        if x["prediction"] == "SELL"
+    ]
+
+    buy_correct = sum(
+        1
+        for x in buys
+        if x["outcome"] == "bullish"
+    )
+
+    sell_correct = sum(
+        1
+        for x in sells
+        if x["outcome"] == "bearish"
+    )
+
+    accuracy = (
+        correct / total * 100
+    )
+
+    buy_precision = (
+        buy_correct / len(buys) * 100
+        if buys
+        else 0.0
+    )
+
+    sell_precision = (
+        sell_correct / len(sells) * 100
+        if sells
+        else 0.0
+    )
+
+    print(
+        f"Validation predictions: {total}"
+    )
+
+    print(
+        f"Directional accuracy: "
+        f"{accuracy:.2f}%"
+    )
+
+    print(
+        f"BUY predictions: "
+        f"{len(buys)}"
+    )
+
+    print(
+        f"SELL predictions: "
+        f"{len(sells)}"
+    )
+
+    print(
+        f"BUY precision: "
+        f"{buy_precision:.2f}%"
+    )
+
+    print(
+        f"SELL precision: "
+        f"{sell_precision:.2f}%"
+    )
+
+    print()
+
+    # --------------------------------------------------------
+    # Confidence test on LOCKED predictions
+    # --------------------------------------------------------
+
+    print(
+        "=" * 70
+    )
+    print(
+        "LOCKED CONFIDENCE TEST"
+    )
+    print(
+        "=" * 70
+    )
+
+    confidence_results = confidence_test(
+        all_validation_predictions,
+        CONFIDENCE_THRESHOLDS
+    )
+
+    if confidence_results:
+        print()
+        print(
+            "THRESHOLD    DIR ACC    COVERAGE"
+            "    BUY PREC    SELL PREC    N"
+        )
+        print("-" * 70)
+
+        for r in confidence_results:
+            print(
+                f"{r['threshold']:>8}%"
+                f"{r['accuracy']:>11.2f}%"
+                f"{r['coverage']:>12.2f}%"
+                f"{r['buy_precision']:>13.2f}%"
+                f"{r['sell_precision']:>13.2f}%"
+                f"{r['count']:>7}"
+            )
+
+    # --------------------------------------------------------
+    # Specific target structure validation
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print(
+        "TARGET STRUCTURE OUT-OF-SAMPLE VALIDATION"
+    )
+    print("=" * 70)
+
+    for target in TARGET_STRUCTURES:
+
+        target_records = [
+            x
+            for x in all_validation_predictions
+            if x["key"] == target
+        ]
+
+        if len(target_records) < MIN_VALIDATION_SAMPLES:
+            print()
+            print(
+                f"{target[0]} + {target[1]}"
+            )
+            print(
+                f"Validation samples: "
+                f"{len(target_records)}"
+            )
+            print(
+                "STATUS: INSUFFICIENT "
+                "VALIDATION SAMPLE"
+            )
+            continue
+
+        correct_target = sum(
+            1
+            for x in target_records
+            if (
+                (x["prediction"] == "BUY"
+                 and x["outcome"] == "bullish")
+                or
+                (x["prediction"] == "SELL"
+                 and x["outcome"] == "bearish")
+            )
+        )
+
+        target_accuracy = (
+            correct_target
+            / len(target_records)
+            * 100
+        )
+
+        target_buys = [
+            x for x in target_records
+            if x["prediction"] == "BUY"
+        ]
+
+        target_sells = [
+            x for x in target_records
+            if x["prediction"] == "SELL"
+        ]
+
+        target_buy_correct = sum(
+            1
+            for x in target_buys
+            if x["outcome"] == "bullish"
+        )
+
+        target_sell_correct = sum(
+            1
+            for x in target_sells
+            if x["outcome"] == "bearish"
+        )
+
+        target_buy_precision = (
+            target_buy_correct
+            / len(target_buys)
+            * 100
+            if target_buys
+            else 0.0
+        )
+
+        target_sell_precision = (
+            target_sell_correct
+            / len(target_sells)
+            * 100
+            if target_sells
+            else 0.0
+        )
+
+        print()
+        print(
+            f"{target[0]} + {target[1]}"
+        )
+        print(
+            f"Validation samples: "
+            f"{len(target_records)}"
+        )
+        print(
+            f"Directional accuracy: "
+            f"{target_accuracy:.2f}%"
+        )
+        print(
+            f"BUY precision: "
+            f"{target_buy_precision:.2f}%"
+        )
+        print(
+            f"SELL precision: "
+            f"{target_sell_precision:.2f}%"
+        )
+
+        # Strict validation verdict.
+        if (
+            target_accuracy >= 60.0
+            and len(target_records)
+                >= MIN_VALIDATION_SAMPLES
+        ):
+            print(
+                "STATUS: POTENTIAL OUT-OF-SAMPLE EDGE"
+            )
+        else:
+            print(
+                "STATUS: EDGE NOT CONFIRMED"
+            )
+
+
+# ============================================================
+# CURRENT MARKET STRUCTURE
+# ============================================================
+
+def print_current_structure(
+    closes
+):
+    index = len(closes) - 1
+
+    features = calculate_features(
+        closes,
+        index
+    )
+
+    print()
+    print("=" * 70)
+    print(
+        "CURRENT 60-CANDLE MARKET STRUCTURE"
+    )
+    print("=" * 70)
+
+    print(
+        f"Latest index: {index}"
+    )
+
+    print(
+        f"Latest price: "
+        f"{closes[index]}"
+    )
+
+    print()
+    print(
+        f"Directional regime: "
+        f"{features['directional_regime']}"
+    )
+
+    print(
+        f"Volatility regime: "

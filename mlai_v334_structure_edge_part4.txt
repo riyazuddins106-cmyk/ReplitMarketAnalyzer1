@@ -1,0 +1,400 @@
+                f"{best['sell_precision'] * 100:.2f}%"
+            )
+
+        # ----------------------------------------------------
+        # REGIME PERFORMANCE
+        # ----------------------------------------------------
+
+        print()
+        print("REGIME EDGE PERFORMANCE")
+        print("-" * 70)
+
+        regime_groups = defaultdict(list)
+
+        for x in detailed:
+
+            key = (
+                x["regime"],
+                x["volatility"]
+            )
+
+            regime_groups[key].append(x)
+
+        print(
+            f"{'REGIME':<20}"
+            f"{'VOLATILITY':<15}"
+            f"{'N':>6}"
+            f"{'DIR ACC':>12}"
+            f"{'BUY PREC':>12}"
+            f"{'SELL PREC':>12}"
+        )
+
+        print("-" * 70)
+
+        for key, items in sorted(
+            regime_groups.items()
+        ):
+
+            regime, volatility = key
+
+            directional = [
+                x
+                for x in items
+                if x["prediction"]
+                in ["BUY", "SELL"]
+            ]
+
+            if directional:
+
+                correct = 0
+
+                buy_total = 0
+                buy_correct = 0
+
+                sell_total = 0
+                sell_correct = 0
+
+                for x in directional:
+
+                    if (
+                        x["prediction"] == "BUY"
+                        and
+                        x["actual"] == "bullish"
+                    ):
+                        correct += 1
+
+                    if (
+                        x["prediction"] == "SELL"
+                        and
+                        x["actual"] == "bearish"
+                    ):
+                        correct += 1
+
+                    if x["prediction"] == "BUY":
+
+                        buy_total += 1
+
+                        if (
+                            x["actual"]
+                            == "bullish"
+                        ):
+                            buy_correct += 1
+
+                    if x["prediction"] == "SELL":
+
+                        sell_total += 1
+
+                        if (
+                            x["actual"]
+                            == "bearish"
+                        ):
+                            sell_correct += 1
+
+                dir_acc = (
+                    correct /
+                    len(directional)
+                )
+
+                buy_prec = (
+                    buy_correct /
+                    buy_total
+                    if buy_total
+                    else 0.0
+                )
+
+                sell_prec = (
+                    sell_correct /
+                    sell_total
+                    if sell_total
+                    else 0.0
+                )
+
+            else:
+
+                dir_acc = 0.0
+                buy_prec = 0.0
+                sell_prec = 0.0
+
+            print(
+                f"{regime:<20}"
+                f"{volatility:<15}"
+                f"{len(items):>6}"
+                f"{dir_acc * 100:>11.2f}%"
+                f"{buy_prec * 100:>11.2f}%"
+                f"{sell_prec * 100:>11.2f}%"
+            )
+
+            for x in directional:
+
+                all_results.append(x)
+
+    # --------------------------------------------------------
+    # EDGE DISCOVERY
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print("RELIABLE STRUCTURE DISCOVERY")
+    print("=" * 70)
+
+    edge_groups = defaultdict(list)
+
+    for x in all_results:
+
+        key = (
+            x["regime"],
+            x["volatility"]
+        )
+
+        edge_groups[key].append(x)
+
+    found = False
+
+    for key, items in sorted(
+        edge_groups.items()
+    ):
+
+        directional = [
+            x for x in items
+            if x["prediction"]
+            in ["BUY", "SELL"]
+        ]
+
+        if len(directional) < MIN_REGIME_SAMPLES:
+            continue
+
+        correct = 0
+
+        for x in directional:
+
+            if (
+                x["prediction"] == "BUY"
+                and x["actual"] == "bullish"
+            ):
+                correct += 1
+
+            elif (
+                x["prediction"] == "SELL"
+                and x["actual"] == "bearish"
+            ):
+                correct += 1
+
+        precision = (
+            correct /
+            len(directional)
+        )
+
+        if precision >= MIN_EDGE_PRECISION:
+
+            found = True
+
+            regime, volatility = key
+
+            print()
+            print(
+                f"STRUCTURE: "
+                f"{regime} + {volatility}"
+            )
+
+            print(
+                f"Samples: "
+                f"{len(directional)}"
+            )
+
+            print(
+                f"Directional accuracy: "
+                f"{precision * 100:.2f}%"
+            )
+
+            buys = [
+                x for x in directional
+                if x["prediction"] == "BUY"
+            ]
+
+            sells = [
+                x for x in directional
+                if x["prediction"] == "SELL"
+            ]
+
+            buy_precision = (
+                sum(
+                    x["actual"] == "bullish"
+                    for x in buys
+                )
+                / len(buys)
+                if buys
+                else 0
+            )
+
+            sell_precision = (
+                sum(
+                    x["actual"] == "bearish"
+                    for x in sells
+                )
+                / len(sells)
+                if sells
+                else 0
+            )
+
+            print(
+                f"BUY precision: "
+                f"{buy_precision * 100:.2f}%"
+            )
+
+            print(
+                f"SELL precision: "
+                f"{sell_precision * 100:.2f}%"
+            )
+
+    if not found:
+
+        print()
+        print(
+            "No structure currently satisfies "
+            "the minimum edge criteria."
+        )
+
+    # --------------------------------------------------------
+    # CURRENT MARKET
+    # --------------------------------------------------------
+
+    current_index = len(candles) - 1
+
+    current_features = build_features(
+        candles,
+        current_index
+    )
+
+    current_regime = directional_regime(
+        current_features
+    )
+
+    current_volatility = volatility_regime(
+        current_features
+    )
+
+    current_record = {
+        "index": current_index,
+        "timestamp":
+            get_timestamp(
+                candles[current_index]
+            ),
+        "features":
+            current_features,
+        "regime":
+            current_regime,
+        "volatility_regime":
+            current_volatility,
+        "outcome": None
+    }
+
+    print()
+    print("=" * 70)
+    print("CURRENT 60-CANDLE MARKET STRUCTURE")
+    print("=" * 70)
+
+    print()
+    print(
+        f"Latest candle: "
+        f"{current_record['timestamp']}"
+    )
+
+    print(
+        f"Latest price: "
+        f"{get_close(candles[current_index])}"
+    )
+
+    print()
+    print(
+        f"Directional regime: "
+        f"{current_regime}"
+    )
+
+    print(
+        f"Volatility regime: "
+        f"{current_volatility}"
+    )
+
+    print()
+    print("STRUCTURE FEATURES")
+
+    for name in FEATURE_NAMES:
+
+        print(
+            f"{name:<25}: "
+            f"{current_features[name]:.6f}"
+        )
+
+    # --------------------------------------------------------
+    # CURRENT HISTORICAL SIMILARITY
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print("CURRENT STRUCTURE HISTORICAL EVIDENCE")
+    print("=" * 70)
+
+    means, stds = fit_scaler(
+        calibration
+    )
+
+    for k in K_VALUES:
+
+        neighbors = find_neighbors(
+            current_record,
+            calibration,
+            means,
+            stds,
+            k
+        )
+
+        prediction = neighbor_prediction(
+            neighbors
+        )
+
+        print()
+        print(
+            f"TOP {k} HISTORICAL NEIGHBORS"
+        )
+
+        print(
+            f"Prediction: "
+            f"{prediction['prediction']}"
+        )
+
+        print(
+            f"Confidence: "
+            f"{prediction['confidence'] * 100:.2f}%"
+        )
+
+        print(
+            f"Bullish outcomes: "
+            f"{prediction['bull']}"
+        )
+
+        print(
+            f"Neutral outcomes: "
+            f"{prediction['neutral']}"
+        )
+
+        print(
+            f"Bearish outcomes: "
+            f"{prediction['bear']}"
+        )
+
+    print()
+    print("=" * 70)
+    print("IMPORTANT")
+    print("=" * 70)
+
+    print(
+        "This is NOT a trading signal."
+    )
+
+    print(
+        "The current-market output is "
+        "diagnostic only."
+    )
+
+    print(
+        "No production model was changed."

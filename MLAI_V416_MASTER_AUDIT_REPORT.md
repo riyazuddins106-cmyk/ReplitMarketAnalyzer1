@@ -1,0 +1,580 @@
+# MLAI v4.1.6 Master Forensic Audit
+
+Generated: 2026-08-19T17:08:41.875218
+
+```text
+
+====================================================================================================
+MLAI v4.1.6 MASTER FORENSIC AUDIT
+====================================================================================================
+Research / validation only
+Source file : C:\Users\HomePC\mlai-test\mlai_market_structure_v416.py
+Started     : 2026-08-19T17:08:41.618760
+NO SOURCE FILES WILL BE MODIFIED.
+
+====================================================================================================
+1. SOURCE / AST INTEGRITY
+====================================================================================================
+[PASS ] Source file exists
+       mlai_market_structure_v416.py
+[PASS ] Python syntax
+[PASS ] Module import
+
+====================================================================================================
+2. IMPLEMENTATION INVENTORY
+====================================================================================================
+Functions discovered : 44
+Classes discovered   : 11
+  FUNCTION __init__                                      line=394
+  FUNCTION _get_value                                    line=261
+  FUNCTION _is_confirmed_high                            line=402
+  FUNCTION _is_confirmed_low                             line=411
+  FUNCTION _normalize_candle                             line=281
+  FUNCTION _to_float                                     line=274
+  FUNCTION assign_episode_ids                            line=737
+  FUNCTION audit_chronology                              line=345
+  FUNCTION audit_structure_causality                     line=496
+  FUNCTION brier                                         line=1164
+  FUNCTION bucket_name                                   line=1293
+  FUNCTION build                                         line=420
+  FUNCTION build_experience_records                      line=774
+  FUNCTION build_market_states                           line=611
+  FUNCTION build_path_vector                             line=585
+  FUNCTION calculate_atr                                 line=374
+  FUNCTION clamp                                         line=249
+  FUNCTION classify_momentum                             line=550
+  FUNCTION classify_regime                               line=536
+  FUNCTION coarse_filter                                 line=822
+  FUNCTION conditional_baseline                          line=1142
+  FUNCTION create_walk_forward_windows                   line=360
+  FUNCTION deterministic_permutation                     line=1191
+  FUNCTION distribution_from_records                     line=1132
+  FUNCTION evaluate_distribution                         line=1179
+  FUNCTION fmt_num                                       line=257
+  FUNCTION fmt_pct                                       line=253
+  FUNCTION load_market_data                              line=318
+  FUNCTION log_loss                                      line=1174
+  FUNCTION main                                          line=1300
+  FUNCTION make_outcome                                  line=699
+  FUNCTION mean_or_zero                                  line=245
+  FUNCTION null_retrieval_sanity_test                    line=1201
+  FUNCTION numeric_similarity                            line=852
+  FUNCTION path_row_similarity                           line=856
+  FUNCTION path_similarity                               line=876
+  FUNCTION retrieve_historical_experience                line=946
+  FUNCTION rolling_return                                line=527
+  FUNCTION safe_div                                      line=241
+  FUNCTION select_episode_representatives                line=933
+  FUNCTION sha256_file                                   line=233
+  FUNCTION similarity_score                              line=884
+  FUNCTION update_sequence                               line=562
+  FUNCTION verify_unchanged                              line=229
+
+  CLASS    Candle                                        line=77
+  CLASS    CausalStructureEngine                         line=393
+  CLASS    ExperienceRecord                              line=159
+  CLASS    MarketState                                   line=122
+  CLASS    Outcome                                       line=150
+  CLASS    ProtectionGuard                               line=222
+  CLASS    RetrievalResult                               line=196
+  CLASS    SimilarityMatch                               line=181
+  CLASS    StructureState                                line=97
+  CLASS    Swing                                         line=88
+  CLASS    WalkForwardWindow                             line=113
+[PASS ] Required function: load_market_data
+       line=318
+[PASS ] Required function: calculate_atr
+       line=374
+[PASS ] Required function: build_market_states
+       line=611
+[PASS ] Required function: build_experience_records
+       line=774
+[PASS ] Required function: path_similarity
+       line=876
+[PASS ] Required function: path_row_similarity
+       line=856
+[PASS ] Required function: similarity_score
+       line=884
+[PASS ] Required function: retrieve_historical_experience
+       line=946
+
+====================================================================================================
+3. STATIC CAUSALITY / FUTURE-REFERENCE AUDIT
+====================================================================================================
+build_market_states: no obvious future-related tokens found
+build_experience_records: future-related tokens found:
+    10: """Create records whose entire future outcome completes before train_end."""
+    18: outcome = make_outcome(candles, atr, i, horizon)
+    19: if outcome is None:
+    42: outcome=outcome,
+path_similarity: no obvious future-related tokens found
+path_row_similarity: no obvious future-related tokens found
+similarity_score: no obvious future-related tokens found
+retrieve_historical_experience: future-related tokens found:
+    69: sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "UP"),
+    73: sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "DOWN"),
+    77: sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "NEUTRAL"),
+    91: if record.outcome.direction == dominant
+    118: weight * (record.outcome.atr_return or 0.0)
+    126: weight * (record.outcome.mfe_atr or 0.0)
+    134: weight * (record.outcome.mae_atr or 0.0)
+
+====================================================================================================
+4. DATA FOUNDATION
+====================================================================================================
+[PASS ] Market data loaded
+       candles=1309 invalid=0
+[PASS ] Timestamp chronology
+       count=1309
+[PASS ] Duplicate timestamps
+
+====================================================================================================
+5. CORE MARKET REPRESENTATION
+====================================================================================================
+[PASS ] ATR construction
+       records=1309
+[PASS ] Structure construction
+       records=1309
+[PASS ] Market-state construction
+       records=1309
+
+====================================================================================================
+6. STATE DISTRIBUTIONS
+====================================================================================================
+STRUCTURE TREND
+  BULLISH                                       676
+  BEARISH                                       622
+  NEUTRAL                                       11
+STRUCTURE EVENT
+  NONE                                          1232
+  BOS_BULLISH                                   23
+  CHoCH_BEARISH                                 18
+  BOS_BEARISH                                   18
+  CHoCH_BULLISH                                 18
+STRUCTURE ACCEPTANCE
+  MISSING                                       1309
+STRUCTURE RETEST
+  MISSING                                       1309
+MARKET CANDLE_TYPE
+  MISSING                                       1309
+MARKET REJECTION
+  MISSING                                       1309
+MARKET PRESSURE
+  MISSING                                       1309
+MARKET DIRECTION
+  MISSING                                       1309
+MARKET REGIME
+  VOL_CONTRACTION                               334
+  TRENDING_UP                                   276
+  TRENDING_DOWN                                 248
+  TRANSITION                                    223
+  VOL_EXPANSION                                 219
+  RANGING                                       9
+
+====================================================================================================
+7. CAUSAL PREFIX AUDIT
+====================================================================================================
+[FAIL ] Causal prefix audit function
+       function not present
+
+====================================================================================================
+8. SYNTHETIC / P2 TESTS
+====================================================================================================
+[FAIL ] Synthetic tests
+       synthetic_tests() not found
+
+====================================================================================================
+9. HISTORICAL EXPERIENCE RECORD AUDIT
+====================================================================================================
+[PASS ] Experience record construction
+       records=887 eligible=876
+
+ExperienceRecord fields:
+  index
+  episode_id
+  state_key
+  sequence_state
+  regime
+  structure_event
+  location
+  momentum_state
+  volatility_ratio
+  body_ratio
+  range_ratio
+  r1
+  r3
+  r8
+  r16
+  path_vector
+  horizon
+  outcome
+
+====================================================================================================
+10. HISTORICAL SIMILARITY FORENSIC
+====================================================================================================
+[PASS ] Similarity calculation
+       usable_pairs=876
+
+Top 20 similarity matches:
+  index= 250 similarity=0.769881 future_return=+0.00055661
+  index= 584 similarity=0.759734 future_return=+0.00157166
+  index=  37 similarity=0.755194 future_return=+0.00022658
+  index= 173 similarity=0.753435 future_return=+0.00248588
+  index= 140 similarity=0.752209 future_return=+0.00183697
+  index=  65 similarity=0.742047 future_return=-0.00106675
+  index= 228 similarity=0.740044 future_return=+0.00159038
+  index= 555 similarity=0.726685 future_return=+0.00056098
+  index= 679 similarity=0.725319 future_return=+0.00080399
+  index= 270 similarity=0.719477 future_return=-0.00071439
+  index= 562 similarity=0.717256 future_return=+0.00033636
+  index= 358 similarity=0.716399 future_return=+0.00229770
+  index= 601 similarity=0.714722 future_return=-0.00006712
+  index= 700 similarity=0.714226 future_return=-0.00327720
+  index= 255 similarity=0.714159 future_return=-0.00351748
+  index= 190 similarity=0.712591 future_return=-0.00067398
+  index= 866 similarity=0.712291 future_return=-0.00074432
+  index= 664 similarity=0.711694 future_return=-0.00022337
+  index= 147 similarity=0.710289 future_return=-0.00135722
+  index= 686 similarity=0.710079 future_return=-0.00173854
+
+Query future return : 0.0013731054672944348
+Path/future corr.   : 0.052667
+Maximum similarity  : 0.769881
+Mean similarity     : 0.588173
+Similarity >= 0.50: count= 802 positive=0.5249 mean_future=+0.00004893
+Similarity >= 0.60: count= 379 positive=0.5409 mean_future=+0.00005112
+Similarity >= 0.65: count= 155 positive=0.5548 mean_future=+0.00005828
+Similarity >= 0.70: count=  30 positive=0.5000 mean_future=-0.00004248
+Similarity >= 0.75: count=   5 positive=1.0000 mean_future=+0.00133554
+Similarity >= 0.80: EMPTY
+Similarity >= 0.90: EMPTY
+
+====================================================================================================
+11. SIMILARITY ARCHITECTURE
+====================================================================================================
+
+--- path_similarity ---
+def path_similarity(current: MarketState, record: ExperienceRecord) -> float:
+    values = [
+        path_row_similarity(a, b)
+        for a, b in zip(current.path_vector, record.path_vector)
+    ]
+    return mean_or_zero(values)
+
+
+--- path_row_similarity ---
+def path_row_similarity(
+    current_row: Tuple[float, float, float, float],
+    historical_row: Tuple[float, float, float, float],
+) -> float:
+    current_return, current_range, current_direction, current_body = current_row
+    historical_return, historical_range, historical_direction, historical_body = historical_row
+
+    return_similarity = numeric_similarity(current_return, historical_return, 1.0)
+    range_similarity = numeric_similarity(current_range, historical_range, 1.0)
+    body_similarity = numeric_similarity(current_body, historical_body, 1.0)
+    direction_similarity = 1.0 if current_direction == historical_direction else 0.0
+
+    return (
+        0.45 * return_similarity
+        + 0.25 * range_similarity
+        + 0.20 * body_similarity
+        + 0.10 * direction_similarity
+    )
+
+
+--- similarity_score ---
+def similarity_score(current: MarketState, record: ExperienceRecord) -> Dict[str, float]:
+    structure = mean_or_zero(
+        [
+            1.0 if current.trend == record.state_key[0] else 0.0,
+            1.0 if current.structure_event == record.structure_event else 0.0,
+            1.0 if current.high_label == record.state_key[2] else 0.0,
+            1.0 if current.low_label == record.state_key[3] else 0.0,
+        ]
+    )
+
+    sequence = 1.0 if current.sequence_state == record.sequence_state else 0.0
+    regime = 1.0 if current.regime == record.regime else 0.0
+    location = 1.0 if current.location == record.location else 0.0
+    momentum = 1.0 if current.momentum_state == record.momentum_state else 0.0
+    volatility = numeric_similarity(current.volatility_ratio, record.volatility_ratio, 0.50)
+
+    candle = mean_or_zero(
+        [
+            numeric_similarity(current.body_ratio, record.body_ratio, 1.0),
+            numeric_similarity(current.range_ratio, record.range_ratio, 1.0),
+        ]
+    )
+
+    path = path_similarity(current, record)
+
+    total = (
+        WEIGHT_STRUCTURE * structure
+        + WEIGHT_SEQUENCE * sequence
+        + WEIGHT_REGIME * regime
+        + WEIGHT_LOCATION * location
+        + WEIGHT_MOMENTUM * momentum
+        + WEIGHT_VOLATILITY * volatility
+        + WEIGHT_CANDLE * candle
+        + WEIGHT_PATH * path
+    )
+
+    return {
+        "total": clamp(total),
+        "structure": clamp(structure),
+        "sequence": clamp(sequence),
+        "regime": clamp(regime),
+        "location": clamp(location),
+        "momentum": clamp(momentum),
+        "volatility": clamp(volatility),
+        "candle": clamp(candle),
+        "path": clamp(path),
+    }
+
+
+--- retrieve_historical_experience ---
+def retrieve_historical_experience(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+    horizon: int,
+    query_index: int,
+) -> RetrievalResult:
+    candidates: List[SimilarityMatch] = []
+
+    for record in coarse_filter(current, records, query_index):
+        components = similarity_score(current, record)
+        candidates.append(
+            SimilarityMatch(
+                index=record.index,
+                episode_id=record.episode_id,
+                similarity=components["total"],
+                structure_similarity=components["structure"],
+                sequence_similarity=components["sequence"],
+                regime_similarity=components["regime"],
+                location_similarity=components["location"],
+                momentum_similarity=components["momentum"],
+                volatility_similarity=components["volatility"],
+                candle_similarity=components["candle"],
+                path_similarity=components["path"],
+            )
+        )
+
+    candidates.sort(key=lambda item: (item.similarity, item.index), reverse=True)
+    raw_candidate_count = len(candidates)
+    selected = select_episode_representatives(candidates)
+
+    record_by_index = {record.index: record for record in records}
+    selected_rows = [
+        (match, record_by_index[match.index])
+        for match in selected
+        if match.index in record_by_index
+    ]
+
+    if not selected_rows:
+        return RetrievalResult(
+            horizon=horizon,
+            query_index=query_index,
+            raw_candidates=raw_candidate_count,
+            deduplicated_matches=0,
+            top_similarity=0.0,
+            mean_similarity=0.0,
+            level="NONE",
+            evidence="NONE",
+            sparse_warning=True,
+            regime_agreement=0.0,
+            structure_agreement=0.0,
+            context_agreement=0.0,
+            up_share=0.0,
+            down_share=0.0,
+            neutral_share=0.0,
+            mean_atr_return=None,
+            mean_mfe_atr=None,
+            mean_mae_atr=None,
+            supporting_matches=0,
+            conflicting_matches=0,
+            historical_min_index=None,
+            historical_max_index=None,
+            selected_match_indices=[],
+        )
+
+    weights = [match.similarity ** 2 for match, _ in selected_rows]
+    total_weight = sum(weights)
+
+    up_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "UP"),
+        total_weight,
+    )
+    down_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "DOWN"),
+        total_weight,
+    )
+    neutral_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "NEUTRAL"),
+        total_weight,
+    )
+
+    dominant = max(
+        ("UP", up_share),
+        ("DOWN", down_share),
+        ("NEUTRAL", neutral_share),
+        key=lambda x: x[1],
+    )[0]
+
+    supporting_matches = sum(
+        1
+        for _, record in selected_rows
+        if record.outcome.direction == dominant
+    )
+
+    conflicting_matches = len(selected_rows) - supporting_matches
+
+    top_similarity = selected[0].similarity
+    mean_similarity = mean_or_zero([match.similarity for match, _ in selected_rows])
+
+    regime_agreement = mean_or_zero([match.regime_similarity for match, _ in selected_rows])
+    structure_agreement = mean_or_zero([match.structure_similarity for match, _ in selected_rows])
+    context_agreement = mean_or_zero(
+        [
+            mean_or_zero(
+                [
+                    match.sequence_similarity,
+                    match.regime_similarity,
+                    match.location_similarity,
+                    match.momentum_similarity,
+                    match.path_similarity,
+                ]
+            )
+            for match, _ in selected_rows
+        ]
+    )
+
+    mean_atr_return = safe_div(
+        sum(
+            weight * (record.outcome.atr_return or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    mean_mfe_atr = safe_div(
+        sum(
+            weight * (record.outcome.mfe_atr or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    mean_mae_atr = safe_div(
+        sum(
+            weight * (record.outcome.mae_atr or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    if len(selected_rows) < MIN_RETRIEVAL_MATCHES:
+        level = "SPARSE"
+    elif top_similarity >= 0.80:
+        level = "STRONG_SIMILARITY"
+    elif top_similarity >= 0.70:
+        level = "MODERATE_STRONG"
+    elif top_similarity >= 0.60:
+        level = "MODERATE"
+    else:
+        level = "LOW_MODERATE"
+
+    if len(selected_rows) < MIN_RETRIEVAL_MATCHES:
+        evidence = "LOW"
+    elif top_similarity >= 0.70:
+        evidence = "MODERATE"
+    else:
+        evidence = "LOW_TO_MODERATE"
+
+    indices = [record.index for _, record in selected_rows]
+
+    return RetrievalResult(
+        horizon=horizon,
+        query_index=query_index,
+        raw_candidates=raw_candidate_count,
+        deduplicated_matches=len(selected_rows),
+        top_similarity=top_similarity,
+        mean_similarity=mean_similarity,
+        level=level,
+        evidence=evidence,
+        sparse_warning=len(selected_rows) < MIN_RETRIEVAL_MATCHES,
+        regime_agreement=regime_agreement,
+        structure_agreement=structure_agreement,
+        context_agreement=context_agreement,
+        up_share=up_share,
+        down_share=down_share,
+        neutral_share=neutral_share,
+        mean_atr_return=mean_atr_return,
+        mean_mfe_atr=mean_mfe_atr,
+        mean_mae_atr=mean_mae_atr,
+        supporting_matches=supporting_matches,
+        conflicting_matches=conflicting_matches,
+        historical_min_index=min(indices) if indices else None,
+        historical_max_index=max(indices) if indices else None,
+        selected_match_indices=indices,
+    )
+
+
+====================================================================================================
+12. MLAI GOAL COMPONENT AUDIT
+====================================================================================================
+[PRESENT] raw_market_data: load_market_data
+[PRESENT] causal_data_handling: CausalStructureEngine
+[ABSENT ] candle_anatomy
+[PRESENT] market_structure: CausalStructureEngine
+[ABSENT ] sequence_understanding
+[PRESENT] volatility_momentum: calculate_atr
+[PRESENT] context_regime: regime, build_market_states
+[PRESENT] historical_outcomes: build_experience_records
+[PRESENT] historical_experience_memory: ExperienceRecord, build_experience_records
+[PRESENT] non_exact_similarity: path_similarity, similarity_score
+[PRESENT] probability_estimation: retrieve_historical_experience
+[PRESENT] probability_calibration: calibration, brier, logloss
+[PRESENT] scenario_reasoning: scenario
+[PRESENT] confirmation_conditions: confirmation, confirm
+[ABSENT ] invalidation_conditions
+[PRESENT] human_language_explanation: explanation, language
+[PRESENT] multi_timeframe: timeframe
+[PRESENT] continuous_learning: learning, learn
+[PRESENT] live_pipeline: live
+
+====================================================================================================
+13. AUTOMATIC RISK FLAGS
+====================================================================================================
+[RISK] Historical similarity does not currently produce very-high similarity matches.
+[RISK] Path/future correlation is weak: 0.052667
+[RISK] Invalidation-condition infrastructure is not clearly implemented.
+
+====================================================================================================
+14. MASTER AUDIT CONCLUSION
+====================================================================================================
+This is a forensic assessment, not a trading recommendation.
+
+MASTER VERDICT:
+FIX REQUIRED — HISTORICAL EXPERIENCE REPRESENTATION/RETRIEVAL IS THE NEXT PRIORITY
+
+Recommended order:
+1. Protect and freeze the verified causal foundation.
+2. Fix/validate the candle synthetic-test issue if confirmed.
+3. Audit and redesign historical experience representation.
+4. Validate similarity without future leakage.
+5. Build calibrated probability estimation.
+6. Add scenario / confirmation / invalidation reasoning.
+7. Add human-language market explanation.
+8. Add multi-timeframe reasoning.
+9. Test unseen-chart generalization.
+10. Only then consider controlled learning/live infrastructure.
+
+====================================================================================================
+15. AUDIT COMPLETE
+====================================================================================================
+No source files were modified.
+No market data was modified.
+No learning memory was modified.
+Trading remains disabled.
+```

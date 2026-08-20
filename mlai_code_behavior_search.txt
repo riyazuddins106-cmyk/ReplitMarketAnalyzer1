@@ -1,0 +1,3416 @@
+﻿
+check_mlai_versions.py:17:#   This does NOT modify market_data.bin.
+check_mlai_versions.py:18:#   This does NOT modify mlai_learning_memory.bin.
+check_mlai_versions.py:25:#       - market_data.bin usage
+check_mlai_versions.py:26:#       - mlai_learning_memory.bin usage
+check_mlai_versions.py:157:    "market_data.bin",
+check_mlai_versions.py:158:    "market_data",
+check_mlai_versions.py:159:    "pickle.load",
+check_mlai_versions.py:160:    "pickle.dump",
+check_mlai_versions.py:165:    "mlai_learning_memory.bin",
+check_mlai_versions.py:166:    "learning_memory",
+check_mlai_versions.py:417:        "has_pickle":
+check_mlai_versions.py:418:            "pickle" in text,
+check_mlai_versions.py:472:            "Learning memory logic  : "
+check_mlai_versions.py:568:    "LEARNING MEMORY": "learning",
+check_mlai_versions.py:780:# CHECK FOR FILES THAT WRITE THE SAME MEMORY
+check_mlai_versions.py:788:    "MEMORY FILE WRITERS"
+check_mlai_versions.py:794:memory_writers = []
+check_mlai_versions.py:801:        "mlai_learning_memory.bin"
+check_mlai_versions.py:804:            "pickle.dump"
+check_mlai_versions.py:806:            or "open(" in text
+check_mlai_versions.py:810:        memory_writers.append(
+check_mlai_versions.py:815:if memory_writers:
+check_mlai_versions.py:817:    for file in memory_writers:
+check_mlai_versions.py:826:        "No obvious learning-memory writer found."
+check_mlai_versions.py:831:# CHECK MARKET DATA WRITERS
+check_mlai_versions.py:839:    "MARKET DATA WRITERS"
+check_mlai_versions.py:845:market_writers = []
+check_mlai_versions.py:852:        "market_data.bin"
+check_mlai_versions.py:854:        and "pickle.dump"
+check_mlai_versions.py:858:        market_writers.append(
+check_mlai_versions.py:863:if market_writers:
+check_mlai_versions.py:865:    for file in market_writers:
+check_mlai_versions.py:874:        "No obvious market-data writer found."
+check_mlai_versions.py:1053:# WRITE FULL AUDIT REPORT
+check_mlai_versions.py:1103:        f"Learning memory: "
+check_mlai_versions.py:1277:    OUTPUT_FILE.write_text(
+check_mlai_versions.py:1336:    "It does NOT modify market_data.bin."
+check_mlai_versions.py:1340:    "It does NOT modify 
+mlai_learning_memory.bin."
+fix_boundary.py:114:path.write_text(
+fix_event_reference.py:137:path.write_text(
+fix_structure_reference.py:187:path.write_text(text, encoding="utf-8")
+fix_structure_reference_v2.py:64:path.write_text(text, encoding="utf-8")
+fix_structure_reference_v3.py:141:TARGET.write_text(
+fix_structure_reference_v4.py:236:# 7. Write file
+fix_structure_reference_v4.py:239:TARGET.write_text(
+inspect_market_data.py:1:import pickle
+inspect_market_data.py:3:DATA_FILE = "market_data.bin"
+inspect_market_data.py:6:print("MLAI MARKET MEMORY INSPECTOR")
+inspect_market_data.py:9:with open(DATA_FILE, "rb") as f:
+inspect_market_data.py:10:    data = pickle.load(f)
+mlai_market_language_brain.py:11:import pickle
+mlai_market_language_brain.py:108:        self._load()
+mlai_market_language_brain.py:110:    def _load(self):
+mlai_market_language_brain.py:112:            with open(self.storage_path, 
+'rb') as f:
+mlai_market_language_brain.py:113:                data = pickle.load(f)
+mlai_market_language_brain.py:127:        with open(self.storage_path, 'wb') 
+as f:
+mlai_market_language_brain.py:128:            pickle.dump({'candles': 
+self.raw_candles, 'saved_at': datetime.now(timezone.utc).isoformat()}, f)
+mlai_market_language_brain.py:752:# SECTION 6: HISTORICAL EXPERIENCE MEMORY 
+(Phase P1)
+mlai_market_language_brain.py:755:class MemoryQuality(Enum):
+mlai_market_language_brain.py:776:    quality: MemoryQuality = 
+MemoryQuality.CANDIDATE
+mlai_market_language_brain.py:793:class ExperienceMemory:
+mlai_market_language_brain.py:794:    def __init__(self, storage_path: str = 
+"mlai_memory.pkl"):
+mlai_market_language_brain.py:799:        self._load()
+mlai_market_language_brain.py:801:    def _load(self):
+mlai_market_language_brain.py:803:            with open(self.storage_path, 
+'rb') as f:
+mlai_market_language_brain.py:804:                data = pickle.load(f)
+mlai_market_language_brain.py:825:    def query_by_regime(self, regime: str, 
+min_quality: MemoryQuality = MemoryQuality.CANDIDATE) -> 
+List[ExperienceRecord]:
+mlai_market_language_brain.py:833:    def _quality_rank(self, q: 
+MemoryQuality) -> int:
+mlai_market_language_brain.py:834:        ranks = {MemoryQuality.CANDIDATE: 
+0, MemoryQuality.UNDER_EVALUATION: 1,
+mlai_market_language_brain.py:835:                 
+MemoryQuality.WEAK_EVIDENCE: 2, MemoryQuality.VALIDATED: 3,
+mlai_market_language_brain.py:836:                 MemoryQuality.FAILED: -1, 
+MemoryQuality.DEPRECATED: -2}
+mlai_market_language_brain.py:840:        with open(self.storage_path, 'wb') 
+as f:
+mlai_market_language_brain.py:841:            pickle.dump({'records': 
+self.records, 'saved_at': datetime.now(timezone.utc).isoformat()}, f)
+mlai_market_language_brain.py:849:                "validated_outcomes": 
+sum(1 for r in self.records if r.quality == MemoryQuality.VALIDATED)}
+mlai_market_language_brain.py:857:    def __init__(self, memory: 
+ExperienceMemory):
+mlai_market_language_brain.py:858:        self.memory = memory
+mlai_market_language_brain.py:870:        regime_matches = 
+self.memory.query_by_regime(current_state.regime.regime_label)
+mlai_market_language_brain.py:1212:        self.memory = 
+ExperienceMemory(os.path.join(storage_dir, "experience_memory.pkl"))
+mlai_market_language_brain.py:1213:        self.similarity = 
+SimilarityEngine(self.memory)
+mlai_market_language_brain.py:1236:    def load_instrument(self, instrument: 
+str, timeframe: str) -> bool:
+mlai_market_language_brain.py:1246:    def build_experience_memory(self, 
+instrument: str, timeframe: str, 
+mlai_market_language_brain.py:1250:            if not 
+self.load_instrument(instrument, timeframe):
+mlai_market_language_brain.py:1251:                return {"error": "No data 
+loaded"}
+mlai_market_language_brain.py:1270:                self.memory.store(record)
+mlai_market_language_brain.py:1272:        self.memory.save()
+mlai_market_language_brain.py:1273:        return {"records_added": added, 
+"memory_stats": self.memory.get_statistics()}
+mlai_market_language_brain.py:1304:        if not 
+self.load_instrument(instrument, timeframe):
+mlai_market_language_brain.py:1325:            "memory": 
+self.memory.get_statistics(),
+mlai_market_language_brain.py:1327:            "loaded_candles": 
+len(self._candles),
+mlai_market_language_brain.py:1328:            "loaded_states": sum(1 for s 
+in self._states if s is not None),
+mlai_market_language_brain.py:1374:    print(f"    Memory: versioned with 
+quality tracking")
+mlai_market_language_brain.py:1382:    print("[3] Loading instrument 
+data...")
+mlai_market_language_brain.py:1383:    success = 
+brain.load_instrument("XAUUSD", "1H")
+mlai_market_language_brain.py:1384:    print(f"    Loaded: {success}, 
+Candles: {len(brain._candles)}, States built: {sum(1 for s in brain._states 
+if s)}")
+mlai_market_language_brain.py:1386:    print("[4] Building historical 
+experience memory...")
+mlai_market_language_brain.py:1387:    mem_result = 
+brain.build_experience_memory("XAUUSD", "1H", horizons=[4, 8, 16])
+mlai_market_language_brain.py:1389:    stats = mem_result['memory_stats']
+mlai_market_language_brain.py:1390:    print(f"    Memory stats: {stats}")
+mlai_market_language_brain.py:1412:    print(f"    Memory records: 
+{status['memory']['total_records']}")
+mlai_market_representation_v1.py:2:import pickle
+mlai_market_representation_v1.py:19:#   market_data.bin
+mlai_market_representation_v1.py:21:#   production learning memory
+mlai_market_representation_v1.py:48:MARKET_FILE = "market_data.bin"
+mlai_market_representation_v1.py:124:    print("market_data.bin : READ ONLY")
+mlai_market_representation_v1.py:127:    print("learning memory : NOT 
+MODIFIED")
+mlai_market_representation_v1.py:137:# LOAD MARKET DATA
+mlai_market_representation_v1.py:140:def load_market_data():
+mlai_market_representation_v1.py:142:    with open(MARKET_FILE, "rb") as f:
+mlai_market_representation_v1.py:143:        return pickle.load(f)
+mlai_market_representation_v1.py:153:            "market_data",
+mlai_market_representation_v1.py:199:        "Unsupported market_data.bin 
+structure."
+mlai_market_representation_v1.py:226:# LOAD
+mlai_market_representation_v1.py:231:market_data = load_market_data()
+mlai_market_representation_v1.py:234:    market_data
+mlai_market_representation_v1.py:259:    type(market_data).__name__
+mlai_market_representation_v1.py:268:    "PASS: market_data.bin loaded."
+mlai_market_representation_v1.py:3113:        "market-memory system."
+mlai_market_representation_v1.py:3242:        "market_data.bin was READ 
+ONLY."
+mlai_market_representation_v2.py:3:import pickle
+mlai_market_representation_v2.py:19:# market_data.bin is READ ONLY.
+mlai_market_representation_v2.py:22:# Learning memory is NOT modified.
+mlai_market_representation_v2.py:52:MARKET_FILE = "market_data.bin"
+mlai_market_representation_v2.py:88:    with open(path, "rb") as f:
+mlai_market_representation_v2.py:111:    print(f"{'learning memory':<20}: 
+NOT MODIFIED")
+mlai_market_representation_v2.py:123:# LOAD MARKET DATA
+mlai_market_representation_v2.py:126:def load_market_data():
+mlai_market_representation_v2.py:128:    with open(MARKET_FILE, "rb") as f:
+mlai_market_representation_v2.py:130:        data = pickle.load(f)
+mlai_market_representation_v2.py:146:        elif "market_data" in data:
+mlai_market_representation_v2.py:148:            candles = 
+data["market_data"]
+mlai_market_representation_v2.py:170:                    "Dictionary loaded, 
+but no candle "
+mlai_market_representation_v2.py:181:            "Unsupported 
+market_data.bin structure."
+mlai_market_representation_v2.py:3346:    with open(
+mlai_market_representation_v2.py:3351:        pickle.dump(
+mlai_market_representation_v2.py:3393:        "- Learning memory: NOT 
+MODIFIED"
+mlai_market_representation_v2.py:3538:    with open(
+mlai_market_representation_v2.py:3544:        f.write(
+mlai_market_representation_v2.py:3561:    candles_raw = load_market_data()
+mlai_market_representation_v2.py:3670:        "The original market_data.bin 
+was only READ."
+mlai_market_representation_v2.py:3682:        "No learning memory was 
+modified."
+mlai_market_structure_v381_validation.py:40:# market_data.bin is READ ONLY.
+mlai_market_structure_v381_validation.py:46:import pickle
+mlai_market_structure_v381_validation.py:58:    "market_data.bin"
+mlai_market_structure_v381_validation.py:269:# DATA LOADING
+mlai_market_structure_v381_validation.py:286:        "market_data",
+mlai_market_structure_v381_validation.py:314:def load_market_data():
+mlai_market_structure_v381_validation.py:319:            f"market_data.bin 
+not found:\n{DATA_FILE}"
+mlai_market_structure_v381_validation.py:322:    with open(
+mlai_market_structure_v381_validation.py:327:        data = pickle.load(f)
+mlai_market_structure_v381_validation.py:2221:        with open(
+mlai_market_structure_v381_validation.py:2227:            f.write(
+mlai_market_structure_v381_validation.py:2300:        "market_data.bin : 
+READ ONLY"
+mlai_market_structure_v381_validation.py:2306:        "Learning memory : NOT 
+MODIFIED"
+mlai_market_structure_v381_validation.py:2316:    # LOAD DATA
+mlai_market_structure_v381_validation.py:2319:    data, candles, invalid = 
+load_market_data()
+mlai_market_structure_v381_validation.py:3166:        "market_data.bin : 
+READ ONLY"
+mlai_market_structure_v381_validation.py:3174:        "Learning memory : NOT 
+MODIFIED"
+mlai_market_structure_v381_validation.py:3283:            
+"market_data_read_only":
+mlai_market_structure_v381_validation.py:3289:            
+"learning_memory_modified":
+mlai_market_structure_v381_validation.py:3307:    with open(
+mlai_market_structure_v381_validation.py:3312:        pickle.dump(
+mlai_market_structure_v381_validation.py:3315:            
+protocol=pickle.HIGHEST_PROTOCOL
+mlai_market_structure_v381_validation.py:3452:        "market_data.bin : 
+READ ONLY"
+mlai_market_structure_v381_validation.py:3460:        "Learning memory : NOT 
+MODIFIED"
+mlai_market_structure_v382.py:40:# market_data.bin is READ ONLY.
+mlai_market_structure_v382.py:84:import pickle
+mlai_market_structure_v382.py:96:    "market_data.bin"
+mlai_market_structure_v382.py:332:        "market_data",
+mlai_market_structure_v382.py:360:def load_market_data():
+mlai_market_structure_v382.py:365:            f"market_data.bin not 
+found:\n{DATA_FILE}"
+mlai_market_structure_v382.py:368:    with open(
+mlai_market_structure_v382.py:373:        data = pickle.load(f)
+mlai_market_structure_v382.py:2691:        with open(
+mlai_market_structure_v382.py:2697:            f.write(
+mlai_market_structure_v382.py:2741:market_data.bin:
+mlai_market_structure_v382.py:2766:        "market_data.bin : READ ONLY"
+mlai_market_structure_v382.py:2774:        "Learning memory : NOT MODIFIED"
+mlai_market_structure_v382.py:2786:    # LOAD DATA
+mlai_market_structure_v382.py:2789:    data, candles, invalid = 
+load_market_data()
+mlai_market_structure_v382.py:3761:        "market_data.bin : READ ONLY"
+mlai_market_structure_v382.py:3769:        "Learning memory : NOT MODIFIED"
+mlai_market_structure_v382.py:3894:            "market_data_read_only":
+mlai_market_structure_v382.py:3900:            "learning_memory_modified":
+mlai_market_structure_v382.py:3918:    with open(
+mlai_market_structure_v382.py:3923:        pickle.dump(
+mlai_market_structure_v382.py:3926:            
+protocol=pickle.HIGHEST_PROTOCOL
+mlai_market_structure_v382.py:4204:        "market_data.bin : READ ONLY"
+mlai_market_structure_v382.py:4212:        "Learning memory : NOT MODIFIED"
+mlai_market_structure_v383.py:40:# market_data.bin is READ ONLY.
+mlai_market_structure_v383.py:84:import pickle
+mlai_market_structure_v383.py:96:    "market_data.bin"
+mlai_market_structure_v383.py:332:        "market_data",
+mlai_market_structure_v383.py:360:def load_market_data():
+mlai_market_structure_v383.py:365:            f"market_data.bin not 
+found:\n{DATA_FILE}"
+mlai_market_structure_v383.py:368:    with open(
+mlai_market_structure_v383.py:373:        data = pickle.load(f)
+mlai_market_structure_v383.py:2691:        with open(
+mlai_market_structure_v383.py:2697:            f.write(
+mlai_market_structure_v383.py:2741:market_data.bin:
+mlai_market_structure_v383.py:2766:        "market_data.bin : READ ONLY"
+mlai_market_structure_v383.py:2774:        "Learning memory : NOT MODIFIED"
+mlai_market_structure_v383.py:2786:    # LOAD DATA
+mlai_market_structure_v383.py:2789:    data, candles, invalid = 
+load_market_data()
+mlai_market_structure_v383.py:3761:        "market_data.bin : READ ONLY"
+mlai_market_structure_v383.py:3769:        "Learning memory : NOT MODIFIED"
+mlai_market_structure_v383.py:3894:            "market_data_read_only":
+mlai_market_structure_v383.py:3900:            "learning_memory_modified":
+mlai_market_structure_v383.py:3918:    with open(
+mlai_market_structure_v383.py:3923:        pickle.dump(
+mlai_market_structure_v383.py:3926:            
+protocol=pickle.HIGHEST_PROTOCOL
+mlai_market_structure_v383.py:4204:        "market_data.bin : READ ONLY"
+mlai_market_structure_v383.py:4212:        "Learning memory : NOT MODIFIED"
+mlai_market_structure_v383_walkforward.py:22:# 9. READ-ONLY market_data.bin
+mlai_market_structure_v383_walkforward.py:57:import pickle
+mlai_market_structure_v383_walkforward.py:70:    "market_data.bin"
+mlai_market_structure_v383_walkforward.py:372:        "market_data",
+mlai_market_structure_v383_walkforward.py:403:def load_market_data():
+mlai_market_structure_v383_walkforward.py:408:            f"market_data.bin 
+not found:\n"
+mlai_market_structure_v383_walkforward.py:412:    with open(
+mlai_market_structure_v383_walkforward.py:417:        data = pickle.load(f)
+mlai_market_structure_v383_walkforward.py:3278:        with open(
+mlai_market_structure_v383_walkforward.py:3284:            f.write(
+mlai_market_structure_v383_walkforward.py:3329:market_data.bin:
+mlai_market_structure_v383_walkforward.py:3355:        "market_data.bin     
+: READ ONLY"
+mlai_market_structure_v383_walkforward.py:3363:        "Learning memory     
+: NOT MODIFIED"
+mlai_market_structure_v383_walkforward.py:3375:    # LOAD
+mlai_market_structure_v383_walkforward.py:3379:        load_market_data()
+mlai_market_structure_v383_walkforward.py:4957:        "market_data.bin     
+: READ ONLY"
+mlai_market_structure_v383_walkforward.py:4965:        "Learning memory     
+: NOT MODIFIED"
+mlai_market_structure_v383_walkforward.py:5074:            
+"market_data_read_only":
+mlai_market_structure_v383_walkforward.py:5080:            
+"learning_memory_modified":
+mlai_market_structure_v383_walkforward.py:5097:    with open(
+mlai_market_structure_v383_walkforward.py:5102:        pickle.dump(
+mlai_market_structure_v383_walkforward.py:5109:            
+pickle.HIGHEST_PROTOCOL
+mlai_market_structure_v383_walkforward.py:5503:        "market_data.bin : 
+READ ONLY"
+mlai_market_structure_v383_walkforward.py:5511:        "Learning memory : 
+NOT MODIFIED"
+mlai_market_structure_v384.py:9:#   market_data.bin           READ ONLY
+mlai_market_structure_v384.py:11:#   learning memory           NOT MODIFIED
+mlai_market_structure_v384.py:44:# 8. market_data.bin is never written.
+mlai_market_structure_v384.py:49:import pickle
+mlai_market_structure_v384.py:59:MARKET_FILE = "market_data.bin"
+mlai_market_structure_v384.py:265:# LOAD MARKET DATA
+mlai_market_structure_v384.py:268:def load_market_data():
+mlai_market_structure_v384.py:270:    with open(
+mlai_market_structure_v384.py:275:        return pickle.load(f)
+mlai_market_structure_v384.py:278:def normalize_market_data(data):
+mlai_market_structure_v384.py:290:            "market_data",
+mlai_market_structure_v384.py:322:                    "inside 
+market_data.bin"
+mlai_market_structure_v384.py:328:            "Unsupported market_data.bin 
+type: "
+mlai_market_structure_v384.py:2020:        "- market_data.bin: READ ONLY"
+mlai_market_structure_v384.py:2028:        "- Learning memory modified: NO"
+mlai_market_structure_v384.py:2249:    print("market_data.bin:")
+mlai_market_structure_v384.py:2267:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v384.py:2275:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v384.py:2287:    # LOAD
+mlai_market_structure_v384.py:2290:    raw_data = load_market_data()
+mlai_market_structure_v384.py:2296:    candles = normalize_market_data(
+mlai_market_structure_v384.py:3279:            "market_data_read_only": True,
+mlai_market_structure_v384.py:3281:            "learning_memory_modified": 
+False,
+mlai_market_structure_v384.py:3291:    with open(
+mlai_market_structure_v384.py:3296:        pickle.dump(
+mlai_market_structure_v384.py:3299:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v384.py:3314:    with open(
+mlai_market_structure_v384.py:3320:        f.write(report)
+mlai_market_structure_v384.py:3331:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v384.py:3339:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v385.py:35:    market_data.bin is READ ONLY.
+mlai_market_structure_v385.py:39:    - modify learning memory
+mlai_market_structure_v385.py:41:    - connect to the internet
+mlai_market_structure_v385.py:42:    - download data
+mlai_market_structure_v385.py:43:    - call an API
+mlai_market_structure_v385.py:53:import pickle
+mlai_market_structure_v385.py:69:MARKET_DATA_FILE = os.path.join(
+mlai_market_structure_v385.py:71:    "market_data.bin",
+mlai_market_structure_v385.py:323:# MARKET DATA LOADER
+mlai_market_structure_v385.py:326:def load_market_data(path: str) -> 
+List[Candle]:
+mlai_market_structure_v385.py:330:            f"market_data.bin not 
+found:\n{path}"
+mlai_market_structure_v385.py:334:    with open(path, "rb") as f:
+mlai_market_structure_v385.py:335:        raw = pickle.load(f)
+mlai_market_structure_v385.py:346:            "market_data",
+mlai_market_structure_v385.py:366:                    "Could not find candle 
+collection in market_data.bin"
+mlai_market_structure_v385.py:374:            f"Unsupported market_data.bin 
+type: {type(raw).__name__}"
+mlai_market_structure_v385.py:460:            "No valid OHLC candles were 
+found in market_data.bin"
+mlai_market_structure_v385.py:2650:    with open(path, "rb") as f:
+mlai_market_structure_v385.py:2668:    if not 
+os.path.exists(MARKET_DATA_FILE):
+mlai_market_structure_v385.py:2671:            "market_data.bin       : NOT 
+FOUND"
+mlai_market_structure_v385.py:2675:            MARKET_DATA_FILE
+mlai_market_structure_v385.py:2679:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v385.py:2687:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v385.py:2699:        MARKET_DATA_FILE
+mlai_market_structure_v385.py:2712:        MARKET_DATA_FILE
+mlai_market_structure_v385.py:2718:            "market_data.bin       : 
+MODIFIED"
+mlai_market_structure_v385.py:2722:            "PROTECTION FAILURE: 
+market_data.bin changed."
+mlai_market_structure_v385.py:2726:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v385.py:2734:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v385.py:2790:    payload = {
+mlai_market_structure_v385.py:2797:            "market_data_read_only": True,
+mlai_market_structure_v385.py:2799:            "learning_memory_modified": 
+False,
+mlai_market_structure_v385.py:2809:    # It does not overwrite 
+market_data.bin.
+mlai_market_structure_v385.py:2810:    with open(
+mlai_market_structure_v385.py:2815:        pickle.dump(
+mlai_market_structure_v385.py:2816:            payload,
+mlai_market_structure_v385.py:2818:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v385.py:2846:        "- market_data.bin: READ ONLY"
+mlai_market_structure_v385.py:2854:        "- Learning memory: NOT MODIFIED"
+mlai_market_structure_v385.py:2949:    with open(
+mlai_market_structure_v385.py:2955:        f.write(
+mlai_market_structure_v385.py:2998:    print("market_data.bin:")
+mlai_market_structure_v385.py:3008:    # Load
+mlai_market_structure_v385.py:3011:    candles = load_market_data(
+mlai_market_structure_v385.py:3012:        MARKET_DATA_FILE
+mlai_market_structure_v386.py:35:    market_data.bin is READ ONLY.
+mlai_market_structure_v386.py:40:    - modify learning memory
+mlai_market_structure_v386.py:42:    - connect to the internet
+mlai_market_structure_v386.py:43:    - download data
+mlai_market_structure_v386.py:44:    - call an API
+mlai_market_structure_v386.py:64:import pickle
+mlai_market_structure_v386.py:81:MARKET_DATA_FILE = os.path.join(
+mlai_market_structure_v386.py:83:    "market_data.bin",
+mlai_market_structure_v386.py:353:# MARKET DATA LOADER
+mlai_market_structure_v386.py:356:def load_market_data(path: str) -> 
+List[Candle]:
+mlai_market_structure_v386.py:360:            f"market_data.bin not 
+found:\n{path}"
+mlai_market_structure_v386.py:364:    with open(path, "rb") as f:
+mlai_market_structure_v386.py:365:        raw = pickle.load(f)
+mlai_market_structure_v386.py:372:            "market_data",
+mlai_market_structure_v386.py:397:                    "Could not find candle 
+collection in market_data.bin"
+mlai_market_structure_v386.py:407:            f"Unsupported market_data.bin 
+type: "
+mlai_market_structure_v386.py:480:            "No valid OHLC candles were 
+found in market_data.bin"
+mlai_market_structure_v386.py:3376:    with open(path, "rb") as f:
+mlai_market_structure_v386.py:3399:        MARKET_DATA_FILE
+mlai_market_structure_v386.py:3403:            "market_data.bin       : NOT 
+FOUND"
+mlai_market_structure_v386.py:3407:            MARKET_DATA_FILE
+mlai_market_structure_v386.py:3411:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v386.py:3419:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v386.py:3431:        MARKET_DATA_FILE
+mlai_market_structure_v386.py:3444:        MARKET_DATA_FILE
+mlai_market_structure_v386.py:3450:            "market_data.bin       : 
+MODIFIED"
+mlai_market_structure_v386.py:3455:            "market_data.bin changed."
+mlai_market_structure_v386.py:3459:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v386.py:3467:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v386.py:3526:    payload = {
+mlai_market_structure_v386.py:3535:            "market_data_read_only": True,
+mlai_market_structure_v386.py:3537:            "learning_memory_modified": 
+False,
+mlai_market_structure_v386.py:3547:    with open(
+mlai_market_structure_v386.py:3552:        pickle.dump(
+mlai_market_structure_v386.py:3553:            payload,
+mlai_market_structure_v386.py:3555:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v386.py:3595:        "- market_data.bin: READ ONLY"
+mlai_market_structure_v386.py:3603:        "- Learning memory: NOT MODIFIED"
+mlai_market_structure_v386.py:3735:    with open(
+mlai_market_structure_v386.py:3741:        f.write(
+mlai_market_structure_v386.py:3846:        "market_data.bin:"
+mlai_market_structure_v386.py:3860:    # Load
+mlai_market_structure_v386.py:3863:    candles = load_market_data(
+mlai_market_structure_v386.py:3864:        MARKET_DATA_FILE
+mlai_market_structure_v390.py:25:market_data.bin:
+mlai_market_structure_v390.py:31:Learning memory:
+mlai_market_structure_v390.py:83:import pickle
+mlai_market_structure_v390.py:95:MARKET_FILE = "market_data.bin"
+mlai_market_structure_v390.py:278:def load_market_data():
+mlai_market_structure_v390.py:280:    with open(
+mlai_market_structure_v390.py:285:        return pickle.load(f)
+mlai_market_structure_v390.py:288:def normalize_market_data(data):
+mlai_market_structure_v390.py:300:            "market_data",
+mlai_market_structure_v390.py:335:                    "inside 
+market_data.bin."
+mlai_market_structure_v390.py:341:            "Unsupported market_data.bin 
+type: "
+mlai_market_structure_v390.py:2215:        "- market_data.bin: READ ONLY"
+mlai_market_structure_v390.py:2223:        "- Learning memory modified: NO"
+mlai_market_structure_v390.py:2397:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v390.py:2405:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v390.py:2417:    # LOAD
+mlai_market_structure_v390.py:2420:    banner("DATA LOAD")
+mlai_market_structure_v390.py:2422:    raw_data = load_market_data()
+mlai_market_structure_v390.py:2429:        normalize_market_data(
+mlai_market_structure_v390.py:3402:            "market_data_read_only": True,
+mlai_market_structure_v390.py:3406:            "learning_memory_modified": 
+False,
+mlai_market_structure_v390.py:3454:    with open(
+mlai_market_structure_v390.py:3459:        pickle.dump(
+mlai_market_structure_v390.py:3462:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v390.py:3486:    with open(
+mlai_market_structure_v390.py:3492:        f.write(report)
+mlai_market_structure_v390.py:3511:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v390.py:3519:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v400.py:43:19. No learning-memory modification
+mlai_market_structure_v400.py:63:import pickle
+mlai_market_structure_v400.py:77:MARKET_DATA_FILE = "market_data.bin"
+mlai_market_structure_v400.py:222:    with open(path, "rb") as f:
+mlai_market_structure_v400.py:265:# MARKET DATA LOADING
+mlai_market_structure_v400.py:276:            "market_data",
+mlai_market_structure_v400.py:352:def load_market_data(path: str) -> 
+Tuple[List[Candle], int]:
+mlai_market_structure_v400.py:359:    with open(path, "rb") as f:
+mlai_market_structure_v400.py:360:        obj = pickle.load(f)
+mlai_market_structure_v400.py:2175:    add("- Learning memory modification: 
+NO")
+mlai_market_structure_v400.py:2409:    add("Learning memory modified: NO")
+mlai_market_structure_v400.py:2441:    print(f"{MARKET_DATA_FILE:<24}: READ 
+ONLY")
+mlai_market_structure_v400.py:2443:    print("Learning memory          : NOT 
+MODIFIED")
+mlai_market_structure_v400.py:2448:        MARKET_DATA_FILE
+mlai_market_structure_v400.py:2459:    print("DATA LOAD")
+mlai_market_structure_v400.py:2462:    candles, invalid = load_market_data(
+mlai_market_structure_v400.py:2463:        MARKET_DATA_FILE
+mlai_market_structure_v400.py:3028:            "market_file": 
+MARKET_DATA_FILE,
+mlai_market_structure_v400.py:3033:    with open(
+mlai_market_structure_v400.py:3038:        pickle.dump(
+mlai_market_structure_v400.py:3041:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v400.py:3045:        MARKET_DATA_FILE
+mlai_market_structure_v400.py:3065:    with open(
+mlai_market_structure_v400.py:3071:        f.write(report)
+mlai_market_structure_v400.py:3106:            "market_data.bin       : FAIL 
+- FILE CHANGED"
+mlai_market_structure_v400.py:3110:            "Protection failure: 
+market_data.bin changed."
+mlai_market_structure_v400.py:3114:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v400.py:3122:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v410.py:39:market_data.bin is read-only and is hash 
+checked before/after execution.
+mlai_market_structure_v410.py:40:No production MLAI memory is modified. 
+Trading is disabled.
+mlai_market_structure_v410.py:51:import pickle
+mlai_market_structure_v410.py:64:MARKET_DATA_FILE = "market_data.bin"
+mlai_market_structure_v410.py:177:    with open(path, "rb") as f:
+mlai_market_structure_v410.py:195:# MARKET DATA LOADER
+mlai_market_structure_v410.py:271:def load_market_data(path: str) -> 
+Tuple[List[Candle], int]:
+mlai_market_structure_v410.py:272:    with open(path, "rb") as f:
+mlai_market_structure_v410.py:273:        obj = pickle.load(f)
+mlai_market_structure_v410.py:281:            "market_data",
+mlai_market_structure_v410.py:289:            "market_data.bin does not 
+contain a supported candle sequence."
+mlai_market_structure_v410.py:1951:    add("- Learning memory modification: 
+NO")
+mlai_market_structure_v410.py:2155:    add("- Learning memory modified: NO")
+mlai_market_structure_v410.py:2185:    print(f"{MARKET_DATA_FILE:<24}: READ 
+ONLY")
+mlai_market_structure_v410.py:2187:    print("Learning memory          : NOT 
+MODIFIED")
+mlai_market_structure_v410.py:2191:    guard = 
+ProtectionGuard(MARKET_DATA_FILE)
+mlai_market_structure_v410.py:2200:    print("DATA LOAD")
+mlai_market_structure_v410.py:2203:    candles, invalid = load_market_data(
+mlai_market_structure_v410.py:2204:        MARKET_DATA_FILE
+mlai_market_structure_v410.py:2701:            "market_file": 
+MARKET_DATA_FILE,
+mlai_market_structure_v410.py:2706:    with open(
+mlai_market_structure_v410.py:2710:        pickle.dump(
+mlai_market_structure_v410.py:2713:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v410.py:2717:        MARKET_DATA_FILE
+mlai_market_structure_v410.py:2737:    with open(
+mlai_market_structure_v410.py:2742:        f.write(report)
+mlai_market_structure_v410.py:2766:            "market_data.bin       : FAIL 
+- FILE CHANGED"
+mlai_market_structure_v410.py:2769:            "Protection failure: 
+market_data.bin changed."
+mlai_market_structure_v410.py:2773:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v410.py:2781:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v411.py:39:market_data.bin is read-only and is hash 
+checked before/after execution.
+mlai_market_structure_v411.py:40:No production MLAI memory is modified. 
+Trading is disabled.
+mlai_market_structure_v411.py:51:import pickle
+mlai_market_structure_v411.py:64:MARKET_DATA_FILE = "market_data.bin"
+mlai_market_structure_v411.py:177:    with open(path, "rb") as f:
+mlai_market_structure_v411.py:195:# MARKET DATA LOADER
+mlai_market_structure_v411.py:271:def load_market_data(path: str) -> 
+Tuple[List[Candle], int]:
+mlai_market_structure_v411.py:272:    with open(path, "rb") as f:
+mlai_market_structure_v411.py:273:        obj = pickle.load(f)
+mlai_market_structure_v411.py:281:            "market_data",
+mlai_market_structure_v411.py:289:            "market_data.bin does not 
+contain a supported candle sequence."
+mlai_market_structure_v411.py:1951:    add("- Learning memory modification: 
+NO")
+mlai_market_structure_v411.py:2155:    add("- Learning memory modified: NO")
+mlai_market_structure_v411.py:2185:    print(f"{MARKET_DATA_FILE:<24}: READ 
+ONLY")
+mlai_market_structure_v411.py:2187:    print("Learning memory          : NOT 
+MODIFIED")
+mlai_market_structure_v411.py:2191:    guard = 
+ProtectionGuard(MARKET_DATA_FILE)
+mlai_market_structure_v411.py:2200:    print("DATA LOAD")
+mlai_market_structure_v411.py:2203:    candles, invalid = load_market_data(
+mlai_market_structure_v411.py:2204:        MARKET_DATA_FILE
+mlai_market_structure_v411.py:2701:            "market_file": 
+MARKET_DATA_FILE,
+mlai_market_structure_v411.py:2706:    with open(
+mlai_market_structure_v411.py:2710:        pickle.dump(
+mlai_market_structure_v411.py:2713:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v411.py:2717:        MARKET_DATA_FILE
+mlai_market_structure_v411.py:2737:    with open(
+mlai_market_structure_v411.py:2742:        f.write(report)
+mlai_market_structure_v411.py:2766:            "market_data.bin       : FAIL 
+- FILE CHANGED"
+mlai_market_structure_v411.py:2769:            "Protection failure: 
+market_data.bin changed."
+mlai_market_structure_v411.py:2773:        "market_data.bin       : READ 
+ONLY"
+mlai_market_structure_v411.py:2781:        "Learning memory       : NOT 
+MODIFIED"
+mlai_market_structure_v411_diagnostic.py:11:    - modify market_data.bin
+mlai_market_structure_v411_diagnostic.py:13:    - modify learning memory
+mlai_market_structure_v411_diagnostic.py:47:import pickle
+mlai_market_structure_v411_diagnostic.py:68:MARKET_DATA_FILE = getattr(
+mlai_market_structure_v411_diagnostic.py:70:    "MARKET_DATA_FILE",
+mlai_market_structure_v411_diagnostic.py:71:    "market_data.bin",
+mlai_market_structure_v411_diagnostic.py:135:    with open(path, "rb") as f:
+mlai_market_structure_v411_diagnostic.py:286:        return json.dumps(
+mlai_market_structure_v411_diagnostic.py:337:        return json.dumps(
+mlai_market_structure_v411_diagnostic.py:1096:    add("- Learning memory 
+modified: NO")
+mlai_market_structure_v411_diagnostic.py:1453:        
+f"{MARKET_DATA_FILE:<30}: READ ONLY"
+mlai_market_structure_v411_diagnostic.py:1461:        "Learning memory       
+       : NOT MODIFIED"
+mlai_market_structure_v411_diagnostic.py:1477:        MARKET_DATA_FILE
+mlai_market_structure_v411_diagnostic.py:1481:    # DATA LOAD
+mlai_market_structure_v411_diagnostic.py:1486:    print("DATA LOAD")
+mlai_market_structure_v411_diagnostic.py:1489:    candles, invalid = 
+BASE.load_market_data(
+mlai_market_structure_v411_diagnostic.py:1490:        MARKET_DATA_FILE
+mlai_market_structure_v411_diagnostic.py:2091:        MARKET_DATA_FILE
+mlai_market_structure_v411_diagnostic.py:2109:            "market_data": 
+MARKET_DATA_FILE,
+mlai_market_structure_v411_diagnostic.py:2124:            
+"learning_memory_modified":
+mlai_market_structure_v411_diagnostic.py:2173:    with open(
+mlai_market_structure_v411_diagnostic.py:2178:        pickle.dump(
+mlai_market_structure_v411_diagnostic.py:2181:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v411_diagnostic.py:2207:    with open(
+mlai_market_structure_v411_diagnostic.py:2213:        f.write(
+mlai_market_structure_v411_diagnostic.py:2232:            "market_data.bin   
+          : FAIL"
+mlai_market_structure_v411_diagnostic.py:2236:            "market_data.bin 
+changed."
+mlai_market_structure_v411_diagnostic.py:2240:        "market_data.bin       
+      : READ ONLY"
+mlai_market_structure_v411_diagnostic.py:2248:        "Learning memory       
+      : NOT MODIFIED"
+mlai_market_structure_v411_diagnostic_backup.py:11:    - modify 
+market_data.bin
+mlai_market_structure_v411_diagnostic_backup.py:13:    - modify learning 
+memory
+mlai_market_structure_v411_diagnostic_backup.py:43:import pickle
+mlai_market_structure_v411_diagnostic_backup.py:69:MARKET_DATA_FILE = 
+getattr(
+mlai_market_structure_v411_diagnostic_backup.py:71:    "MARKET_DATA_FILE",
+mlai_market_structure_v411_diagnostic_backup.py:72:    "market_data.bin",
+mlai_market_structure_v411_diagnostic_backup.py:128:    with open(path, 
+"rb") as f:
+mlai_market_structure_v411_diagnostic_backup.py:320:            return 
+json.dumps(
+mlai_market_structure_v411_diagnostic_backup.py:332:            return 
+json.dumps(
+mlai_market_structure_v411_diagnostic_backup.py:344:            return 
+json.dumps(
+mlai_market_structure_v411_diagnostic_backup.py:1059:    add("- Learning 
+memory modification: NO")
+mlai_market_structure_v411_diagnostic_backup.py:1412:        "Learning 
+memory modified: NO"
+mlai_market_structure_v411_diagnostic_backup.py:1451:        
+f"{MARKET_DATA_FILE:<30}: READ ONLY"
+mlai_market_structure_v411_diagnostic_backup.py:1459:        "Learning 
+memory              : NOT MODIFIED"
+mlai_market_structure_v411_diagnostic_backup.py:1475:        MARKET_DATA_FILE
+mlai_market_structure_v411_diagnostic_backup.py:1479:    # LOAD DATA
+mlai_market_structure_v411_diagnostic_backup.py:1484:    print("DATA LOAD")
+mlai_market_structure_v411_diagnostic_backup.py:1487:    candles, invalid = 
+BASE.load_market_data(
+mlai_market_structure_v411_diagnostic_backup.py:1488:        MARKET_DATA_FILE
+mlai_market_structure_v411_diagnostic_backup.py:2036:        MARKET_DATA_FILE
+mlai_market_structure_v411_diagnostic_backup.py:2052:            
+"market_data": MARKET_DATA_FILE,
+mlai_market_structure_v411_diagnostic_backup.py:2060:            
+"learning_memory_modified": False,
+mlai_market_structure_v411_diagnostic_backup.py:2089:    with open(
+mlai_market_structure_v411_diagnostic_backup.py:2094:        pickle.dump(
+mlai_market_structure_v411_diagnostic_backup.py:2097:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v411_diagnostic_backup.py:2121:    with open(
+mlai_market_structure_v411_diagnostic_backup.py:2127:        f.write(report)
+mlai_market_structure_v411_diagnostic_backup.py:2144:            
+"market_data.bin             : FAIL"
+mlai_market_structure_v411_diagnostic_backup.py:2148:            
+"market_data.bin changed."
+mlai_market_structure_v411_diagnostic_backup.py:2152:        
+"market_data.bin             : READ ONLY"
+mlai_market_structure_v411_diagnostic_backup.py:2160:        "Learning 
+memory             : NOT MODIFIED"
+mlai_market_structure_v411_v411_backup.py:39:market_data.bin is read-only 
+and is hash checked before/after execution.
+mlai_market_structure_v411_v411_backup.py:40:No production MLAI memory is 
+modified. Trading is disabled.
+mlai_market_structure_v411_v411_backup.py:51:import pickle
+mlai_market_structure_v411_v411_backup.py:64:MARKET_DATA_FILE = 
+"market_data.bin"
+mlai_market_structure_v411_v411_backup.py:177:    with open(path, "rb") as f:
+mlai_market_structure_v411_v411_backup.py:195:# MARKET DATA LOADER
+mlai_market_structure_v411_v411_backup.py:271:def load_market_data(path: 
+str) -> Tuple[List[Candle], int]:
+mlai_market_structure_v411_v411_backup.py:272:    with open(path, "rb") as f:
+mlai_market_structure_v411_v411_backup.py:273:        obj = pickle.load(f)
+mlai_market_structure_v411_v411_backup.py:281:            "market_data",
+mlai_market_structure_v411_v411_backup.py:289:            "market_data.bin 
+does not contain a supported candle sequence."
+mlai_market_structure_v411_v411_backup.py:1951:    add("- Learning memory 
+modification: NO")
+mlai_market_structure_v411_v411_backup.py:2155:    add("- Learning memory 
+modified: NO")
+mlai_market_structure_v411_v411_backup.py:2185:    
+print(f"{MARKET_DATA_FILE:<24}: READ ONLY")
+mlai_market_structure_v411_v411_backup.py:2187:    print("Learning memory    
+      : NOT MODIFIED")
+mlai_market_structure_v411_v411_backup.py:2191:    guard = 
+ProtectionGuard(MARKET_DATA_FILE)
+mlai_market_structure_v411_v411_backup.py:2200:    print("DATA LOAD")
+mlai_market_structure_v411_v411_backup.py:2203:    candles, invalid = 
+load_market_data(
+mlai_market_structure_v411_v411_backup.py:2204:        MARKET_DATA_FILE
+mlai_market_structure_v411_v411_backup.py:2701:            "market_file": 
+MARKET_DATA_FILE,
+mlai_market_structure_v411_v411_backup.py:2706:    with open(
+mlai_market_structure_v411_v411_backup.py:2710:        pickle.dump(
+mlai_market_structure_v411_v411_backup.py:2713:            
+protocol=pickle.HIGHEST_PROTOCOL,
+mlai_market_structure_v411_v411_backup.py:2717:        MARKET_DATA_FILE
+mlai_market_structure_v411_v411_backup.py:2737:    with open(
+mlai_market_structure_v411_v411_backup.py:2742:        f.write(report)
+mlai_market_structure_v411_v411_backup.py:2766:            "market_data.bin  
+     : FAIL - FILE CHANGED"
+mlai_market_structure_v411_v411_backup.py:2769:            "Protection 
+failure: market_data.bin changed."
+mlai_market_structure_v411_v411_backup.py:2773:        "market_data.bin      
+ : READ ONLY"
+mlai_market_structure_v411_v411_backup.py:2781:        "Learning memory      
+ : NOT MODIFIED"
+mlai_test.py:2:import pickle
+mlai_test.py:3:import requests
+mlai_test.py:16:API_URL = (
+mlai_test.py:17:    "https://query1.finance.yahoo.com/v8/finance/chart/"
+mlai_test.py:21:OUTPUT_FILE = "market_data.bin"
+mlai_test.py:25:# 1. Download market data
+mlai_test.py:28:def download_candles():
+mlai_test.py:30:    print("Connecting to Yahoo Finance...")
+mlai_test.py:40:    response = requests.get(
+mlai_test.py:41:        API_URL,
+mlai_test.py:53:            + json.dumps(data, indent=2)
+mlai_test.py:293:        "raw_api_response":
+mlai_test.py:300:    with open(
+mlai_test.py:305:        pickle.dump(
+mlai_test.py:308:            protocol=pickle.HIGHEST_PROTOCOL
+mlai_test.py:445:        raw_data = download_candles()
+mlai_test.py:448:            "Internet/API connection: SUCCESS"
+mlai_test.py:515:        print("market_data.bin")
+mlai_test.py:519:    except requests.RequestException as error:
+mlai_test.py:522:        print("NETWORK/API ERROR:")
+mlai_v02.py:2:import pickle
+mlai_v02.py:10:#     market_data.bin
+mlai_v02.py:25:INPUT_FILE = "market_data.bin"
+mlai_v02.py:29:# 1. LOAD MLAI MARKET MEMORY
+mlai_v02.py:32:def load_market_memory():
+mlai_v02.py:34:    print("Loading MLAI market memory...")
+mlai_v02.py:38:    with open(INPUT_FILE, "rb") as file:
+mlai_v02.py:39:        data = pickle.load(file)
+mlai_v02.py:1005:    print("MARKET MEMORY")
+mlai_v02.py:1138:        # LOAD
+mlai_v02.py:1141:        data, candles = load_market_memory()
+mlai_v02.py:1144:            f"Loaded {len(candles)} candles successfully."
+mlai_v02.py:1248:            "as market_data.bin."
+mlai_v03.py:6:- Uses existing market_data.bin
+mlai_v03.py:7:- Does NOT download new market data
+mlai_v03.py:26:import pickle
+mlai_v03.py:349:# LOAD MARKET MEMORY
+mlai_v03.py:352:def load_market_memory(
+mlai_v03.py:353:    filename: str = "market_data.bin",
+mlai_v03.py:359:        "MLAI v0.3.1 - LOADING MARKET MEMORY"
+mlai_v03.py:368:    with open(
+mlai_v03.py:373:        data = pickle.load(file)
+mlai_v03.py:376:        "PASS: market_data.bin loaded"
+mlai_v03.py:403:            "market_data",
+mlai_v03.py:424:        "market_data",
+mlai_v03.py:446:        "Could not locate candle data inside market_data.bin"
+mlai_v03.py:2651:- Reused existing market_data.bin.
+mlai_v03.py:2652:- Did not download new market data.
+mlai_v03.py:2787:- Existing market_data.bin loading
+mlai_v03.py:2922:        with open(
+mlai_v03.py:2966:    with open(
+mlai_v03.py:2972:        file.write(updated)
+mlai_v03.py:2988:        data = load_market_memory(
+mlai_v03.py:2989:            "market_data.bin"
+mlai_v03.py:3064:            "ERROR: market_data.bin "
+mlai_v04.py:6:- Uses existing market_data.bin
+mlai_v04.py:7:- Does NOT download new market data
+mlai_v04.py:23:import pickle
+mlai_v04.py:48:MARKET_DATA_FILE = "market_data.bin"
+mlai_v04.py:132:# LOAD MARKET MEMORY
+mlai_v04.py:135:def load_market_memory(
+mlai_v04.py:136:    filename: str = MARKET_DATA_FILE,
+mlai_v04.py:142:        "MLAI v0.4 - LOADING MARKET MEMORY"
+mlai_v04.py:151:    with open(
+mlai_v04.py:156:        data = pickle.load(file)
+mlai_v04.py:159:        "PASS: market_data.bin loaded"
+mlai_v04.py:191:            "market_data",
+mlai_v04.py:216:        "market_data",
+mlai_v04.py:239:        "inside market_data.bin"
+mlai_v04.py:2226:- Loaded existing market_data.bin.
+mlai_v04.py:2246:- No new market data was downloaded.
+mlai_v04.py:2313:- market_data.bin loading
+mlai_v04.py:2378:The next reasoning layer should connect:
+mlai_v04.py:2425:        with open(
+mlai_v04.py:2469:    with open(
+mlai_v04.py:2475:        file.write(updated)
+mlai_v04.py:2492:        data = load_market_memory(
+mlai_v04.py:2493:            MARKET_DATA_FILE
+mlai_v04.py:2569:            "ERROR: market_data.bin "
+mlai_v04.py:2574:            "Make sure market_data.bin "
+mlai_v05.py:2:import pickle
+mlai_v05.py:36:DATA_FILE = "market_data.bin"
+mlai_v05.py:142:# LOAD MARKET MEMORY
+mlai_v05.py:146:print("MLAI v0.5 - LOADING MARKET MEMORY")
+mlai_v05.py:153:    print("ERROR: market_data.bin was not found.")
+mlai_v05.py:161:    with open(DATA_FILE, "rb") as f:
+mlai_v05.py:162:        market_data = pickle.load(f)
+mlai_v05.py:165:    print("ERROR: Could not load market_data.bin")
+mlai_v05.py:170:if isinstance(market_data, dict):
+mlai_v05.py:171:    for key in ("candles", "data", "market_data", "records"):
+mlai_v05.py:172:        if key in market_data and 
+isinstance(market_data[key], list):
+mlai_v05.py:173:            market_data = market_data[key]
+mlai_v05.py:177:if not isinstance(market_data, list):
+mlai_v05.py:179:    print("ERROR: market_data.bin does not contain a candle 
+list.")
+mlai_v05.py:183:print("PASS: market_data.bin loaded")
+mlai_v05.py:184:print(f"Found {len(market_data)} stored candles.")
+mlai_v05.py:188:if len(market_data) < LOOKBACK:
+mlai_v05.py:196:candles = market_data[-LOOKBACK:]
+mlai_v05.py:910:- market_data.bin
+mlai_v05.py:940:    with open(STATUS_FILE, "a", encoding="utf-8") as f:
+mlai_v05.py:941:        f.write("\n" + status_entry)
+mlai_v06.py:2:import pickle
+mlai_v06.py:36:DATA_FILE = "market_data.bin"
+mlai_v06.py:663:# LOAD MARKET MEMORY
+mlai_v06.py:667:print("MLAI v0.6 - LOADING MARKET MEMORY")
+mlai_v06.py:675:    print("ERROR: market_data.bin was not found.")
+mlai_v06.py:681:    with open(DATA_FILE, "rb") as f:
+mlai_v06.py:683:        market_data = pickle.load(f)
+mlai_v06.py:687:    print(f"ERROR: Could not load market_data.bin: {e}")
+mlai_v06.py:691:if isinstance(market_data, dict):
+mlai_v06.py:693:    for key in ("candles", "data", "market_data", "records"):
+mlai_v06.py:695:        if key in market_data and 
+isinstance(market_data[key], list):
+mlai_v06.py:697:            market_data = market_data[key]
+mlai_v06.py:702:if not isinstance(market_data, list):
+mlai_v06.py:704:    print("ERROR: market_data.bin does not contain candle 
+data.")
+mlai_v06.py:708:print("PASS: market_data.bin loaded")
+mlai_v06.py:709:print(f"Found {len(market_data)} stored candles.")
+mlai_v06.py:713:if len(market_data) < LOOKBACK:
+mlai_v06.py:722:candles = market_data[-LOOKBACK:]
+mlai_v06.py:1064:- market_data.bin
+mlai_v06.py:1104:    with open(STATUS_FILE, "a", encoding="utf-8") as f:
+mlai_v06.py:1106:        f.write("\n" + status_entry)
+mlai_v07.py:2:import pickle
+mlai_v07.py:12:# candle sequences stored in market_data.bin.
+mlai_v07.py:18:# - connect to the Internet
+mlai_v07.py:32:DATA_FILE = "market_data.bin"
+mlai_v07.py:44:# DATA LOADING
+mlai_v07.py:107:def load_market_memory():
+mlai_v07.py:110:    print(f"MLAI v{VERSION} - LOADING MARKET MEMORY")
+mlai_v07.py:123:        with open(DATA_FILE, "rb") as file:
+mlai_v07.py:125:            data = pickle.load(file)
+mlai_v07.py:130:        print(f"ERROR: Could not load {DATA_FILE}")
+mlai_v07.py:140:            "market_data",
+mlai_v07.py:155:        print("ERROR: Unsupported market_data.bin format.")
+mlai_v07.py:169:    print("PASS: market_data.bin loaded")
+mlai_v07.py:814:            f"{outcome.capitalize():8s}: "
+mlai_v07.py:1028:        with open(
+mlai_v07.py:1034:            file.write("\n")
+mlai_v07.py:1036:            file.write(
+mlai_v07.py:1040:            file.write(
+mlai_v07.py:1044:            file.write(
+mlai_v07.py:1049:            file.write(
+mlai_v07.py:1054:            file.write(
+mlai_v07.py:1059:            file.write(
+mlai_v07.py:1063:            file.write(
+mlai_v07.py:1067:            file.write(
+mlai_v07.py:1071:            file.write(
+mlai_v07.py:1075:            file.write(
+mlai_v07.py:1080:            file.write(
+mlai_v07.py:1104:    candles = load_market_memory()
+mlai_v08.py:634:path.write_text(
+mlai_v09.py:2:import pickle
+mlai_v09.py:14:# v0.9 connects:
+mlai_v09.py:35:DATA_FILE = "market_data.bin"
+mlai_v09.py:140:# LOAD MARKET MEMORY
+mlai_v09.py:144:print("MLAI v0.9 - LOADING MARKET MEMORY")
+mlai_v09.py:153:    print("ERROR: market_data.bin not found.")
+mlai_v09.py:159:    with open(DATA_FILE, "rb") as f:
+mlai_v09.py:160:        market_data = pickle.load(f)
+mlai_v09.py:165:        f"ERROR: Could not load market_data.bin: {e}"
+mlai_v09.py:172:# SUPPORT CURRENT MLAI MEMORY FORMAT
+mlai_v09.py:175:if isinstance(market_data, dict):
+mlai_v09.py:177:    candles = market_data.get("candles")
+mlai_v09.py:182:            "ERROR: market_data.bin dictionary does not "
+mlai_v09.py:191:        "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v09.py:196:    print("MEMORY METADATA")
+mlai_v09.py:201:        f"{market_data.get('mlai_version', 'unknown')}"
+mlai_v09.py:206:        f"{market_data.get('created_at', 'unknown')}"
+mlai_v09.py:211:        f"{market_data.get('source', 'unknown')}"
+mlai_v09.py:217:elif isinstance(market_data, (list, tuple)):
+mlai_v09.py:221:    candles = list(market_data)
+mlai_v09.py:224:        "PASS: market_data.bin loaded as legacy candle list."
+mlai_v09.py:233:        "ERROR: Unsupported market_data.bin format."
+mlai_v09.py:1568:        f"The historical memory contains {historical_total} 
+"
+mlai_v09.py:1842:print("HISTORICAL MEMORY")
+mlai_v09.py:2158:The engine connects:
+mlai_v09.py:2193:Final   Continuous Data + Memory +
+mlai_v09.py:2200:    with open(
+mlai_v09.py:2206:        f.write(
+mlai_v10.py:2:import pickle
+mlai_v10.py:45:DATA_FILE = "market_data.bin"
+mlai_v10.py:144:# LOAD MARKET MEMORY
+mlai_v10.py:148:print("MLAI v1.0 - LOADING MARKET MEMORY")
+mlai_v10.py:156:    print("ERROR: market_data.bin not found.")
+mlai_v10.py:162:    with open(DATA_FILE, "rb") as f:
+mlai_v10.py:163:        market_memory = pickle.load(f)
+mlai_v10.py:167:    print(f"ERROR: Could not load market_data.bin: {e}")
+mlai_v10.py:172:# VALIDATE MLAI MEMORY OBJECT
+mlai_v10.py:175:if not isinstance(market_memory, dict):
+mlai_v10.py:178:        "ERROR: market_data.bin does not contain "
+mlai_v10.py:179:        "an MLAI memory object."
+mlai_v10.py:185:if "candles" not in market_memory:
+mlai_v10.py:188:        "ERROR: MLAI memory object does not contain "
+mlai_v10.py:195:candles = market_memory["candles"]
+mlai_v10.py:201:        "ERROR: MLAI memory candles field is not a list."
+mlai_v10.py:210:print("PASS: market_data.bin loaded as MLAI memory object.")
+mlai_v10.py:213:print("MEMORY METADATA")
+mlai_v10.py:218:    f"{market_memory.get('mlai_version', 'unknown')}"
+mlai_v10.py:223:    f"{market_memory.get('created_at', 'unknown')}"
+mlai_v10.py:228:    f"{market_memory.get('source', 'unknown')}"
+mlai_v10.py:632:# LAYER 4 — HISTORICAL MEMORY
+mlai_v10.py:1171:# HISTORICAL MEMORY
+mlai_v10.py:1189:            f"Historical memory has a bullish-dominant 
+outcome "
+mlai_v10.py:1207:            f"Historical memory has a bearish-dominant 
+outcome "
+mlai_v10.py:1215:            "Historical memory produces mixed outcome 
+behaviour."
+mlai_v10.py:1517:        f"The historical memory contains "
+mlai_v10.py:1779:print("HISTORICAL MEMORY")
+mlai_v10.py:2094:v1.2    Memory Update Engine               PENDING
+mlai_v10.py:2111:    with open(
+mlai_v10.py:2117:        f.write(
+mlai_v11.py:2:import pickle
+mlai_v11.py:9:# LEARNING + EXPERIENCE MEMORY ENGINE
+mlai_v11.py:12:#   Build persistent MLAI experience memory.
+mlai_v11.py:14:# v1.1 connects:
+mlai_v11.py:15:#   Market Memory
+mlai_v11.py:20:#   Observation Memory
+mlai_v11.py:28:#   market_data.bin
+mlai_v11.py:29:#       Existing market candle memory.
+mlai_v11.py:32:#       Persistent MLAI experience / observation memory.
+mlai_v11.py:39:DATA_FILE = "market_data.bin"
+mlai_v11.py:153:# LOAD MARKET MEMORY
+mlai_v11.py:157:print("MLAI v1.1 - LOADING MARKET MEMORY")
+mlai_v11.py:166:        "ERROR: market_data.bin not found."
+mlai_v11.py:174:    with open(
+mlai_v11.py:179:        market_data = pickle.load(f)
+mlai_v11.py:184:        f"ERROR: Could not load market_data.bin: {e}"
+mlai_v11.py:191:# SUPPORT BOTH CURRENT MLAI MEMORY FORMATS
+mlai_v11.py:194:memory_metadata = {}
+mlai_v11.py:196:if isinstance(market_data, dict):
+mlai_v11.py:199:        "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v11.py:202:    memory_metadata = market_data
+mlai_v11.py:204:    if "candles" not in market_data:
+mlai_v11.py:207:            "ERROR: MLAI memory object does not contain 
+'candles'."
+mlai_v11.py:213:        market_data["candles"]
+mlai_v11.py:217:    print("MEMORY METADATA")
+mlai_v11.py:222:        f"{market_data.get('mlai_version', 'unknown')}"
+mlai_v11.py:227:        f"{market_data.get('created_at', 'unknown')}"
+mlai_v11.py:232:        f"{market_data.get('source', 'unknown')}"
+mlai_v11.py:238:        "PASS: Legacy candle-list memory detected."
+mlai_v11.py:242:        market_data,
+mlai_v11.py:247:            "ERROR: market_data.bin does not contain 
+candles."
+mlai_v11.py:253:        market_data
+mlai_v11.py:1065:# EXPERIENCE MEMORY
+mlai_v11.py:1069:print("MLAI v1.1 LEARNING + EXPERIENCE MEMORY ENGINE")
+mlai_v11.py:1076:# LOAD EXISTING EXPERIENCE MEMORY
+mlai_v11.py:1079:experience_memory = None
+mlai_v11.py:1088:        with open(
+mlai_v11.py:1093:            experience_memory = (
+mlai_v11.py:1094:                pickle.load(f)
+mlai_v11.py:1098:            experience_memory,
+mlai_v11.py:1102:            experience_memory = None
+mlai_v11.py:1106:        experience_memory = None
+mlai_v11.py:1109:if experience_memory is None:
+mlai_v11.py:1111:    experience_memory = {
+mlai_v11.py:1154:        "PASS: Created new MLAI experience memory."
+mlai_v11.py:1160:        "PASS: Existing MLAI experience memory loaded."
+mlai_v11.py:1164:records = experience_memory.setdefault(
+mlai_v11.py:1170:statistics = experience_memory.setdefault(
+mlai_v11.py:1194:        memory_metadata.get(
+mlai_v11.py:1364:        "already exists in experience memory."
+mlai_v11.py:1427:        # Do not repeatedly overwrite
+mlai_v11.py:1729:experience_memory[
+mlai_v11.py:1734:experience_memory[
+mlai_v11.py:1739:experience_memory[
+mlai_v11.py:1745:# SAVE EXPERIENCE MEMORY
+mlai_v11.py:1750:    with open(
+mlai_v11.py:1755:        pickle.dump(
+mlai_v11.py:1756:            experience_memory,
+mlai_v11.py:1758:            protocol=pickle.HIGHEST_PROTOCOL
+mlai_v11.py:1784:    "MLAI v1.1 LEARNING + EXPERIENCE MEMORY"
+mlai_v11.py:1872:print("EXPERIENCE MEMORY")
+mlai_v11.py:1932:print("RECENT EXPERIENCE MEMORY")
+mlai_v11.py:2053:    f"experience memory. "
+mlai_v11.py:2073:## MLAI v1.1 — Learning + Experience Memory Engine
+mlai_v11.py:2127:MLAI v1.1 introduces persistent Learning + Experience 
+Memory.
+mlai_v11.py:2154:### Persistent Memory
+mlai_v11.py:2156:Experience memory file:
+mlai_v11.py:2160:The experience memory contains:
+mlai_v11.py:2184:v1.1    Learning + Experience Memory      COMPLETED
+mlai_v11.py:2187:v1.4    Market Regime Memory              PENDING
+mlai_v11.py:2193:MLAI is not allowed to rewrite history.
+mlai_v11.py:2207:    with open(
+mlai_v11.py:2213:        f.write(
+mlai_v11.py:2233:    "Memory Engine completed."
+mlai_v12.py:2:import pickle
+mlai_v12.py:16:#   Loads those observations correctly
+mlai_v12.py:26:DATA_FILE = "market_data.bin"
+mlai_v12.py:131:# LOAD MARKET DATA
+mlai_v12.py:135:print("MLAI v1.2 - LOADING MARKET MEMORY")
+mlai_v12.py:145:        "ERROR: market_data.bin not found."
+mlai_v12.py:153:    with open(
+mlai_v12.py:158:        market_data = pickle.load(f)
+mlai_v12.py:163:        f"ERROR: Could not load market_data.bin: {e}"
+mlai_v12.py:170:# SUPPORT MLAI MEMORY OBJECT
+mlai_v12.py:173:if isinstance(market_data, dict):
+mlai_v12.py:176:        "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v12.py:179:    memory_metadata = market_data
+mlai_v12.py:181:    candles = market_data.get(
+mlai_v12.py:189:        "PASS: market_data.bin loaded as candle list."
+mlai_v12.py:192:    memory_metadata = {}
+mlai_v12.py:194:    candles = market_data
+mlai_v12.py:200:if memory_metadata:
+mlai_v12.py:202:    print("MEMORY METADATA")
+mlai_v12.py:207:        f"{memory_metadata.get('mlai_version', 'unknown')}"
+mlai_v12.py:212:        f"{memory_metadata.get('created_at', 'unknown')}"
+mlai_v12.py:217:        f"{memory_metadata.get('source', 'unknown')}"
+mlai_v12.py:229:        "ERROR: market_data.bin does not contain a candle 
+list."
+mlai_v12.py:754:# LOAD EXPERIENCE MEMORY
+mlai_v12.py:758:    "PASS: Analysing experience memory..."
+mlai_v12.py:773:        "Run mlai_v11.py first to create the experience 
+memory."
+mlai_v12.py:781:    with open(
+mlai_v12.py:786:        experience_memory = pickle.load(f)
+mlai_v12.py:791:        f"ERROR: Could not load "
+mlai_v12.py:799:# CRITICAL MEMORY COMPATIBILITY FIX
+mlai_v12.py:808:# 4. {"memory": [...]}
+mlai_v12.py:818:    experience_memory,
+mlai_v12.py:822:    observations = experience_memory
+mlai_v12.py:826:    experience_memory,
+mlai_v12.py:833:        "memory",
+mlai_v12.py:840:        value = experience_memory.get(
+mlai_v12.py:862:        experience_memory,
+mlai_v12.py:868:            in experience_memory
+mlai_v12.py:872:                experience_memory
+mlai_v12.py:1486:# REBUILD MEMORY OBJECT
+mlai_v12.py:1494:new_memory = {
+mlai_v12.py:1496:    "memory_version":
+mlai_v12.py:1500:        experience_memory.get(
+mlai_v12.py:1507:            experience_memory,
+mlai_v12.py:1549:# SAVE CORRECTED EXPERIENCE MEMORY
+mlai_v12.py:1554:    with open(
+mlai_v12.py:1559:        pickle.dump(
+mlai_v12.py:1560:            new_memory,
+mlai_v12.py:1652:print("EXPERIENCE MEMORY")
+mlai_v12.py:1725:print("RECENT EXPERIENCE MEMORY")
+mlai_v12.py:1876:    "The corrected v1.2 memory format preserves the 
+original "
+mlai_v12.py:1903:    f"stored in persistent memory. "
+mlai_v12.py:1975:- Loads v1.1 experience memory
+mlai_v12.py:1978:- Rebuilds the memory in a clean v1.2 format
+mlai_v12.py:2020:v1.1    Learning + Experience Memory      COMPLETED
+mlai_v12.py:2026:### Memory Compatibility Fix
+mlai_v12.py:2028:v1.2 explicitly supports legacy v1.1 memory structures.
+mlai_v12.py:2035:- memory
+mlai_v12.py:2039:The memory is then rewritten into a consistent v1.2 format.
+mlai_v12.py:2053:    with open(
+mlai_v12.py:2059:        f.write(
+mlai_v13.py:2:import pickle
+mlai_v13.py:12:# Discover recurring market behaviour from stored market 
+memory.
+mlai_v13.py:23:#   v1.1   Experience Memory
+mlai_v13.py:47:DATA_FILE = "market_data.bin"
+mlai_v13.py:49:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v13.py:490:# LOAD MARKET MEMORY
+mlai_v13.py:494:print("MLAI v1.3 - LOADING MARKET MEMORY")
+mlai_v13.py:503:        "ERROR: market_data.bin not found."
+mlai_v13.py:511:    with open(
+mlai_v13.py:516:        market_data = pickle.load(f)
+mlai_v13.py:521:        f"ERROR: Could not load market_data.bin: {e}"
+mlai_v13.py:528:# SUPPORT BOTH MEMORY FORMATS
+mlai_v13.py:532:    market_data,
+mlai_v13.py:537:        "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v13.py:542:    print("MEMORY METADATA")
+mlai_v13.py:547:        f"{market_data.get('mlai_version', 'unknown')}"
+mlai_v13.py:552:        f"{market_data.get('created_at', 'unknown')}"
+mlai_v13.py:557:        f"{market_data.get('source', 'unknown')}"
+mlai_v13.py:560:    candles = market_data.get(
+mlai_v13.py:568:        "PASS: Legacy candle-list market memory loaded."
+mlai_v13.py:571:    candles = market_data
+mlai_v13.py:580:        "ERROR: No candle list found in market_data.bin."
+mlai_v13.py:1207:# LOAD EXPERIENCE MEMORY
+mlai_v13.py:1210:experience_memory = None
+mlai_v13.py:1218:        with open(
+mlai_v13.py:1223:            experience_memory = (
+mlai_v13.py:1224:                pickle.load(f)
+mlai_v13.py:1228:            "PASS: Existing MLAI experience memory loaded."
+mlai_v13.py:1234:            "WARNING: Could not load "
+mlai_v13.py:1241:        "INFO: No MLAI experience memory found."
+mlai_v13.py:1254:    experience_memory,
+mlai_v13.py:1259:        experience_memory.get(
+mlai_v13.py:1323:# SAVE PATTERN MEMORY
+mlai_v13.py:1326:pattern_memory = {
+mlai_v13.py:1339:        market_data.get(
+mlai_v13.py:1343:            market_data,
+mlai_v13.py:1454:    with open(
+mlai_v13.py:1459:        pickle.dump(
+mlai_v13.py:1460:            pattern_memory,
+mlai_v13.py:1780:# EXPERIENCE MEMORY
+mlai_v13.py:1783:print("EXPERIENCE MEMORY")
+mlai_v13.py:1957:    f"market memory."
+mlai_v13.py:1973:        "discovered pattern memory."
+mlai_v13.py:2007:        "pattern memory is primarily based on "
+mlai_v13.py:2093:The engine searches historical market memory for recurring:
+mlai_v13.py:2138:v1.1    Learning + Experience Memory      COMPLETED
+mlai_v13.py:2141:v1.4    Market Regime Memory              NEXT
+mlai_v13.py:2148:Final   Continuous Data + Memory +
+mlai_v13.py:2155:    with open(
+mlai_v13.py:2161:        f.write(
+mlai_v14.py:3:import pickle
+mlai_v14.py:14:# Connect:
+mlai_v14.py:15:#   Market memory
+mlai_v14.py:16:#   Experience memory
+mlai_v14.py:17:#   Pattern memory
+mlai_v14.py:29:#   market_data.bin
+mlai_v14.py:31:#   mlai_pattern_memory.bin
+mlai_v14.py:32:#   mlai_learning_memory.bin
+mlai_v14.py:38:DATA_FILE = "market_data.bin"
+mlai_v14.py:40:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v14.py:41:LEARNING_FILE = "mlai_learning_memory.bin"
+mlai_v14.py:188:# LOAD MARKET MEMORY
+mlai_v14.py:192:print("MLAI v1.4 - LOADING MARKET MEMORY")
+mlai_v14.py:201:    print("ERROR: market_data.bin not found.")
+mlai_v14.py:207:    with open(DATA_FILE, "rb") as f:
+mlai_v14.py:208:        market_memory = pickle.load(f)
+mlai_v14.py:213:        f"ERROR: Could not load market_data.bin: {e}"
+mlai_v14.py:220:# SUPPORT BOTH OLD AND NEW MARKET MEMORY FORMATS
+mlai_v14.py:225:if isinstance(market_memory, dict):
+mlai_v14.py:229:            market_memory.get("mlai_version"),
+mlai_v14.py:232:            market_memory.get("created_at"),
+mlai_v14.py:235:            market_memory.get("source")
+mlai_v14.py:239:        market_memory.get("candles"),
+mlai_v14.py:244:            market_memory["candles"]
+mlai_v14.py:250:            "ERROR: Market memory dictionary does not "
+mlai_v14.py:257:    market_memory,
+mlai_v14.py:261:    candles = list(market_memory)
+mlai_v14.py:266:        "ERROR: Unsupported market_data.bin format."
+mlai_v14.py:273:    "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v14.py:278:print("MEMORY METADATA")
+mlai_v14.py:500:# EXPERIENCE MEMORY
+mlai_v14.py:504:    "PASS: Loading MLAI experience memory..."
+mlai_v14.py:508:experience_memory = None
+mlai_v14.py:515:        with open(
+mlai_v14.py:520:            experience_memory = pickle.load(f)
+mlai_v14.py:525:            "WARNING: Could not load "
+mlai_v14.py:530:if experience_memory is None:
+mlai_v14.py:532:    experience_memory = {
+mlai_v14.py:539:# NORMALIZE EXPERIENCE MEMORY
+mlai_v14.py:543:    experience_memory,
+mlai_v14.py:547:    experience_memory = {
+mlai_v14.py:549:        "observations": experience_memory
+mlai_v14.py:554:    experience_memory,
+mlai_v14.py:558:    experience_memory = {
+mlai_v14.py:564:observations = experience_memory.get(
+mlai_v14.py:789:# SAVE EXPERIENCE MEMORY
+mlai_v14.py:792:experience_memory["version"] = "1.4"
+mlai_v14.py:794:experience_memory["observations"] = observations
+mlai_v14.py:796:experience_memory[
+mlai_v14.py:803:    with open(
+mlai_v14.py:808:        pickle.dump(
+mlai_v14.py:809:            experience_memory,
+mlai_v14.py:814:        "PASS: Updated experience memory saved."
+mlai_v14.py:820:        "WARNING: Could not save experience memory:"
+mlai_v14.py:826:# PATTERN MEMORY
+mlai_v14.py:830:    "PASS: Loading MLAI pattern memory..."
+mlai_v14.py:834:pattern_memory = None
+mlai_v14.py:841:        with open(
+mlai_v14.py:846:            pattern_memory = pickle.load(f)
+mlai_v14.py:851:            "WARNING: Could not load "
+mlai_v14.py:856:if pattern_memory is None:
+mlai_v14.py:858:    pattern_memory = {}
+mlai_v14.py:862:# SUPPORT MULTIPLE PATTERN MEMORY FORMATS
+mlai_v14.py:870:    pattern_memory,
+mlai_v14.py:875:        pattern_memory.get(
+mlai_v14.py:877:            pattern_memory.get(
+mlai_v14.py:885:        pattern_memory.get(
+mlai_v14.py:911:# This is intentionally recalculated from market_data.bin.
+mlai_v14.py:913:# It prevents old pattern-memory formats from corrupting
+mlai_v14.py:1031:# CREATE LEARNING MEMORY
+mlai_v14.py:1034:learning_memory = {
+mlai_v14.py:1179:    learning_memory[
+mlai_v14.py:1188:current_stats = learning_memory[
+mlai_v14.py:1438:# SAVE LEARNING MEMORY
+mlai_v14.py:1441:learning_memory[
+mlai_v14.py:1445:learning_memory[
+mlai_v14.py:1449:learning_memory[
+mlai_v14.py:1453:learning_memory[
+mlai_v14.py:1457:learning_memory[
+mlai_v14.py:1461:learning_memory[
+mlai_v14.py:1465:learning_memory[
+mlai_v14.py:1474:    with open(
+mlai_v14.py:1479:        pickle.dump(
+mlai_v14.py:1480:            learning_memory,
+mlai_v14.py:1485:        "PASS: mlai_learning_memory.bin saved."
+mlai_v14.py:1491:        "WARNING: Could not save learning memory:"
+mlai_v14.py:1584:print("EXPERIENCE MEMORY")
+mlai_v14.py:1628:print("HISTORICAL PATTERN MEMORY")
+mlai_v14.py:1633:    f"{len(learning_memory['patterns'])}"
+mlai_v14.py:1709:for pattern, record in learning_memory[
+mlai_v14.py:1782:        horizon_16 = learning_memory[
+mlai_v14.py:2071:{len(learning_memory["patterns"])}
+mlai_v14.py:2078:MLAI v1.4 connects:
+mlai_v14.py:2080:- Market memory
+mlai_v14.py:2082:- Experience memory
+mlai_v14.py:2097:v1.1  Learning + Experience Memory              COMPLETED
+mlai_v14.py:2105:v1.9  Continuous Learning Memory                PENDING
+mlai_v14.py:2122:    with open(
+mlai_v14.py:2128:        f.write(
+mlai_v15.py:2:import pickle
+mlai_v15.py:12:#   market_data.bin
+mlai_v15.py:14:#   mlai_pattern_memory.bin
+mlai_v15.py:15:#   mlai_learning_memory.bin
+mlai_v15.py:18:#   mlai_adaptive_memory.bin
+mlai_v15.py:28:MARKET_FILE = "market_data.bin"
+mlai_v15.py:30:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v15.py:31:LEARNING_FILE = "mlai_learning_memory.bin"
+mlai_v15.py:32:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v15.py:61:def load_pickle(path):
+mlai_v15.py:65:    with open(path, "rb") as f:
+mlai_v15.py:66:        return pickle.load(f)
+mlai_v15.py:69:def save_pickle(path, obj):
+mlai_v15.py:70:    with open(path, "wb") as f:
+mlai_v15.py:71:        pickle.dump(obj, f)
+mlai_v15.py:120:def extract_candles(memory):
+mlai_v15.py:121:    if isinstance(memory, list):
+mlai_v15.py:122:        return memory
+mlai_v15.py:124:    if isinstance(memory, dict):
+mlai_v15.py:129:            "market_data",
+mlai_v15.py:133:            value = memory.get(key)
+mlai_v15.py:541:# EXPERIENCE MEMORY
+mlai_v15.py:544:def normalize_experience(memory):
+mlai_v15.py:545:    if memory is None:
+mlai_v15.py:551:    if isinstance(memory, dict):
+mlai_v15.py:553:        observations = memory.get("observations")
+mlai_v15.py:556:            return memory
+mlai_v15.py:564:def get_experience_statistics(memory):
+mlai_v15.py:565:    observations = memory.get("observations", [])
+mlai_v15.py:1008:# ADAPTIVE MEMORY
+mlai_v15.py:1011:def create_adaptive_memory(
+mlai_v15.py:1064:def update_status(memory, context, structure, evidence):
+mlai_v15.py:1072:            with open(path, "r", encoding="utf-8") as f:
+mlai_v15.py:1095:        f"- Confidence level: 
+{confidence_level(evidence['confidence'], memory['experience'])}",
+mlai_v15.py:1096:        f"- Current pattern: {memory['current_pattern']}",
+mlai_v15.py:1097:        f"- Experience observations: 
+{memory['experience']['total_observations']}",
+mlai_v15.py:1098:        f"- Resolved windows: 
+{memory['experience']['resolved_windows']}",
+mlai_v15.py:1099:        f"- Pending windows: 
+{memory['experience']['pending_windows']}",
+mlai_v15.py:1124:    with open(path, "w", encoding="utf-8") as f:
+mlai_v15.py:1125:        f.write("\n".join(lines))
+mlai_v15.py:1150:    print("MLAI v1.5 - LOADING MARKET MEMORY")
+mlai_v15.py:1157:        print("ERROR: market_data.bin was not found.")
+mlai_v15.py:1160:    market_memory = load_pickle(MARKET_FILE)
+mlai_v15.py:1162:    print("PASS: market_data.bin loaded as MLAI memory 
+object.")
+mlai_v15.py:1167:    if isinstance(market_memory, dict):
+mlai_v15.py:1168:        metadata = market_memory.get(
+mlai_v15.py:1170:            market_memory.get("meta", {})
+mlai_v15.py:1173:    print("MEMORY METADATA")
+mlai_v15.py:1192:    candles_raw = extract_candles(market_memory)
+mlai_v15.py:1239:        "PASS: Loading MLAI experience memory..."
+mlai_v15.py:1242:    experience_memory = normalize_experience(
+mlai_v15.py:1243:        load_pickle(EXPERIENCE_FILE)
+mlai_v15.py:1247:        experience_memory
+mlai_v15.py:1251:        "PASS: Loading MLAI pattern memory..."
+mlai_v15.py:1254:    pattern_memory = load_pickle(
+mlai_v15.py:1258:    # v1.3/v1.4 pattern memory may have a nested
+mlai_v15.py:1260:    # the market memory to guarantee consistency.
+mlai_v15.py:1288:    adaptive_memory = create_adaptive_memory(
+mlai_v15.py:1298:    save_pickle(
+mlai_v15.py:1300:        adaptive_memory
+mlai_v15.py:1414:    print("EXPERIENCE MEMORY")
+mlai_v15.py:1519:    principles = adaptive_memory["principles"]
+mlai_v15.py:1560:        adaptive_memory,
+mlai_v16.py:3:import pickle
+mlai_v16.py:12:#   v1.1  Experience Memory
+mlai_v16.py:24:MEMORY_FILE = "market_data.bin"
+mlai_v16.py:26:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v16.py:27:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v16.py:59:def load_pickle(path, default=None):
+mlai_v16.py:64:        with open(path, "rb") as f:
+mlai_v16.py:65:            return pickle.load(f)
+mlai_v16.py:70:def save_pickle(path, data):
+mlai_v16.py:71:    with open(path, "wb") as f:
+mlai_v16.py:72:        pickle.dump(data, f)
+mlai_v16.py:101:            "market_data",
+mlai_v16.py:156:# MEMORY EXTRACTION
+mlai_v16.py:159:def extract_market_memory(memory):
+mlai_v16.py:163:    if isinstance(memory, dict):
+mlai_v16.py:165:        metadata = memory.get("metadata", {})
+mlai_v16.py:172:            "market_data",
+mlai_v16.py:174:            if key in memory:
+mlai_v16.py:175:                candles = normalize_candles(memory[key])
+mlai_v16.py:179:    elif isinstance(memory, (list, tuple)):
+mlai_v16.py:180:        candles = normalize_candles(memory)
+mlai_v16.py:190:            value = getattr(memory, key, None)
+mlai_v16.py:198:        metadata = getattr(memory, "metadata", {}) or {}
+mlai_v16.py:709:# EXPERIENCE / PATTERN / ADAPTIVE MEMORY
+mlai_v16.py:712:def memory_counts():
+mlai_v16.py:714:    experience = load_pickle(EXPERIENCE_FILE, {})
+mlai_v16.py:715:    pattern = load_pickle(PATTERN_FILE, {})
+mlai_v16.py:716:    adaptive = load_pickle(ADAPTIVE_FILE, {})
+mlai_v16.py:748:        "pattern_memory_loaded": bool(pattern),
+mlai_v16.py:749:        "adaptive_memory_loaded": bool(adaptive),
+mlai_v16.py:785:    lines.append("## Market Memory")
+mlai_v16.py:788:    lines.append(f"- Memory MLAI version: {version}")
+mlai_v16.py:789:    lines.append(f"- Memory created at: {created}")
+mlai_v16.py:798:            f"### {name.capitalize()} Context "
+mlai_v16.py:888:    lines.append("## Learning Memory")
+mlai_v16.py:917:        "Historical memory is not treated as guaranteed 
+future behaviour.",
+mlai_v16.py:918:        "Experience memory is not counted until outcomes are 
+actually resolved.",
+mlai_v16.py:928:    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+mlai_v16.py:929:        f.write("\n".join(lines))
+mlai_v16.py:939:    print("MLAI v1.6 - LOADING MARKET MEMORY")
+mlai_v16.py:941:    print(f"File: {MEMORY_FILE}")
+mlai_v16.py:944:    memory = load_pickle(MEMORY_FILE)
+mlai_v16.py:946:    if memory is None:
+mlai_v16.py:947:        print("ERROR: market_data.bin could not be loaded.")
+mlai_v16.py:948:        print("Make sure the market memory file exists.")
+mlai_v16.py:951:    print("PASS: market_data.bin loaded as MLAI memory 
+object.")
+mlai_v16.py:954:    metadata, candles = extract_market_memory(memory)
+mlai_v16.py:957:        print("ERROR: No valid candles found in 
+market_data.bin.")
+mlai_v16.py:960:    print("MEMORY METADATA")
+mlai_v16.py:1031:    counts = memory_counts()
+mlai_v16.py:1034:    # Save v1.6 memory
+mlai_v16.py:1037:    mtf_memory = {
+mlai_v16.py:1047:        "experience_memory": counts,
+mlai_v16.py:1050:    save_pickle(
+mlai_v16.py:1051:        "mlai_multitimeframe_memory.bin",
+mlai_v16.py:1052:        mtf_memory,
+mlai_v16.py:1056:        "PASS: mlai_multitimeframe_memory.bin saved."
+mlai_v16.py:1077:            f"{name.capitalize():<12} "
+mlai_v16.py:1312:    print("EXPERIENCE MEMORY")
+mlai_v16.py:1372:        "Historical and experience memory remain separate 
+from direct observation.",
+mlai_v16.py:1388:        f"contexts using the available stored candle 
+memory. "
+mlai_v17.py:2:import pickle
+mlai_v17.py:17:#   - Existing MLAI adaptive memory
+mlai_v17.py:25:MARKET_FILE = "market_data.bin"
+mlai_v17.py:26:MTF_FILE = "mlai_multitimeframe_memory.bin"
+mlai_v17.py:27:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v17.py:87:# LOAD MARKET MEMORY
+mlai_v17.py:91:print("MLAI v1.7 - LOADING MARKET MEMORY")
+mlai_v17.py:98:    print("ERROR: market_data.bin not found.")
+mlai_v17.py:103:    with open(MARKET_FILE, "rb") as f:
+mlai_v17.py:104:        market_memory = pickle.load(f)
+mlai_v17.py:106:    print("PASS: market_data.bin loaded as MLAI memory 
+object.")
+mlai_v17.py:108:    print(f"ERROR: Could not load market_data.bin: {exc}")
+mlai_v17.py:118:if isinstance(market_memory, dict):
+mlai_v17.py:124:        "market_data",
+mlai_v17.py:129:        value = market_memory.get(key)
+mlai_v17.py:135:elif isinstance(market_memory, list):
+mlai_v17.py:136:    raw_candles = market_memory
+mlai_v17.py:145:        "market_data",
+mlai_v17.py:148:        value = getattr(market_memory, attr, None)
+mlai_v17.py:156:    print("ERROR: No candle data found in market_data.bin.")
+mlai_v17.py:167:print("MEMORY METADATA")
+mlai_v17.py:170:metadata = market_memory if isinstance(market_memory, dict) 
+else {}
+mlai_v17.py:443:# LOAD v1.6 MULTI-TIMEFRAME MEMORY
+mlai_v17.py:446:mtf_memory = None
+mlai_v17.py:452:        with open(MTF_FILE, "rb") as f:
+mlai_v17.py:453:            mtf_memory = pickle.load(f)
+mlai_v17.py:456:        print("PASS: Multi-timeframe memory loaded.")
+mlai_v17.py:462:            "WARNING: Multi-timeframe memory could not be 
+loaded."
+mlai_v17.py:467:# LOAD ADAPTIVE MEMORY
+mlai_v17.py:470:adaptive_memory = None
+mlai_v17.py:476:        with open(ADAPTIVE_FILE, "rb") as f:
+mlai_v17.py:477:            adaptive_memory = pickle.load(f)
+mlai_v17.py:479:        print("PASS: Adaptive learning memory loaded.")
+mlai_v17.py:484:            "WARNING: Adaptive learning memory could not be 
+loaded."
+mlai_v17.py:824:if isinstance(adaptive_memory, dict):
+mlai_v17.py:827:        adaptive_memory.get(
+mlai_v17.py:829:            adaptive_memory.get("total_observations", 0)
+mlai_v17.py:834:        adaptive_memory.get(
+mlai_v17.py:841:        adaptive_memory.get(
+mlai_v17.py:849:# SAVE REGIME MEMORY
+mlai_v17.py:852:regime_memory = {
+mlai_v17.py:907:        "Historical memory does not guarantee future 
+behaviour.",
+mlai_v17.py:914:REGIME_FILE = "mlai_regime_memory.bin"
+mlai_v17.py:917:with open(REGIME_FILE, "wb") as f:
+mlai_v17.py:918:    pickle.dump(
+mlai_v17.py:919:        regime_memory,
+mlai_v17.py:921:        protocol=pickle.HIGHEST_PROTOCOL
+mlai_v17.py:1125:print("EXPERIENCE MEMORY")
+mlai_v17.py:1187:    "Historical memory does not guarantee future 
+behaviour.",
+mlai_v17.py:1229:### Learning Memory
+mlai_v17.py:1246:    with open(
+mlai_v17.py:1252:        f.write(status_entry)
+mlai_v18.py:2:import pickle
+mlai_v18.py:9:# MARKET REGIME TRANSITION + STATE MEMORY ENGINE
+mlai_v18.py:12:#   market_data.bin
+mlai_v18.py:13:#   mlai_multitimeframe_memory.bin
+mlai_v18.py:14:#   mlai_adaptive_memory.bin
+mlai_v18.py:15:#   mlai_regime_memory.bin
+mlai_v18.py:18:#   mlai_regime_transition_memory.bin
+mlai_v18.py:27:MARKET_FILE = "market_data.bin"
+mlai_v18.py:28:MTF_FILE = "mlai_multitimeframe_memory.bin"
+mlai_v18.py:29:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v18.py:30:REGIME_FILE = "mlai_regime_memory.bin"
+mlai_v18.py:31:TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+mlai_v18.py:125:def load_pickle(filename):
+mlai_v18.py:130:        with open(filename, "rb") as f:
+mlai_v18.py:131:            return pickle.load(f)
+mlai_v18.py:136:def save_pickle(filename, data):
+mlai_v18.py:137:    with open(filename, "wb") as f:
+mlai_v18.py:138:        pickle.dump(data, f)
+mlai_v18.py:156:def extract_candles(memory):
+mlai_v18.py:157:    if isinstance(memory, dict):
+mlai_v18.py:162:            "market_data",
+mlai_v18.py:166:            value = memory.get(key)
+mlai_v18.py:172:        history = memory.get("history")
+mlai_v18.py:177:    if isinstance(memory, list):
+mlai_v18.py:178:        return memory
+mlai_v18.py:206:def get_open(candle):
+mlai_v18.py:259:    opens = [get_open(c) for c in candles]
+mlai_v18.py:374:def extract_regime(regime_memory):
+mlai_v18.py:376:    if not isinstance(regime_memory, dict):
+mlai_v18.py:385:        regime_memory,
+mlai_v18.py:393:        regime_memory,
+mlai_v18.py:401:            regime_memory,
+mlai_v18.py:409:        regime_memory,
+mlai_v18.py:714:# MEMORY CREATION / MIGRATION
+mlai_v18.py:717:def normalize_transition_memory(memory):
+mlai_v18.py:719:    if not isinstance(memory, dict):
+mlai_v18.py:722:            "memory_version": "1.8",
+mlai_v18.py:732:    if "observations" not in memory:
+mlai_v18.py:733:        memory["observations"] = []
+mlai_v18.py:736:        memory["observations"],
+mlai_v18.py:739:        memory["observations"] = []
+mlai_v18.py:741:    memory.setdefault(
+mlai_v18.py:742:        "memory_version",
+mlai_v18.py:746:    memory.setdefault(
+mlai_v18.py:753:    memory["updated_at"] = datetime.now(
+mlai_v18.py:757:    return memory
+mlai_v18.py:765:    market_memory,
+mlai_v18.py:775:    if isinstance(market_memory, dict):
+mlai_v18.py:776:        source = market_memory.get(
+mlai_v18.py:778:            market_memory.get(
+mlai_v18.py:796:        "Market Regime Transition + State Memory Engine"
+mlai_v18.py:858:    lines.append("## Historical Regime Memory")
+mlai_v18.py:913:    lines.append("## Memory Files")
+mlai_v18.py:936:    with open(
+mlai_v18.py:941:        f.write("\n".join(lines))
+mlai_v18.py:951:    print("MLAI v1.8 - LOADING MARKET MEMORY")
+mlai_v18.py:957:    market_memory = load_pickle(
+mlai_v18.py:961:    if market_memory is None:
+mlai_v18.py:963:            "ERROR: market_data.bin could not be loaded."
+mlai_v18.py:968:        "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v18.py:973:    if isinstance(market_memory, dict):
+mlai_v18.py:974:        metadata = market_memory.get(
+mlai_v18.py:976:            market_memory.get(
+mlai_v18.py:986:    print("MEMORY METADATA")
+mlai_v18.py:1017:        market_memory
+mlai_v18.py:1023:            "ERROR: No candles found in market_data.bin."
+mlai_v18.py:1049:    # Load v1.6 memory
+mlai_v18.py:1052:    mtf_memory = load_pickle(
+mlai_v18.py:1056:    if mtf_memory is not None:
+mlai_v18.py:1059:            "PASS: Multi-timeframe memory loaded."
+mlai_v18.py:1064:            "INFO: Multi-timeframe memory unavailable; "
+mlai_v18.py:1069:    # Load v1.5 memory
+mlai_v18.py:1072:    adaptive_memory = load_pickle(
+mlai_v18.py:1076:    if adaptive_memory is not None:
+mlai_v18.py:1078:            "PASS: Adaptive learning memory loaded."
+mlai_v18.py:1082:            "INFO: Adaptive learning memory unavailable."
+mlai_v18.py:1086:    # Load v1.7 regime memory
+mlai_v18.py:1089:    regime_memory = load_pickle(
+mlai_v18.py:1093:    if regime_memory is not None:
+mlai_v18.py:1095:            "PASS: Regime memory loaded."
+mlai_v18.py:1099:            "INFO: v1.7 regime memory unavailable; "
+mlai_v18.py:1129:    if regime_memory is not None:
+mlai_v18.py:1132:            regime_memory
+mlai_v18.py:1154:        "PASS: Current market regime loaded/calculated."
+mlai_v18.py:1158:    # Load transition memory
+mlai_v18.py:1161:    transition_memory = load_pickle(
+mlai_v18.py:1165:    if transition_memory is None:
+mlai_v18.py:1167:        transition_memory = (
+mlai_v18.py:1168:            normalize_transition_memory(None)
+mlai_v18.py:1172:            "PASS: Created new regime transition memory."
+mlai_v18.py:1177:        transition_memory = (
+mlai_v18.py:1178:            normalize_transition_memory(
+mlai_v18.py:1179:                transition_memory
+mlai_v18.py:1184:            "PASS: Existing regime transition memory 
+loaded."
+mlai_v18.py:1187:    history = transition_memory[
+mlai_v18.py:1293:        transition_memory[
+mlai_v18.py:1300:        transition_memory[
+mlai_v18.py:1304:    transition_memory[
+mlai_v18.py:1308:    transition_memory[
+mlai_v18.py:1312:    transition_memory[
+mlai_v18.py:1316:    transition_memory[
+mlai_v18.py:1322:    save_pickle(
+mlai_v18.py:1324:        transition_memory
+mlai_v18.py:1337:        transition_memory[
+mlai_v18.py:1349:        "MLAI v1.8 REGIME TRANSITION + STATE MEMORY ENGINE"
+mlai_v18.py:1403:            f"{name.capitalize():<23} | "
+mlai_v18.py:1452:    print("REGIME MEMORY")
+mlai_v18.py:1480:    print("REGIME MEMORY INTERPRETATION")
+mlai_v18.py:1497:                "in the v1.8 transition memory."
+mlai_v18.py:1563:        f"The regime transition memory contains "
+mlai_v18.py:1590:        "PASS: MLAI v1.8 Regime Transition + State Memory 
+Engine completed."
+mlai_v19.py:3:import pickle
+mlai_v19.py:12:#   market_data.bin
+mlai_v19.py:13:#   mlai_regime_transition_memory.bin
+mlai_v19.py:14:#   mlai_multitimeframe_memory.bin
+mlai_v19.py:15:#   mlai_adaptive_memory.bin
+mlai_v19.py:18:#   mlai_regime_learning_memory.bin
+mlai_v19.py:32:MARKET_FILE = "market_data.bin"
+mlai_v19.py:33:TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+mlai_v19.py:34:MULTITIMEFRAME_FILE = "mlai_multitimeframe_memory.bin"
+mlai_v19.py:35:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v19.py:37:LEARNING_FILE = "mlai_regime_learning_memory.bin"
+mlai_v19.py:53:def load_pickle(path, default=None):
+mlai_v19.py:58:        with open(path, "rb") as f:
+mlai_v19.py:59:            return pickle.load(f)
+mlai_v19.py:64:def save_pickle(path, data):
+mlai_v19.py:65:    with open(path, "wb") as f:
+mlai_v19.py:66:        pickle.dump(data, f)
+mlai_v19.py:157:def extract_candles(memory):
+mlai_v19.py:159:    Supports the common memory layouts used by previous MLAI 
+versions.
+mlai_v19.py:162:    if memory is None:
+mlai_v19.py:167:    if isinstance(memory, dict):
+mlai_v19.py:171:            "market_data",
+mlai_v19.py:175:            value = memory.get(key)
+mlai_v19.py:181:    elif isinstance(memory, list):
+mlai_v19.py:182:        candidates = memory
+mlai_v19.py:196:# MARKET MEMORY
+mlai_v19.py:200:print("MLAI v1.9 - LOADING MARKET MEMORY")
+mlai_v19.py:206:market_memory = load_pickle(MARKET_FILE)
+mlai_v19.py:208:if market_memory is None:
+mlai_v19.py:209:    print("ERROR: market_data.bin could not be loaded.")
+mlai_v19.py:212:print("PASS: market_data.bin loaded as MLAI memory object.")
+mlai_v19.py:217:if isinstance(market_memory, dict):
+mlai_v19.py:218:    metadata = market_memory.get("metadata", {})
+mlai_v19.py:220:print("MEMORY METADATA")
+mlai_v19.py:238:candles = extract_candles(market_memory)
+mlai_v19.py:242:    print("ERROR: No usable OHLC candles found in 
+market_data.bin.")
+mlai_v19.py:447:# LOAD EXISTING MEMORIES
+mlai_v19.py:450:print("PASS: Loading regime transition memory...")
+mlai_v19.py:451:transition_memory = load_pickle(TRANSITION_FILE, {})
+mlai_v19.py:453:print("PASS: Loading multi-timeframe memory...")
+mlai_v19.py:454:multitimeframe_memory = load_pickle(MULTITIMEFRAME_FILE, {})
+mlai_v19.py:456:print("PASS: Loading adaptive learning memory...")
+mlai_v19.py:457:adaptive_memory = load_pickle(ADAPTIVE_FILE, {})
+mlai_v19.py:464:# LEARNING MEMORY FORMAT
+mlai_v19.py:467:learning_memory = load_pickle(LEARNING_FILE)
+mlai_v19.py:469:if not isinstance(learning_memory, dict):
+mlai_v19.py:470:    learning_memory = {}
+mlai_v19.py:472:learning_memory.setdefault(
+mlai_v19.py:477:learning_memory.setdefault(
+mlai_v19.py:482:learning_memory.setdefault(
+mlai_v19.py:487:learning_memory.setdefault(
+mlai_v19.py:492:learning_memory.setdefault(
+mlai_v19.py:497:learning_memory.setdefault(
+mlai_v19.py:536:for observation in learning_memory["observations"]:
+mlai_v19.py:622:for observation in learning_memory["observations"]:
+mlai_v19.py:637:                learning_memory["observations"]
+mlai_v19.py:683:    learning_memory["observations"].append(
+mlai_v19.py:779:    learning_memory["observations"]
+mlai_v19.py:782:learning_memory[
+mlai_v19.py:795:for observation in learning_memory["observations"]:
+mlai_v19.py:822:learning_memory[
+mlai_v19.py:853:for observation in learning_memory["observations"]:
+mlai_v19.py:916:learning_memory[
+mlai_v19.py:920:learning_memory[
+mlai_v19.py:924:learning_memory[
+mlai_v19.py:930:# SAVE MEMORY
+mlai_v19.py:933:save_pickle(
+mlai_v19.py:935:    learning_memory
+mlai_v19.py:939:print("PASS: mlai_regime_learning_memory.bin saved.")
+mlai_v19.py:972:print("REGIME LEARNING MEMORY")
+mlai_v19.py:977:    f"{len(learning_memory['observations'])}"
+mlai_v19.py:986:    len(learning_memory["observations"]) * 3
+mlai_v19.py:1218:    f"MLAI has {len(learning_memory['observations'])} "
+mlai_v19.py:1285:{len(learning_memory['observations'])}
+mlai_v19.py:1331:## Memory Files
+mlai_v19.py:1333:- market_data.bin
+mlai_v19.py:1335:- mlai_pattern_memory.bin
+mlai_v19.py:1336:- mlai_learning_memory.bin
+mlai_v19.py:1337:- mlai_adaptive_memory.bin
+mlai_v19.py:1338:- mlai_multitimeframe_memory.bin
+mlai_v19.py:1339:- mlai_regime_memory.bin
+mlai_v19.py:1340:- mlai_regime_transition_memory.bin
+mlai_v19.py:1341:- mlai_regime_learning_memory.bin
+mlai_v19.py:1356:with open(
+mlai_v19.py:1361:    f.write(status_text)
+mlai_v20.py:3:import pickle
+mlai_v20.py:13:#   market_data.bin
+mlai_v20.py:15:#   mlai_pattern_memory.bin
+mlai_v20.py:16:#   mlai_adaptive_memory.bin
+mlai_v20.py:17:#   mlai_multitimeframe_memory.bin
+mlai_v20.py:18:#   mlai_regime_memory.bin
+mlai_v20.py:19:#   mlai_regime_transition_memory.bin
+mlai_v20.py:20:#   mlai_regime_learning_memory.bin
+mlai_v20.py:23:#   mlai_unified_memory.bin
+mlai_v20.py:32:MARKET_FILE = "market_data.bin"
+mlai_v20.py:34:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v20.py:35:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v20.py:36:MTF_FILE = "mlai_multitimeframe_memory.bin"
+mlai_v20.py:37:REGIME_FILE = "mlai_regime_memory.bin"
+mlai_v20.py:38:TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+mlai_v20.py:39:REGIME_LEARNING_FILE = "mlai_regime_learning_memory.bin"
+mlai_v20.py:41:OUTPUT_FILE = "mlai_unified_memory.bin"
+mlai_v20.py:51:def load_pickle(path):
+mlai_v20.py:56:        with open(path, "rb") as f:
+mlai_v20.py:57:            return pickle.load(f)
+mlai_v20.py:62:def save_pickle(path, obj):
+mlai_v20.py:63:    with open(path, "wb") as f:
+mlai_v20.py:64:        pickle.dump(obj, f)
+mlai_v20.py:156:def extract_candles(memory):
+mlai_v20.py:172:    if isinstance(memory, list):
+mlai_v20.py:173:        candles = memory
+mlai_v20.py:175:    elif isinstance(memory, dict):
+mlai_v20.py:183:            "market_data",
+mlai_v20.py:186:            if key in memory and isinstance(memory[key], 
+list):
+mlai_v20.py:187:                candles = memory[key]
+mlai_v20.py:195:            memory,
+mlai_v20.py:278:        raise ValueError("No usable candles found in 
+market_data.bin")
+mlai_v20.py:500:# MEMORY EXTRACTION
+mlai_v20.py:503:def memory_dict(memory):
+mlai_v20.py:504:    if isinstance(memory, dict):
+mlai_v20.py:505:        return memory
+mlai_v20.py:507:    if hasattr(memory, "__dict__"):
+mlai_v20.py:508:        return vars(memory)
+mlai_v20.py:513:def extract_experience_info(memory):
+mlai_v20.py:514:    if not memory:
+mlai_v20.py:525:    data = memory_dict(memory)
+mlai_v20.py:542:            "memory",
+mlai_v20.py:605:    inspect(memory)
+mlai_v20.py:704:def extract_pattern_info(memory):
+mlai_v20.py:705:    if not memory:
+mlai_v20.py:711:    data = memory_dict(memory)
+mlai_v20.py:718:            "pattern_memory",
+mlai_v20.py:736:def extract_adaptive_info(memory):
+mlai_v20.py:737:    if not memory:
+mlai_v20.py:745:    data = memory_dict(memory)
+mlai_v20.py:802:def extract_mtf_info(memory):
+mlai_v20.py:803:    if not memory:
+mlai_v20.py:810:    data = memory_dict(memory)
+mlai_v20.py:852:def extract_regime_info(memory):
+mlai_v20.py:853:    if not memory:
+mlai_v20.py:861:    data = memory_dict(memory)
+mlai_v20.py:912:def extract_transition_info(memory):
+mlai_v20.py:913:    if not memory:
+mlai_v20.py:922:    data = memory_dict(memory)
+mlai_v20.py:1201:        # memory uses percentages or arbitrary scores.
+mlai_v20.py:1225:                "Adaptive historical pattern memory has a 
+bullish-weighted distribution."
+mlai_v20.py:1230:                "Adaptive historical pattern memory has a 
+bearish-weighted distribution."
+mlai_v20.py:1416:    loaded_files,
+mlai_v20.py:1470:## Experience Memory
+mlai_v20.py:1484:## Adaptive Historical Memory
+mlai_v20.py:1520:## Memory Files
+mlai_v20.py:1524:    for name, loaded in loaded_files.items():
+mlai_v20.py:1527:            f"{'loaded' if loaded else 'not available'}\n"
+mlai_v20.py:1536:1. Direct market observation has priority over historical 
+pattern memory.
+mlai_v20.py:1564:    with open(
+mlai_v20.py:1569:        f.write(status)
+mlai_v20.py:1579:    print("MLAI v2.0 - LOADING MARKET MEMORY")
+mlai_v20.py:1585:    market_memory = load_pickle(
+mlai_v20.py:1589:    if market_memory is None:
+mlai_v20.py:1591:            "ERROR: market_data.bin could not be loaded."
+mlai_v20.py:1594:            "Make sure market_data.bin exists in the 
+current folder."
+mlai_v20.py:1599:        "PASS: market_data.bin loaded as MLAI memory 
+object."
+mlai_v20.py:1606:    metadata = memory_dict(
+mlai_v20.py:1607:        market_memory
+mlai_v20.py:1614:            "memory_metadata",
+mlai_v20.py:1677:    print("MEMORY METADATA")
+mlai_v20.py:1688:        market_memory
+mlai_v20.py:1718:    # Load all previous memories
+mlai_v20.py:1723:        "PASS: Loading MLAI experience memory..."
+mlai_v20.py:1726:    experience_memory = load_pickle(
+mlai_v20.py:1731:        "PASS: Loading MLAI pattern memory..."
+mlai_v20.py:1734:    pattern_memory = load_pickle(
+mlai_v20.py:1739:        "PASS: Loading adaptive learning memory..."
+mlai_v20.py:1742:    adaptive_memory = load_pickle(
+mlai_v20.py:1747:        "PASS: Loading multi-timeframe memory..."
+mlai_v20.py:1750:    mtf_memory = load_pickle(
+mlai_v20.py:1755:        "PASS: Loading regime memory..."
+mlai_v20.py:1758:    regime_memory = load_pickle(
+mlai_v20.py:1763:        "PASS: Loading regime transition memory..."
+mlai_v20.py:1766:    transition_memory = load_pickle(
+mlai_v20.py:1771:        "PASS: Loading regime learning memory..."
+mlai_v20.py:1774:    regime_learning_memory = load_pickle(
+mlai_v20.py:1783:        experience_memory
+mlai_v20.py:1787:        pattern_memory
+mlai_v20.py:1791:        adaptive_memory
+mlai_v20.py:1795:        mtf_memory
+mlai_v20.py:1799:        regime_memory
+mlai_v20.py:1802:    # If regime memory doesn't expose useful data,
+mlai_v20.py:1803:    # attempt regime-learning memory as fallback.
+mlai_v20.py:1806:        and regime_learning_memory is not None
+mlai_v20.py:1809:            regime_learning_memory
+mlai_v20.py:1813:        transition_memory
+mlai_v20.py:1817:    # If MTF memory is missing, use direct market context.
+mlai_v20.py:1855:    # Create unified memory
+mlai_v20.py:1858:    unified_memory = {
+mlai_v20.py:1897:    save_pickle(
+mlai_v20.py:1899:        unified_memory
+mlai_v20.py:2059:    print("EXPERIENCE MEMORY")
+mlai_v20.py:2091:    print("ADAPTIVE HISTORICAL MEMORY")
+mlai_v20.py:2227:    loaded_files = {
+mlai_v20.py:2228:        MARKET_FILE: market_memory is not None,
+mlai_v20.py:2229:        EXPERIENCE_FILE: experience_memory is not None,
+mlai_v20.py:2230:        PATTERN_FILE: pattern_memory is not None,
+mlai_v20.py:2231:        ADAPTIVE_FILE: adaptive_memory is not None,
+mlai_v20.py:2232:        MTF_FILE: mtf_memory is not None,
+mlai_v20.py:2233:        REGIME_FILE: regime_memory is not None,
+mlai_v20.py:2234:        TRANSITION_FILE: transition_memory is not None,
+mlai_v20.py:2235:        REGIME_LEARNING_FILE: regime_learning_memory is not 
+None,
+mlai_v20.py:2246:        loaded_files,
+mlai_v21.py:6:# 1. Correctly reads v2.0 unified memory when available.
+mlai_v21.py:7:# 2. Correctly reads multi-timeframe memory.
+mlai_v21.py:8:# 3. Correctly reads regime memory.
+mlai_v21.py:17:# 10. Saves mlai_scenario_memory.bin.
+mlai_v21.py:22:import pickle
+mlai_v21.py:30:MARKET_FILE = "market_data.bin"
+mlai_v21.py:33:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v21.py:34:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v21.py:35:MTF_FILE = "mlai_multitimeframe_memory.bin"
+mlai_v21.py:36:REGIME_FILE = "mlai_regime_memory.bin"
+mlai_v21.py:37:TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+mlai_v21.py:38:REGIME_LEARNING_FILE = "mlai_regime_learning_memory.bin"
+mlai_v21.py:39:UNIFIED_FILE = "mlai_unified_memory.bin"
+mlai_v21.py:41:SCENARIO_FILE = "mlai_scenario_memory.bin"
+mlai_v21.py:52:def load_pickle(path, default=None):
+mlai_v21.py:57:        with open(path, "rb") as f:
+mlai_v21.py:58:            return pickle.load(f)
+mlai_v21.py:63:def save_pickle(path, data):
+mlai_v21.py:64:    with open(path, "wb") as f:
+mlai_v21.py:65:        pickle.dump(data, f)
+mlai_v21.py:231:# LOAD MARKET MEMORY
+mlai_v21.py:235:print("MLAI v2.1 FIXED - LOADING MARKET MEMORY")
+mlai_v21.py:240:market_memory = load_pickle(MARKET_FILE)
+mlai_v21.py:242:if market_memory is None:
+mlai_v21.py:243:    print("ERROR: market_data.bin could not be loaded.")
+mlai_v21.py:246:print("PASS: market_data.bin loaded as MLAI memory object.")
+mlai_v21.py:251:if isinstance(market_memory, dict):
+mlai_v21.py:252:    metadata = market_memory.get("metadata", {})
+mlai_v21.py:254:print("MEMORY METADATA")
+mlai_v21.py:268:if isinstance(market_memory, dict):
+mlai_v21.py:269:    for key in ["candles", "data", "market_data", "records"]:
+mlai_v21.py:270:        value = market_memory.get(key)
+mlai_v21.py:276:elif isinstance(market_memory, list):
+mlai_v21.py:277:    candles = market_memory
+mlai_v21.py:281:    print("ERROR: No candle data found in market_data.bin.")
+mlai_v21.py:317:# LOAD PREVIOUS MLAI MEMORIES
+mlai_v21.py:320:print("PASS: Loading MLAI evidence memories...")
+mlai_v21.py:322:experience_memory = load_pickle(EXPERIENCE_FILE, {})
+mlai_v21.py:323:pattern_memory = load_pickle(PATTERN_FILE, {})
+mlai_v21.py:324:adaptive_memory = load_pickle(ADAPTIVE_FILE, {})
+mlai_v21.py:325:mtf_memory = load_pickle(MTF_FILE, {})
+mlai_v21.py:326:regime_memory = load_pickle(REGIME_FILE, {})
+mlai_v21.py:327:transition_memory = load_pickle(TRANSITION_FILE, {})
+mlai_v21.py:328:regime_learning_memory = load_pickle(REGIME_LEARNING_FILE, 
+{})
+mlai_v21.py:329:unified_memory = load_pickle(UNIFIED_FILE, {})
+mlai_v21.py:331:print("PASS: Evidence memories loaded.")
+mlai_v21.py:339:def extract_timeframe(memory, names):
+mlai_v21.py:340:    if not isinstance(memory, dict):
+mlai_v21.py:344:        memory,
+mlai_v21.py:358:        direct = memory.get(name)
+mlai_v21.py:367:    mtf_memory,
+mlai_v21.py:372:    mtf_memory,
+mlai_v21.py:377:    mtf_memory,
+mlai_v21.py:382:# If stored MTF memory is incomplete, reconstruct it.
+mlai_v21.py:521:if isinstance(regime_memory, dict):
+mlai_v21.py:524:        regime_memory,
+mlai_v21.py:565:            regime_memory,
+mlai_v21.py:573:            regime_memory,
+mlai_v21.py:580:            regime_memory,
+mlai_v21.py:588:                regime_memory,
+mlai_v21.py:616:# EXPERIENCE MEMORY
+mlai_v21.py:621:if isinstance(experience_memory, dict):
+mlai_v21.py:624:        experience_memory,
+mlai_v21.py:631:elif isinstance(experience_memory, list):
+mlai_v21.py:632:    observations = experience_memory
+mlai_v21.py:790:if isinstance(adaptive_memory, dict):
+mlai_v21.py:794:            adaptive_memory,
+mlai_v21.py:804:            adaptive_memory,
+mlai_v21.py:814:            adaptive_memory,
+mlai_v21.py:1156:# SAVE SCENARIO MEMORY
+mlai_v21.py:1159:scenario_memory = {
+mlai_v21.py:1254:save_pickle(SCENARIO_FILE, scenario_memory)
+mlai_v21.py:1256:print("PASS: mlai_scenario_memory.bin saved.")
+mlai_v21.py:1342:print("EXPERIENCE MEMORY")
+mlai_v21.py:1481:for i, principle in 
+enumerate(scenario_memory["principles"], 1):
+mlai_v21.py:1545:### Memory
+mlai_v21.py:1547:- market_data.bin
+mlai_v21.py:1549:- mlai_pattern_memory.bin
+mlai_v21.py:1550:- mlai_adaptive_memory.bin
+mlai_v21.py:1551:- mlai_multitimeframe_memory.bin
+mlai_v21.py:1552:- mlai_regime_memory.bin
+mlai_v21.py:1553:- mlai_regime_transition_memory.bin
+mlai_v21.py:1554:- mlai_regime_learning_memory.bin
+mlai_v21.py:1555:- mlai_unified_memory.bin
+mlai_v21.py:1556:- mlai_scenario_memory.bin
+mlai_v21.py:1559:with open(STATUS_FILE, "w", encoding="utf-8") as f:
+mlai_v21.py:1560:    f.write(status)
+mlai_v22.py:2:import pickle
+mlai_v22.py:11:MARKET_FILE = "market_data.bin"
+mlai_v22.py:13:SCENARIO_FILE = "mlai_scenario_memory.bin"
+mlai_v22.py:14:CALIBRATION_FILE = "mlai_calibration_memory.bin"
+mlai_v22.py:81:# LOAD PICKLE SAFELY
+mlai_v22.py:84:def load_pickle(path, default):
+mlai_v22.py:89:        with open(path, "rb") as f:
+mlai_v22.py:90:            return pickle.load(f)
+mlai_v22.py:95:def save_pickle(path, obj):
+mlai_v22.py:96:    with open(path, "wb") as f:
+mlai_v22.py:97:        pickle.dump(obj, f)
+mlai_v22.py:101:# LOAD MARKET MEMORY
+mlai_v22.py:105:print("MLAI v2.2 - LOADING MARKET MEMORY")
+mlai_v22.py:110:market_memory = load_pickle(MARKET_FILE, None)
+mlai_v22.py:112:if market_memory is None:
+mlai_v22.py:113:    print("ERROR: market_data.bin could not be loaded.")
+mlai_v22.py:116:print("PASS: market_data.bin loaded as MLAI memory object.")
+mlai_v22.py:120:# Extract candles from different possible memory formats
+mlai_v22.py:125:if isinstance(market_memory, dict):
+mlai_v22.py:126:    for key in ("candles", "data", "rows", "market_data"):
+mlai_v22.py:127:        if isinstance(market_memory.get(key), list):
+mlai_v22.py:128:            candles = market_memory[key]
+mlai_v22.py:131:elif isinstance(market_memory, list):
+mlai_v22.py:132:    candles = market_memory
+mlai_v22.py:135:    print("ERROR: No candle data found in market_data.bin.")
+mlai_v22.py:138:print("MEMORY METADATA")
+mlai_v22.py:141:if isinstance(market_memory, dict):
+mlai_v22.py:142:    metadata = market_memory.get("metadata", {})
+mlai_v22.py:230:# LOAD SCENARIO MEMORY
+mlai_v22.py:233:print("PASS: Loading MLAI scenario memory...")
+mlai_v22.py:235:scenario_memory = load_pickle(SCENARIO_FILE, {})
+mlai_v22.py:237:if not isinstance(scenario_memory, dict):
+mlai_v22.py:238:    scenario_memory = {}
+mlai_v22.py:240:print("PASS: Scenario memory loaded.")
+mlai_v22.py:249:if isinstance(scenario_memory.get("current_scenario"), dict):
+mlai_v22.py:250:    current_scenario = scenario_memory["current_scenario"]
+mlai_v22.py:252:elif isinstance(scenario_memory.get("scenario"), dict):
+mlai_v22.py:253:    current_scenario = scenario_memory["scenario"]
+mlai_v22.py:255:elif isinstance(scenario_memory.get("latest"), dict):
+mlai_v22.py:256:    current_scenario = scenario_memory["latest"]
+mlai_v22.py:262:        scenario_memory,
+mlai_v22.py:323:        value = scenario_memory.get(key)
+mlai_v22.py:379:    scenario_memory.get(
+mlai_v22.py:398:# CALIBRATION MEMORY
+mlai_v22.py:401:print("PASS: Loading calibration memory...")
+mlai_v22.py:403:calibration_memory = load_pickle(
+mlai_v22.py:408:if not isinstance(calibration_memory, dict):
+mlai_v22.py:409:    calibration_memory = {
+mlai_v22.py:415:if "observations" not in calibration_memory:
+mlai_v22.py:416:    calibration_memory["observations"] = []
+mlai_v22.py:418:print("PASS: Calibration memory loaded.")
+mlai_v22.py:423:# EXPERIENCE MEMORY
+mlai_v22.py:426:experience_memory = load_pickle(
+mlai_v22.py:431:if not isinstance(experience_memory, dict):
+mlai_v22.py:432:    experience_memory = {}
+mlai_v22.py:434:experience_observations = experience_memory.get(
+mlai_v22.py:534:    for item in calibration_memory["observations"]
+mlai_v22.py:542:# memory represents the current market observation.
+mlai_v22.py:562:        calibration_memory["observations"].append(
+mlai_v22.py:573:for record in calibration_memory["observations"]:
+mlai_v22.py:695:    for item in calibration_memory["observations"]
+mlai_v22.py:702:    for item in calibration_memory["observations"]
+mlai_v22.py:873:# SAVE CALIBRATION MEMORY
+mlai_v22.py:876:calibration_memory["version"] = "2.2"
+mlai_v22.py:878:calibration_memory["updated_at"] = (
+mlai_v22.py:882:calibration_memory["statistics"] = {
+mlai_v22.py:892:calibration_memory["statistics_by_horizon"] = (
+mlai_v22.py:896:calibration_memory["direction_statistics"] = (
+mlai_v22.py:900:save_pickle(
+mlai_v22.py:902:    calibration_memory
+mlai_v22.py:1199:### New Memory
+mlai_v22.py:1201:`mlai_calibration_memory.bin`
+mlai_v22.py:1231:with open(
+mlai_v22.py:1236:    f.write(status_text)
+mlai_v23.py:2:import pickle
+mlai_v23.py:11:#   - Load all existing MLAI evidence memories.
+mlai_v23.py:16:#   - Save a persistent reliability memory.
+mlai_v23.py:23:MARKET_FILE = "market_data.bin"
+mlai_v23.py:26:PATTERN_FILE = "mlai_pattern_memory.bin"
+mlai_v23.py:27:ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+mlai_v23.py:28:MTF_FILE = "mlai_multitimeframe_memory.bin"
+mlai_v23.py:29:REGIME_FILE = "mlai_regime_memory.bin"
+mlai_v23.py:30:TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+mlai_v23.py:31:REGIME_LEARNING_FILE = "mlai_regime_learning_memory.bin"
+mlai_v23.py:32:UNIFIED_FILE = "mlai_unified_memory.bin"
+mlai_v23.py:33:SCENARIO_FILE = "mlai_scenario_memory.bin"
+mlai_v23.py:34:CALIBRATION_FILE = "mlai_calibration_memory.bin"
+mlai_v23.py:36:RELIABILITY_FILE = "mlai_reliability_memory.bin"
+mlai_v23.py:44:def load_pickle(filename):
+mlai_v23.py:49:        with open(filename, "rb") as f:
+mlai_v23.py:50:            return pickle.load(f)
+mlai_v23.py:55:def save_pickle(filename, data):
+mlai_v23.py:56:    with open(filename, "wb") as f:
+mlai_v23.py:57:        pickle.dump(data, f)
+mlai_v23.py:75:# MARKET MEMORY
+mlai_v23.py:78:def extract_candles(memory):
+mlai_v23.py:79:    if isinstance(memory, list):
+mlai_v23.py:80:        return memory
+mlai_v23.py:82:    if not isinstance(memory, dict):
+mlai_v23.py:88:        "market_data",
+mlai_v23.py:92:        value = memory.get(key)
+mlai_v23.py:227:def find_observations(memory):
+mlai_v23.py:228:    if not isinstance(memory, dict):
+mlai_v23.py:235:        "memory",
+mlai_v23.py:237:        value = memory.get(key)
+mlai_v23.py:310:def experience_statistics(memory):
+mlai_v23.py:311:    observations = find_observations(memory)
+mlai_v23.py:361:    calibration_memory,
+mlai_v23.py:362:    layer_memory,
+mlai_v23.py:396:    if isinstance(calibration_memory, dict):
+mlai_v23.py:397:        calibration_data = calibration_memory.get(
+mlai_v23.py:447:    for name, memory in layer_memory.items():
+mlai_v23.py:448:        if memory is None:
+mlai_v23.py:489:                level = "early_state_memory"
+mlai_v23.py:558:# SAVE MEMORY
+mlai_v23.py:561:def save_reliability_memory(
+mlai_v23.py:567:    memory = {
+mlai_v23.py:594:    save_pickle(RELIABILITY_FILE, memory)
+mlai_v23.py:671:    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+mlai_v23.py:672:        f.write("\n".join(lines))
+mlai_v23.py:682:    print("MLAI v2.3 - LOADING MARKET MEMORY")
+mlai_v23.py:687:    market_memory = load_pickle(MARKET_FILE)
+mlai_v23.py:689:    if market_memory is None:
+mlai_v23.py:690:        print("ERROR: market_data.bin could not be loaded.")
+mlai_v23.py:693:    print("PASS: market_data.bin loaded as MLAI memory 
+object.")
+mlai_v23.py:696:    candles = extract_candles(market_memory)
+mlai_v23.py:722:    # LOAD MEMORIES
+mlai_v23.py:725:    experience = load_pickle(EXPERIENCE_FILE)
+mlai_v23.py:726:    pattern = load_pickle(PATTERN_FILE)
+mlai_v23.py:727:    adaptive = load_pickle(ADAPTIVE_FILE)
+mlai_v23.py:728:    mtf = load_pickle(MTF_FILE)
+mlai_v23.py:729:    regime = load_pickle(REGIME_FILE)
+mlai_v23.py:730:    transition = load_pickle(TRANSITION_FILE)
+mlai_v23.py:731:    regime_learning = load_pickle(REGIME_LEARNING_FILE)
+mlai_v23.py:732:    unified = load_pickle(UNIFIED_FILE)
+mlai_v23.py:733:    scenario = load_pickle(SCENARIO_FILE)
+mlai_v23.py:734:    calibration = load_pickle(CALIBRATION_FILE)
+mlai_v23.py:736:    print("PASS: Loading MLAI evidence memories...")
+mlai_v23.py:738:    layer_memory = {
+mlai_v23.py:751:    print("PASS: Evidence memories loaded.")
+mlai_v23.py:774:        layer_memory,
+mlai_v23.py:781:    save_reliability_memory(
+mlai_v24.py:4:import pickle
+mlai_v24.py:12:#   market_data.bin
+mlai_v24.py:14:#   mlai_pattern_memory.bin
+mlai_v24.py:15:#   mlai_adaptive_memory.bin
+mlai_v24.py:16:#   mlai_multitimeframe_memory.bin
+mlai_v24.py:17:#   mlai_regime_memory.bin
+mlai_v24.py:18:#   mlai_regime_transition_memory.bin
+mlai_v24.py:19:#   mlai_regime_learning_memory.bin
+mlai_v24.py:20:#   mlai_unified_memory.bin
+mlai_v24.py:21:#   mlai_scenario_memory.bin
+mlai_v24.py:22:#   mlai_calibration_memory.bin
+mlai_v24.py:23:#   mlai_reliability_memory.bin
+mlai_v24.py:26:#   mlai_decision_memory.bin
+mlai_v24.py:32:MARKET_FILE = os.path.join(BASE_DIR, "market_data.bin")
+mlai_v24.py:33:DECISION_FILE = os.path.join(BASE_DIR, 
+"mlai_decision_memory.bin")
+mlai_v24.py:41:def load_pickle(filename, default=None):
+mlai_v24.py:48:        with open(file_path, "rb") as f:
+mlai_v24.py:49:            return pickle.load(f)
+mlai_v24.py:54:def save_pickle(filename, data):
+mlai_v24.py:55:    with open(path(filename), "wb") as f:
+mlai_v24.py:56:        pickle.dump(data, f)
+mlai_v24.py:94:    one exact memory schema.
+mlai_v24.py:260:def extract_market_data(memory):
+mlai_v24.py:263:    if isinstance(memory, list):
+mlai_v24.py:264:        candles = memory
+mlai_v24.py:266:    elif isinstance(memory, dict):
+mlai_v24.py:270:            "market_data",
+mlai_v24.py:274:            value = memory.get(key)
+mlai_v24.py:403:def extract_mtf(memory):
+mlai_v24.py:404:    if not isinstance(memory, dict):
+mlai_v24.py:413:    contexts = memory.get("timeframe_contexts")
+mlai_v24.py:416:        contexts = memory.get("contexts")
+mlai_v24.py:427:                memory,
+mlai_v24.py:453:            memory,
+mlai_v24.py:473:            memory,
+mlai_v24.py:506:def extract_regime(memory):
+mlai_v24.py:507:    if not isinstance(memory, dict):
+mlai_v24.py:516:        memory,
+mlai_v24.py:554:            memory,
+mlai_v24.py:563:            memory,
+mlai_v24.py:572:            memory,
+mlai_v24.py:607:def extract_experience(memory):
+mlai_v24.py:608:    if not isinstance(memory, dict):
+mlai_v24.py:617:        memory,
+mlai_v24.py:628:        memory,
+mlai_v24.py:639:        memory,
+mlai_v24.py:650:        memory,
+mlai_v24.py:669:def extract_reliability(memory):
+mlai_v24.py:670:    if not isinstance(memory, dict):
+mlai_v24.py:674:        memory,
+mlai_v24.py:735:def scenario_distribution(memory):
+mlai_v24.py:736:    if not isinstance(memory, dict):
+mlai_v24.py:740:        memory,
+mlai_v24.py:752:    # Search nested scenario memory.
+mlai_v24.py:754:        memory,
+mlai_v24.py:768:def adaptive_distribution(memory):
+mlai_v24.py:769:    if not isinstance(memory, dict):
+mlai_v24.py:773:        memory,
+mlai_v24.py:783:        memory,
+mlai_v24.py:793:        memory,
+mlai_v24.py:811:            memory,
+mlai_v24.py:908:def write_status(result):
+mlai_v24.py:911:    with open(STATUS_FILE, "w", encoding="utf-8") as f:
+mlai_v24.py:912:        f.write(
+mlai_v24.py:941:print("MLAI v2.4 FIXED - LOADING MARKET MEMORY")
+mlai_v24.py:946:market_memory = load_pickle("market_data.bin")
+mlai_v24.py:948:if market_memory is None:
+mlai_v24.py:950:        "market_data.bin was not found or could not be 
+loaded."
+mlai_v24.py:953:print("PASS: market_data.bin loaded as MLAI memory object.")
+mlai_v24.py:957:    market_memory.get("metadata", {})
+mlai_v24.py:958:    if isinstance(market_memory, dict)
+mlai_v24.py:962:print("MEMORY METADATA")
+mlai_v24.py:978:candles = extract_market_data(market_memory)
+mlai_v24.py:982:        "No candle data found inside market_data.bin."
+mlai_v24.py:1003:# LOAD ALL MEMORY LAYERS
+mlai_v24.py:1006:print("PASS: Loading MLAI evidence memories...")
+mlai_v24.py:1009:experience_memory = load_pickle(
+mlai_v24.py:1014:pattern_memory = load_pickle(
+mlai_v24.py:1015:    "mlai_pattern_memory.bin",
+mlai_v24.py:1019:adaptive_memory = load_pickle(
+mlai_v24.py:1020:    "mlai_adaptive_memory.bin",
+mlai_v24.py:1024:mtf_memory = load_pickle(
+mlai_v24.py:1025:    "mlai_multitimeframe_memory.bin",
+mlai_v24.py:1029:regime_memory = load_pickle(
+mlai_v24.py:1030:    "mlai_regime_memory.bin",
+mlai_v24.py:1034:regime_transition_memory = load_pickle(
+mlai_v24.py:1035:    "mlai_regime_transition_memory.bin",
+mlai_v24.py:1039:regime_learning_memory = load_pickle(
+mlai_v24.py:1040:    "mlai_regime_learning_memory.bin",
+mlai_v24.py:1044:unified_memory = load_pickle(
+mlai_v24.py:1045:    "mlai_unified_memory.bin",
+mlai_v24.py:1049:scenario_memory = load_pickle(
+mlai_v24.py:1050:    "mlai_scenario_memory.bin",
+mlai_v24.py:1054:calibration_memory = load_pickle(
+mlai_v24.py:1055:    "mlai_calibration_memory.bin",
+mlai_v24.py:1059:reliability_memory = load_pickle(
+mlai_v24.py:1060:    "mlai_reliability_memory.bin",
+mlai_v24.py:1064:print("PASS: Evidence memories loaded.")
+mlai_v24.py:1071:mtf = extract_mtf(mtf_memory)
+mlai_v24.py:1073:regime = extract_regime(regime_memory)
+mlai_v24.py:1076:    experience_memory
+mlai_v24.py:1080:    reliability_memory
+mlai_v24.py:1083:# If the main regime memory is incomplete, use regime 
+learning.
+mlai_v24.py:1086:        regime_learning_memory
+mlai_v24.py:1092:# If MTF memory is incomplete, try unified memory.
+mlai_v24.py:1095:        unified_memory
+mlai_v24.py:1108:    scenario_memory
+mlai_v24.py:1120:    adaptive_memory
+mlai_v24.py:1148:# SAVE DECISION MEMORY
+mlai_v24.py:1151:decision_memory = {
+mlai_v24.py:1204:save_pickle(
+mlai_v24.py:1205:    "mlai_decision_memory.bin",
+mlai_v24.py:1206:    decision_memory,
+mlai_v24.py:1210:    "PASS: mlai_decision_memory.bin saved."
+mlai_v24.py:1526:principles = decision_memory["principles"]
+mlai_v24.py:1536:write_status(
+mlai_v25.py:2:import pickle
+mlai_v25.py:22:MARKET_FILE = os.path.join(BASE_DIR, "market_data.bin")
+mlai_v25.py:23:DECISION_FILE = os.path.join(BASE_DIR, 
+"mlai_decision_memory.bin")
+mlai_v25.py:24:SCENARIO_FILE = os.path.join(BASE_DIR, 
+"mlai_scenario_memory.bin")
+mlai_v25.py:25:CALIBRATION_FILE = os.path.join(BASE_DIR, 
+"mlai_calibration_memory.bin")
+mlai_v25.py:26:RELIABILITY_FILE = os.path.join(BASE_DIR, 
+"mlai_reliability_memory.bin")
+mlai_v25.py:27:MTF_FILE = os.path.join(BASE_DIR, 
+"mlai_multitimeframe_memory.bin")
+mlai_v25.py:28:REGIME_FILE = os.path.join(BASE_DIR, "mlai_regime_memory.bin")
+mlai_v25.py:29:ADAPTIVE_FILE = os.path.join(BASE_DIR, 
+"mlai_adaptive_memory.bin")
+mlai_v25.py:31:OUTPUT_FILE = os.path.join(BASE_DIR, 
+"mlai_validation_memory.bin")
+mlai_v25.py:39:def load_pickle(path, default=None):
+mlai_v25.py:44:        with open(path, "rb") as f:
+mlai_v25.py:45:            return pickle.load(f)
+mlai_v25.py:50:def save_pickle(path, data):
+mlai_v25.py:51:    with open(path, "wb") as f:
+mlai_v25.py:52:        pickle.dump(data, f)
+mlai_v25.py:112:# LOAD MARKET MEMORY
+mlai_v25.py:116:print("MLAI v2.5 - LOADING MARKET MEMORY")
+mlai_v25.py:121:market_memory = load_pickle(MARKET_FILE)
+mlai_v25.py:123:if market_memory is None:
+mlai_v25.py:124:    print("ERROR: market_data.bin could not be loaded.")
+mlai_v25.py:127:print("PASS: market_data.bin loaded as MLAI memory object.")
+mlai_v25.py:136:if isinstance(market_memory, list):
+mlai_v25.py:137:    candles = market_memory
+mlai_v25.py:139:elif isinstance(market_memory, dict):
+mlai_v25.py:144:        "market_data",
+mlai_v25.py:148:        value = market_memory.get(key)
+mlai_v25.py:155:    print("ERROR: No candle data found inside 
+market_data.bin.")
+mlai_v25.py:159:print("MEMORY METADATA")
+mlai_v25.py:162:if isinstance(market_memory, dict):
+mlai_v25.py:164:    metadata = market_memory.get("metadata", {})
+mlai_v25.py:171:        + str(metadata.get("mlai_version", 
+market_memory.get("mlai_version", "unknown")))
+mlai_v25.py:176:        + str(metadata.get("created_at", 
+market_memory.get("created_at", "unknown")))
+mlai_v25.py:181:        + str(metadata.get("source", 
+market_memory.get("source", "unknown")))
+mlai_v25.py:446:# LOAD ALL AVAILABLE MEMORY
+mlai_v25.py:449:print("PASS: Loading MLAI evidence memories...")
+mlai_v25.py:451:decision_memory = load_pickle(DECISION_FILE, {})
+mlai_v25.py:452:scenario_memory = load_pickle(SCENARIO_FILE, {})
+mlai_v25.py:453:calibration_memory = load_pickle(CALIBRATION_FILE, {})
+mlai_v25.py:454:reliability_memory = load_pickle(RELIABILITY_FILE, {})
+mlai_v25.py:455:mtf_memory = load_pickle(MTF_FILE, {})
+mlai_v25.py:456:regime_memory = load_pickle(REGIME_FILE, {})
+mlai_v25.py:457:adaptive_memory = load_pickle(ADAPTIVE_FILE, {})
+mlai_v25.py:459:print("PASS: Evidence memories loaded.")
+mlai_v25.py:473:if isinstance(mtf_memory, dict):
+mlai_v25.py:475:    contexts = mtf_memory.get("contexts", {})
+mlai_v25.py:500:            mtf_memory,
+mlai_v25.py:509:            mtf_memory,
+mlai_v25.py:517:# Fallback from direct memory if nested format is different
+mlai_v25.py:563:if isinstance(regime_memory, dict):
+mlai_v25.py:567:            regime_memory,
+mlai_v25.py:576:            regime_memory,
+mlai_v25.py:585:            regime_memory,
+mlai_v25.py:594:            regime_memory,
+mlai_v25.py:603:# SCENARIO MEMORY
+mlai_v25.py:611:if isinstance(scenario_memory, dict):
+mlai_v25.py:615:            scenario_memory,
+mlai_v25.py:624:            scenario_memory,
+mlai_v25.py:633:            scenario_memory,
+mlai_v25.py:642:            scenario_memory,
+mlai_v25.py:659:# ADAPTIVE MEMORY
+mlai_v25.py:666:if isinstance(adaptive_memory, dict):
+mlai_v25.py:670:            adaptive_memory,
+mlai_v25.py:679:            adaptive_memory,
+mlai_v25.py:688:            adaptive_memory,
+mlai_v25.py:722:if isinstance(reliability_memory, dict):
+mlai_v25.py:727:                reliability_memory,
+mlai_v25.py:738:                reliability_memory,
+mlai_v25.py:748:            reliability_memory,
+mlai_v25.py:886:if isinstance(decision_memory, dict):
+mlai_v25.py:890:            decision_memory,
+mlai_v25.py:1091:# SAVE VALIDATION MEMORY
+mlai_v25.py:1164:save_pickle(
+mlai_v25.py:1169:print("PASS: mlai_validation_memory.bin saved.")
+mlai_v25.py:1415:with open(STATUS_FILE, "w", encoding="utf-8") as f:
+mlai_v25.py:1416:    f.write(status_text)
+mlai_v26.py:2:import pickle
+mlai_v26.py:16:#   market_data.bin
+mlai_v26.py:19:#   mlai_backtest_memory.bin
+mlai_v26.py:30:MARKET_FILE = "market_data.bin"
+mlai_v26.py:31:OUTPUT_FILE = "mlai_backtest_memory.bin"
+mlai_v26.py:110:def extract_candles(memory):
+mlai_v26.py:112:    Supports several common market_data.bin structures.
+mlai_v26.py:115:    if isinstance(memory, list):
+mlai_v26.py:116:        return memory
+mlai_v26.py:118:    if isinstance(memory, tuple):
+mlai_v26.py:119:        return list(memory)
+mlai_v26.py:121:    if isinstance(memory, dict):
+mlai_v26.py:126:            "market_data",
+mlai_v26.py:133:            value = memory.get(key)
+mlai_v26.py:139:        for value in memory.values():
+mlai_v26.py:145:        "Unable to locate candle list inside 
+market_data.bin."
+mlai_v26.py:1153:# SAVE MEMORY
+mlai_v26.py:1156:def save_memory(results, statistics, confidence):
+mlai_v26.py:1158:    memory = {
+mlai_v26.py:1185:    with open(
+mlai_v26.py:1189:        pickle.dump(
+mlai_v26.py:1190:            memory,
+mlai_v26.py:1194:    return memory
+mlai_v26.py:1201:def write_status(
+mlai_v26.py:1336:    with open(
+mlai_v26.py:1341:        f.write("\n".join(lines))
+mlai_v26.py:1351:        "MLAI v2.6 - LOADING MARKET MEMORY"
+mlai_v26.py:1370:        with open(
+mlai_v26.py:1375:            memory = pickle.load(f)
+mlai_v26.py:1380:            "ERROR: Could not load market_data.bin."
+mlai_v26.py:1390:        "PASS: market_data.bin loaded as "
+mlai_v26.py:1391:        "MLAI memory object."
+mlai_v26.py:1397:            memory
+mlai_v26.py:1472:    save_memory(
+mlai_v26.py:1479:        "PASS: mlai_backtest_memory.bin saved."
+mlai_v27.py:3:import pickle
+mlai_v27.py:14:# market_data.bin.
+mlai_v27.py:21:MARKET_FILE = "market_data.bin"
+mlai_v27.py:22:ERROR_MEMORY_FILE = "mlai_error_memory.bin"
+mlai_v27.py:196:def extract_candles(memory):
+mlai_v27.py:198:    Supports several possible market_data.bin layouts.
+mlai_v27.py:203:    if isinstance(memory, list):
+mlai_v27.py:204:        candidates = memory
+mlai_v27.py:206:    elif isinstance(memory, tuple):
+mlai_v27.py:207:        candidates = list(memory)
+mlai_v27.py:209:    elif isinstance(memory, dict):
+mlai_v27.py:214:            "market_data",
+mlai_v27.py:221:            value = memory.get(key)
+mlai_v27.py:231:            for value in memory.values():
+mlai_v27.py:240:            "market_data",
+mlai_v27.py:244:            value = getattr(memory, attr, None)
+mlai_v27.py:262:# LOAD MARKET MEMORY
+mlai_v27.py:267:    "MLAI v2.7 FIXED - LOADING MARKET MEMORY"
+mlai_v27.py:275:    print("ERROR: market_data.bin not found.")
+mlai_v27.py:279:    with open(MARKET_FILE, "rb") as f:
+mlai_v27.py:280:        market_memory = pickle.load(f)
+mlai_v27.py:282:    print("PASS: market_data.bin loaded as MLAI memory 
+object.")
+mlai_v27.py:285:    print(f"ERROR: Unable to load market_data.bin: {exc}")
+mlai_v27.py:289:candles = extract_candles(market_memory)
+mlai_v27.py:964:# SAVE ERROR MEMORY
+mlai_v27.py:967:error_memory = {
+mlai_v27.py:998:with open(
+mlai_v27.py:999:    ERROR_MEMORY_FILE,
+mlai_v27.py:1002:    pickle.dump(
+mlai_v27.py:1003:        error_memory,
+mlai_v27.py:1013:print("PASS: mlai_error_memory.bin saved.")
+mlai_v27.py:1057:    "directly from market_data.bin."
+mlai_v27.py:1245:walk-forward decisions directly from market_data.bin.
+mlai_v27.py:1269:from raw market_data.bin and future candles are used only
+mlai_v27.py:1287:    with open(
+mlai_v27.py:1293:        f.write(status_text)
+mlai_v28.py:3:import pickle
+mlai_v28.py:27:MARKET_FILE = "market_data.bin"
+mlai_v28.py:28:ERROR_MEMORY_FILE = "mlai_error_memory.bin"
+mlai_v28.py:29:FAILURE_MEMORY_FILE = "mlai_failure_aware_memory.bin"
+mlai_v28.py:188:def extract_candles(memory):
+mlai_v28.py:192:    if isinstance(memory, (list, tuple)):
+mlai_v28.py:193:        candidates = list(memory)
+mlai_v28.py:195:    elif isinstance(memory, dict):
+mlai_v28.py:200:            "market_data",
+mlai_v28.py:206:            value = memory.get(key)
+mlai_v28.py:217:            "market_data",
+mlai_v28.py:222:            value = getattr(memory, attr, None)
+mlai_v28.py:241:# LOAD MARKET MEMORY
+mlai_v28.py:247:print("MLAI v2.8 - LOADING MARKET MEMORY")
+mlai_v28.py:256:    print("ERROR: market_data.bin not found.")
+mlai_v28.py:261:    with open(
+mlai_v28.py:266:        market_memory = pickle.load(f)
+mlai_v28.py:269:        "PASS: market_data.bin loaded as MLAI memory object."
+mlai_v28.py:275:        f"ERROR: Unable to load market_data.bin: {exc}"
+mlai_v28.py:281:candles = extract_candles(market_memory)
+mlai_v28.py:633:# LOAD v2.7 FAILURE MEMORY
+mlai_v28.py:638:    "PASS: Loading v2.7 failure memory..."
+mlai_v28.py:642:    ERROR_MEMORY_FILE
+mlai_v28.py:646:        "ERROR: mlai_error_memory.bin not found."
+mlai_v28.py:658:    with open(
+mlai_v28.py:659:        ERROR_MEMORY_FILE,
+mlai_v28.py:663:        error_memory = pickle.load(f)
+mlai_v28.py:666:        "PASS: Failure memory loaded."
+mlai_v28.py:672:        f"ERROR: Unable to load failure memory: {exc}"
+mlai_v28.py:678:failure_patterns = error_memory.get(
+mlai_v28.py:683:records = error_memory.get(
+mlai_v28.py:1021:# SAVE v2.8 MEMORY
+mlai_v28.py:1024:failure_aware_memory = {
+mlai_v28.py:1079:with open(
+mlai_v28.py:1080:    FAILURE_MEMORY_FILE,
+mlai_v28.py:1084:    pickle.dump(
+mlai_v28.py:1085:        failure_aware_memory,
+mlai_v28.py:1092:    "PASS: mlai_failure_aware_memory.bin saved."
+mlai_v28.py:1423:    with open(
+mlai_v28.py:1429:        f.write(status)
+mlai_v29.py:2:import pickle
+mlai_v29.py:13:# - Robustly loads v2.7 mlai_error_memory.bin
+mlai_v29.py:14:# - Handles dictionaries/lists/nested memory structures
+mlai_v29.py:16:# - Never silently converts valid memory to zero
+mlai_v29.py:26:MARKET_FILE = "market_data.bin"
+mlai_v29.py:27:ERROR_FILE = "mlai_error_memory.bin"
+mlai_v29.py:28:OUTPUT_FILE = "mlai_adaptive_failure_memory.bin"
+mlai_v29.py:95:# MEMORY LOADING
+mlai_v29.py:98:def load_pickle_file(filename):
+mlai_v29.py:101:            f"Required memory file not found: {filename}"
+mlai_v29.py:104:    with open(filename, "rb") as f:
+mlai_v29.py:105:        return pickle.load(f)
+mlai_v29.py:112:    This is intentionally tolerant because v2.7 memory 
+structures
+mlai_v29.py:152:# MARKET MEMORY
+mlai_v29.py:155:def extract_candles(memory):
+mlai_v29.py:157:    Supports common v0.1 MLAI memory layouts.
+mlai_v29.py:163:        "market_data",
+mlai_v29.py:170:        memory,
+mlai_v29.py:181:    if isinstance(memory, dict):
+mlai_v29.py:183:            value = memory.get(name)
+mlai_v29.py:648:def recover_detailed_records(memory):
+mlai_v29.py:664:        memory,
+mlai_v29.py:694:def recover_failure_patterns(memory):
+mlai_v29.py:700:        "failure_pattern_memory",
+mlai_v29.py:704:        memory,
+mlai_v29.py:1066:# SAVE MEMORY
+mlai_v29.py:1069:def save_memory(memory):
+mlai_v29.py:1071:    with open(
+mlai_v29.py:1076:        pickle.dump(
+mlai_v29.py:1077:            memory,
+mlai_v29.py:1112:## Historical Failure Memory
+mlai_v29.py:1137:## Memory Integrity
+mlai_v29.py:1139:v2.9 loaded and validated detailed historical failure 
+memory.
+mlai_v29.py:1140:Historical failure memory is contextual evidence and is not 
+treated as a future probability.
+mlai_v29.py:1143:    with open(
+mlai_v29.py:1149:        f.write(text)
+mlai_v29.py:1160:    print("MLAI v2.9 FIXED - LOADING MARKET MEMORY")
+mlai_v29.py:1168:    # Load market memory
+mlai_v29.py:1173:        market_memory = load_pickle_file(
+mlai_v29.py:1180:            f"ERROR: Could not load {MARKET_FILE}: {exc}"
+mlai_v29.py:1185:        "PASS: market_data.bin loaded as MLAI memory 
+object."
+mlai_v29.py:1190:        market_memory
+mlai_v29.py:1221:    # Load v2.7 error memory
+mlai_v29.py:1225:        "PASS: Loading MLAI failure memory..."
+mlai_v29.py:1230:        error_memory = load_pickle_file(
+mlai_v29.py:1237:            f"ERROR: Could not load {ERROR_FILE}: {exc}"
+mlai_v29.py:1242:        "PASS: Failure memory loaded."
+mlai_v29.py:1251:        error_memory
+mlai_v29.py:1259:        error_memory
+mlai_v29.py:1273:        memory_source = (
+mlai_v29.py:1281:        memory_source = (
+mlai_v29.py:1289:        memory_source = "no usable failure memory"
+mlai_v29.py:1302:    # CRITICAL MEMORY INTEGRITY CHECK
+mlai_v29.py:1311:                "WARNING: mlai_error_memory.bin was found, "
+mlai_v29.py:1363:    # Save unified memory
+mlai_v29.py:1366:    output_memory = {
+mlai_v29.py:1373:            "market_memory": MARKET_FILE,
+mlai_v29.py:1374:            "failure_memory": ERROR_FILE,
+mlai_v29.py:1384:        "memory_integrity": {
+mlai_v29.py:1388:            "memory_source": memory_source,
+mlai_v29.py:1429:    save_memory(
+mlai_v29.py:1430:        output_memory
+mlai_v29.py:1435:        "PASS: mlai_adaptive_failure_memory.bin saved."
+mlai_v29.py:1509:    print("FAILURE MEMORY INTEGRITY")
+mlai_v29.py:1513:        f"Memory source          : "
+mlai_v29.py:1514:        f"{memory_source}"
+mlai_v29.py:1572:            "historical_failure_memory_available"
+mlai_v29.py:1576:            "no_usable_failure_memory"
+mlai_v29.py:1688:            "Historical failure memory is available, "
+mlai_v29.py:1700:            "recovered from mlai_error_memory.bin."
+mlai_v30.py:2:import pickle
+mlai_v30.py:14:MARKET_FILE = "market_data.bin"
+mlai_v30.py:15:LEARNING_FILE = "mlai_learning_memory.bin"
+mlai_v30.py:208:# LOAD MARKET DATA
+mlai_v30.py:211:def load_market_data():
+mlai_v30.py:218:    with open(
+mlai_v30.py:223:        data = pickle.load(f)
+mlai_v30.py:247:            "market_data",
+mlai_v30.py:282:            "market_data.bin does not contain "
+mlai_v30.py:298:            "in market_data.bin."
+mlai_v30.py:1411:        "LOADING MARKET MEMORY"
+mlai_v30.py:1419:    candles = load_market_data()
+mlai_v30.py:1423:        "PASS: market_data.bin loaded."
+mlai_v30.py:1992:    # SAVE LEARNING MEMORY
+mlai_v30.py:1995:    learning_memory = {
+mlai_v30.py:2159:    with open(
+mlai_v30.py:2164:        pickle.dump(
+mlai_v30.py:2165:            learning_memory,
+mlai_v30.py:2167:            protocol=pickle.HIGHEST_PROTOCOL
+mlai_v30.py:2822:    with open(
+mlai_v30.py:2828:        f.write(status_text)
+mlai_v30.py:2854:    pickle.UnpicklingError,
+mlai_v30.py:2861:        "ERROR: market_data.bin could not be "
+mlai_v30.py:2862:        "read as a valid pickle object."
+mlai_v30.py:2887:        "The original market_data.bin has NOT "
+mlai_v31.py:2:import pickle
+mlai_v31.py:15:MARKET_FILE = "market_data.bin"
+mlai_v31.py:16:LEARNING_FILE = "mlai_learning_memory.bin"
+mlai_v31.py:170:# LOAD MARKET DATA
+mlai_v31.py:173:def load_market_data():
+mlai_v31.py:181:    with open(MARKET_FILE, "rb") as f:
+mlai_v31.py:183:        data = pickle.load(f)
+mlai_v31.py:197:            "market_data",
+mlai_v31.py:232:            "market_data.bin does not contain "
+mlai_v31.py:249:            "in market_data.bin."
+mlai_v31.py:1377:        "LOADING MARKET MEMORY"
+mlai_v31.py:1383:    candles = load_market_data()
+mlai_v31.py:1387:        "PASS: market_data.bin loaded."
+mlai_v31.py:1870:    # FINAL MEMORY
+mlai_v31.py:1885:    learning_memory = {
+mlai_v31.py:2050:    with open(
+mlai_v31.py:2055:        pickle.dump(
+mlai_v31.py:2056:            learning_memory,
+mlai_v31.py:2058:            protocol=pickle.HIGHEST_PROTOCOL
+mlai_v31.py:2645:    with open(
+mlai_v31.py:2651:        f.write(status_text)
+mlai_v31.py:2677:    pickle.UnpicklingError,
+mlai_v31.py:2684:        "ERROR: market_data.bin could not be "
+mlai_v31.py:2685:        "read as a valid pickle object."
+mlai_v31.py:2710:        "The original market_data.bin has NOT "
+mlai_v32.py:2:import pickle
+mlai_v32.py:17:# - Does NOT modify market_data.bin
+mlai_v32.py:19:# - Does NOT overwrite mlai_learning_memory.bin
+mlai_v32.py:25:MARKET_FILE = "market_data.bin"
+mlai_v32.py:166:# LOAD MARKET DATA
+mlai_v32.py:169:def load_market_data():
+mlai_v32.py:177:    with open(MARKET_FILE, "rb") as f:
+mlai_v32.py:178:        data = pickle.load(f)
+mlai_v32.py:192:            "market_data",
+mlai_v32.py:225:            "market_data.bin does not contain "
+mlai_v32.py:1146:    # LOAD
+mlai_v32.py:1149:    candles = load_market_data()
+mlai_v32.py:1153:        "PASS: market_data.bin loaded."
+mlai_v32.py:1372:    # SAVE CALIBRATION MEMORY
+mlai_v32.py:1375:    calibration_memory = {
+mlai_v32.py:1412:            "market_data_modified":
+mlai_v32.py:1435:    with open(
+mlai_v32.py:1440:        pickle.dump(
+mlai_v32.py:1441:            calibration_memory,
+mlai_v32.py:1443:            protocol=pickle.HIGHEST_PROTOCOL
+mlai_v32.py:1464:        f"{calibration_memory['created_at']}"
+mlai_v32.py:1481:        "- `market_data.bin` was read-only."
+mlai_v32.py:1487:        "- `mlai_learning_memory.bin` was not overwritten."
+mlai_v32.py:1723:    with open(
+mlai_v32.py:1729:        f.write(
+mlai_v32.py:1746:        with open(
+mlai_v32.py:1766:MLAI v3.2 independently tested the historical 
+outcome-classification thresholds using the existing `market_data.bin`.
+mlai_v32.py:1770:- `market_data.bin` was not modified.
+mlai_v32.py:1772:- `mlai_learning_memory.bin` was not overwritten.
+mlai_v32.py:1773:- Calibration memory was saved separately.
+mlai_v32.py:1843:    with open(
+mlai_v32.py:1849:        f.write(new_status)
+mlai_v32.py:1893:        "PASS: market_data.bin remains unchanged."
+mlai_v32.py:1917:    pickle.UnpicklingError,
+mlai_v32.py:1924:        "ERROR: market_data.bin could not be "
+mlai_v32.py:1925:        "read as a valid pickle object."
+mlai_v32.py:1942:        "The original market_data.bin has NOT "
+mlai_v321.py:2:import pickle
+mlai_v321.py:15:MARKET_FILE = "market_data.bin"
+mlai_v321.py:181:# LOAD MARKET DATA
+mlai_v321.py:184:def load_market_data():
+mlai_v321.py:192:    with open(
+mlai_v321.py:197:        data = pickle.load(f)
+mlai_v321.py:211:            "market_data",
+mlai_v321.py:247:            "market_data.bin does not contain "
+mlai_v321.py:265:            "in market_data.bin."
+mlai_v321.py:554:# historical-learning memory.
+mlai_v321.py:1180:        "- market_data.bin was read only."
+mlai_v321.py:1184:        "- market_data.bin was not modified."
+mlai_v321.py:1192:        "- mlai_learning_memory.bin was not modified."
+mlai_v321.py:1496:    candles = load_market_data()
+mlai_v321.py:1499:        "PASS: market_data.bin loaded."
+mlai_v321.py:1530:        "PASS: Existing MLAI learning memory "
+mlai_v321.py:1804:    # SAVE CALIBRATION MEMORY
+mlai_v321.py:1807:    calibration_memory = {
+mlai_v321.py:1844:            "market_data_modified":
+mlai_v321.py:1850:            "learning_memory_modified":
+mlai_v321.py:1882:    with open(
+mlai_v321.py:1887:        pickle.dump(
+mlai_v321.py:1888:            calibration_memory,
+mlai_v321.py:1890:            protocol=pickle.HIGHEST_PROTOCOL
+mlai_v321.py:1910:    with open(
+mlai_v321.py:1916:        f.write(report)
+mlai_v321.py:1942:- Market file: market_data.bin
+mlai_v321.py:1979:- market_data.bin was not modified.
+mlai_v321.py:1981:- mlai_learning_memory.bin was not modified.
+mlai_v321.py:2015:    with open(
+mlai_v321.py:2021:        f.write(status_text)
+mlai_v321.py:2066:        "PASS: market_data.bin remains unchanged."
+mlai_v321.py:2070:        "PASS: Existing learning memory remains unchanged."
+mlai_v321.py:2100:    pickle.UnpicklingError,
+mlai_v321.py:2107:        "ERROR: market_data.bin could not be "
+mlai_v321.py:2108:        "read as a valid pickle object."
+mlai_v321.py:2135:        "The original market_data.bin has NOT "
+mlai_v322.py:3:import pickle
+mlai_v322.py:18:#   - market_data.bin is READ ONLY
+mlai_v322.py:20:#   - existing learning memory is NOT modified
+mlai_v322.py:26:MARKET_FILE = "market_data.bin"
+mlai_v322.py:84:# LOAD MARKET DATA
+mlai_v322.py:108:with open(MARKET_FILE, "rb") as f:
+mlai_v322.py:109:    market_data = pickle.load(f)
+mlai_v322.py:111:print("PASS: market_data.bin loaded.")
+mlai_v322.py:117:if isinstance(market_data, dict):
+mlai_v322.py:118:    if "candles" in market_data:
+mlai_v322.py:119:        candles = market_data["candles"]
+mlai_v322.py:120:    elif "data" in market_data:
+mlai_v322.py:121:        candles = market_data["data"]
+mlai_v322.py:123:        candles = list(market_data.values())
+mlai_v322.py:125:    candles = market_data
+mlai_v322.py:141:print("PASS: Existing learning memory will NOT be 
+modified.")
+mlai_v322.py:713:with open(
+mlai_v322.py:717:    pickle.dump(output, f)
+mlai_v322.py:720:with open(
+mlai_v322.py:726:    f.write("# MLAI v3.2.2 Directional Validation 
+Report\n\n")
+mlai_v322.py:728:    f.write(
+mlai_v322.py:736:    f.write("## Best Candidate\n\n")
+mlai_v322.py:738:    f.write(
+mlai_v322.py:742:    f.write(
+mlai_v322.py:747:    f.write(
+mlai_v322.py:752:    f.write(
+mlai_v322.py:757:    f.write(
+mlai_v322.py:762:    f.write(
+mlai_v322.py:767:    f.write(
+mlai_v322.py:772:    f.write("## Ranking\n\n")
+mlai_v322.py:774:    f.write(
+mlai_v322.py:780:    f.write(
+mlai_v322.py:786:        f.write(
+mlai_v322.py:797:    f.write(
+mlai_v322.py:799:        "- market_data.bin was read only.\n"
+mlai_v322.py:801:        "- Existing learning memory was not modified.\n"
+mlai_v322.py:825:print("PASS: market_data.bin remains unchanged.")
+mlai_v322.py:826:print("PASS: Existing learning memory remains unchanged.")
+mlai_v323.py:2:import pickle
+mlai_v323.py:17:#   - Does NOT modify market_data.bin
+mlai_v323.py:19:#   - Does NOT modify existing learning memory
+mlai_v323.py:31:MARKET_FILE = "market_data.bin"
+mlai_v323.py:74:# LOAD MARKET DATA
+mlai_v323.py:77:def load_market_data():
+mlai_v323.py:83:    with open(MARKET_FILE, "rb") as f:
+mlai_v323.py:84:        data = pickle.load(f)
+mlai_v323.py:103:            "market_data",
+mlai_v323.py:115:            "Could not find candle list inside 
+market_data.bin"
+mlai_v323.py:621:    # LOAD
+mlai_v323.py:624:    data = load_market_data()
+mlai_v323.py:626:    print("PASS: market_data.bin loaded.")
+mlai_v323.py:636:    print("PASS: Existing learning memory will NOT be 
+modified.")
+mlai_v323.py:1034:        "market_data_modified": False,
+mlai_v323.py:1035:        "learning_memory_modified": False,
+mlai_v323.py:1038:    with open(OUTPUT_BIN, "wb") as f:
+mlai_v323.py:1039:        pickle.dump(output, f)
+mlai_v323.py:1188:        "Existing MLAI learning memory was not modified."
+mlai_v323.py:1202:    with open(
+mlai_v323.py:1207:        f.write("\n".join(report))
+mlai_v323.py:1258:market_data.bin modified:
+mlai_v323.py:1261:Existing learning memory modified:
+mlai_v323.py:1269:    with open(
+mlai_v323.py:1274:        f.write(status_text.strip() + "\n")
+mlai_v323.py:1293:    print("PASS: market_data.bin remains unchanged.")
+mlai_v323.py:1294:    print("PASS: Existing learning memory remains 
+unchanged.")
+mlai_v324_audit.py:3:import pickle
+mlai_v324_audit.py:16:#   - Does NOT modify market_data.bin
+mlai_v324_audit.py:18:#   - Does NOT modify learning memory
+mlai_v324_audit.py:32:MARKET_FILE = "market_data.bin"
+mlai_v324_audit.py:63:# LOAD MARKET DATA
+mlai_v324_audit.py:81:    print("ERROR: market_data.bin was not found.")
+mlai_v324_audit.py:84:with open(MARKET_FILE, "rb") as f:
+mlai_v324_audit.py:85:    data = pickle.load(f)
+mlai_v324_audit.py:88:print("PASS: market_data.bin loaded.")
+mlai_v325.py:2:import pickle
+mlai_v325.py:12:MARKET_FILE = "market_data.bin"
+mlai_v325.py:41:# LOAD MARKET DATA
+mlai_v325.py:60:with open(MARKET_FILE, "rb") as f:
+mlai_v325.py:61:    market_data = pickle.load(f)
+mlai_v325.py:64:print("PASS: market_data.bin loaded.")
+mlai_v325.py:65:print(f"Data type: {type(market_data).__name__}")
+mlai_v325.py:70:print("PASS: Existing learning memory will NOT be modified.")
+mlai_v325.py:81:        for key in ["candles", "data", "prices", 
+"market_data"]:
+mlai_v325.py:122:        "from market_data.bin."
+mlai_v325.py:126:closes = extract_close_prices(market_data)
+mlai_v325.py:831:print("market_data.bin has NOT been changed.")
+mlai_v325.py:832:print("Existing learning memory has NOT been changed.")
+mlai_v325.py:853:with open(
+mlai_v325.py:857:    pickle.dump(output, f)
+mlai_v326.py:3:import pickle
+mlai_v326.py:17:#   - Does NOT modify market_data.bin
+mlai_v326.py:19:#   - Does NOT modify existing learning memory
+mlai_v326.py:24:MARKET_FILE = "market_data.bin"
+mlai_v326.py:74:# LOAD MARKET DATA
+mlai_v326.py:102:with open(MARKET_FILE, "rb") as f:
+mlai_v326.py:103:    market_data = pickle.load(f)
+mlai_v326.py:105:print("PASS: market_data.bin loaded.")
+mlai_v326.py:106:print(f"Data type: {type(market_data).__name__}")
+mlai_v326.py:123:            "market_data",
+mlai_v326.py:166:closes = extract_close_prices(market_data)
+mlai_v326.py:170:        "Could not extract valid close prices from 
+market_data.bin."
+mlai_v326.py:180:print("PASS: Existing learning memory will NOT be 
+modified.")
+mlai_v326.py:761:print("market_data.bin has NOT been changed.")
+mlai_v326.py:762:print("Existing learning memory has NOT been changed.")
+mlai_v326.py:784:with open(OUTPUT_BIN, "wb") as f:
+mlai_v326.py:785:    pickle.dump(
+mlai_v326.py:788:        protocol=pickle.HIGHEST_PROTOCOL,
+mlai_v326.py:880:    "- market_data.bin was not modified."
+mlai_v326.py:883:    "- Existing learning memory was not modified."
+mlai_v326.py:890:with open(
+mlai_v326.py:895:    f.write("\n".join(report))
+mlai_v327.py:2:import pickle
+mlai_v327.py:18:#   - Does NOT modify market_data.bin
+mlai_v327.py:20:#   - Does NOT modify existing learning memory
+mlai_v327.py:37:MARKET_FILE = "market_data.bin"
+mlai_v327.py:94:# LOAD DATA
+mlai_v327.py:124:with open(MARKET_FILE, "rb") as f:
+mlai_v327.py:125:    market_data = pickle.load(f)
+mlai_v327.py:127:print("PASS: market_data.bin loaded.")
+mlai_v327.py:128:print(f"Data type: {type(market_data).__name__}")
+mlai_v327.py:145:            "market_data",
+mlai_v327.py:197:closes = extract_close_prices(market_data)
+mlai_v327.py:209:print("PASS: market_data.bin will NOT be modified.")
+mlai_v327.py:211:print("PASS: Existing learning memory will NOT be 
+modified.")
+mlai_v327.py:1221:print("PASS: market_data.bin unchanged.")
+mlai_v327.py:1223:print("PASS: Existing learning memory unchanged.")
+mlai_v327.py:1249:with open(
+mlai_v327.py:1254:    pickle.dump(
+mlai_v327.py:1257:        protocol=pickle.HIGHEST_PROTOCOL,
+mlai_v327.py:1457:    "- `market_data.bin` was not modified."
+mlai_v327.py:1465:    "- Existing learning memory was not modified."
+mlai_v327.py:1478:with open(
+mlai_v327.py:1484:    f.write(
+mlai_v331_walkforward.py:1:import pickle
+mlai_v331_walkforward.py:22:# - market_data.bin is READ ONLY
+mlai_v331_walkforward.py:24:# - learning memory is NOT modified
+mlai_v331_walkforward.py:29:MARKET_FILE = "market_data.bin"
+mlai_v331_walkforward.py:945:    # Load market data
+mlai_v331_walkforward.py:948:    with open(
+mlai_v331_walkforward.py:953:        data = pickle.load(f)
+mlai_v331_walkforward.py:973:        "market_data.bin: READ ONLY"
+mlai_v331_walkforward.py:981:        "learning memory: NOT MODIFIED"
+mlai_v331_walkforward.py:1434:        "market_data.bin was READ ONLY."
+mlai_v331_walkforward.py:1442:        "Learning memory was NOT modified."
+mlai_v332_regime_test.py:1:import pickle
+mlai_v332_regime_test.py:15:# - market_data.bin is READ ONLY
+mlai_v332_regime_test.py:17:# - learning memory is NOT modified
+mlai_v332_regime_test.py:22:DATA_FILE = "market_data.bin"
+mlai_v332_regime_test.py:56:# LOAD MARKET DATA
+mlai_v332_regime_test.py:72:with open(DATA_FILE, "rb") as f:
+mlai_v332_regime_test.py:73:    data = pickle.load(f)
+mlai_v332_regime_test.py:89:print("market_data.bin: READ ONLY")
+mlai_v332_regime_test.py:91:print("learning memory: NOT MODIFIED")
+mlai_v332_regime_test.py:1309:    "It does NOT modify market_data.bin."
+mlai_v332_regime_test.py:1313:    "It does NOT modify learning memory."
+mlai_v333_regime_model_test.py:1:import pickle
+mlai_v333_regime_model_test.py:13:# market_data.bin       -> READ ONLY
+mlai_v333_regime_model_test.py:15:# learning memory       -> NOT MODIFIED
+mlai_v333_regime_model_test.py:30:DATA_FILE = "market_data.bin"
+mlai_v333_regime_model_test.py:1688:    # Load market data READ ONLY.
+mlai_v333_regime_model_test.py:1691:    with open(
+mlai_v333_regime_model_test.py:1696:        data = pickle.load(f)
+mlai_v333_regime_model_test.py:1721:        "market_data.bin: READ ONLY"
+mlai_v333_regime_model_test.py:1729:        "learning memory: NOT MODIFIED"
+mlai_v333_regime_model_test.py:1837:        "It does NOT modify 
+market_data.bin."
+mlai_v333_regime_model_test.py:1845:        "It does NOT modify learning 
+memory."
+mlai_v334_structure_edge.py:2:import pickle
+mlai_v334_structure_edge.py:24:#   market_data.bin      -> READ ONLY
+mlai_v334_structure_edge.py:26:#   learning memory      -> NOT MODIFIED
+mlai_v334_structure_edge.py:31:MARKET_FILE = "market_data.bin"
+mlai_v334_structure_edge.py:63:        print("market_data.bin: READ ONLY")
+mlai_v334_structure_edge.py:65:        print("ERROR: market_data.bin not 
+found.")
+mlai_v334_structure_edge.py:69:    print("learning memory: NOT MODIFIED")
+mlai_v334_structure_edge.py:75:# LOAD MARKET DATA
+mlai_v334_structure_edge.py:78:def load_market_data(path):
+mlai_v334_structure_edge.py:79:    with open(path, "rb") as f:
+mlai_v334_structure_edge.py:80:        data = pickle.load(f)
+mlai_v334_structure_edge.py:87:            "market_data",
+mlai_v334_structure_edge.py:97:            "Unsupported market_data.bin 
+structure. "
+mlai_v334_structure_edge.py:130:def get_open(row):
+mlai_v334_structure_edge.py:226:        get_open(x)
+mlai_v334_structure_edge.py:1636:    candles = load_market_data(
+mlai_v334_structure_edge.py:1665:        "market_data.bin was READ ONLY."
+mlai_v334_structure_edge.py:1673:        "Learning memory was NOT modified."
+mlai_v335_locked_edge_validation.py:3:import pickle
+mlai_v335_locked_edge_validation.py:18:# market_data.bin        READ ONLY
+mlai_v335_locked_edge_validation.py:20:# learning memory        NOT MODIFIED
+mlai_v335_locked_edge_validation.py:28:MARKET_FILE = "market_data.bin"
+mlai_v335_locked_edge_validation.py:71:# PROTECTION / LOAD
+mlai_v335_locked_edge_validation.py:79:    print("market_data.bin: READ 
+ONLY")
+mlai_v335_locked_edge_validation.py:86:    print("learning memory: NOT 
+MODIFIED")
+mlai_v335_locked_edge_validation.py:91:def load_market():
+mlai_v335_locked_edge_validation.py:92:    with open(MARKET_FILE, "rb") as f:
+mlai_v335_locked_edge_validation.py:93:        data = pickle.load(f)
+mlai_v335_locked_edge_validation.py:103:        elif "market_data" in data:
+mlai_v335_locked_edge_validation.py:104:            candles = 
+data["market_data"]
+mlai_v335_locked_edge_validation.py:124:                    "Could not 
+locate candle data inside market_data.bin"
+mlai_v335_locked_edge_validation.py:131:            "Unsupported 
+market_data.bin format"
+mlai_v335_locked_edge_validation.py:1310:    candles = load_market()
+mlai_v335_locked_edge_validation.py:1322:        "PASS: market_data.bin 
+loaded."
+mlai_v335_locked_edge_validation.py:1330:        "PASS: market_data.bin will 
+NOT "
+mlai_v335_locked_edge_validation.py:1368:        "No learning memory was 
+changed."
+mlai_v335_locked_edge_validation.py:1372:        "market_data.bin was READ 
+ONLY."
+mlai_v336_robust_edge_discovery.py:3:import pickle
+mlai_v336_robust_edge_discovery.py:24:#   - modify market_data.bin
+mlai_v336_robust_edge_discovery.py:26:#   - modify learning memory
+mlai_v336_robust_edge_discovery.py:45:MARKET_FILE = "market_data.bin"
+mlai_v336_robust_edge_discovery.py:85:    print("learning memory: NOT 
+MODIFIED")
+mlai_v336_robust_edge_discovery.py:92:# DATA LOADING
+mlai_v336_robust_edge_discovery.py:95:def load_market_data():
+mlai_v336_robust_edge_discovery.py:101:    with open(MARKET_FILE, "rb") as f:
+mlai_v336_robust_edge_discovery.py:102:        data = pickle.load(f)
+mlai_v336_robust_edge_discovery.py:128:            "market_data",
+mlai_v336_robust_edge_discovery.py:142:            "Could not locate candle 
+list inside market_data.bin."
+mlai_v336_robust_edge_discovery.py:1742:    # LOAD DATA
+mlai_v336_robust_edge_discovery.py:1745:    data = load_market_data()
+mlai_v336_robust_edge_discovery.py:1758:        "PASS: market_data.bin 
+loaded."
+mlai_v336_robust_edge_discovery.py:1766:        "PASS: market_data.bin will 
+NOT be modified."
+mlai_v336_robust_edge_discovery.py:1920:        "No learning memory was 
+changed."
+mlai_v336_robust_edge_discovery.py:1924:        "market_data.bin was READ 
+ONLY."
+mlai_v337_adaptive_edge_discovery.py:3:import pickle
+mlai_v337_adaptive_edge_discovery.py:32:# market_data.bin is READ ONLY
+mlai_v337_adaptive_edge_discovery.py:34:# learning memory is NOT MODIFIED
+mlai_v337_adaptive_edge_discovery.py:43:MARKET_FILE = "market_data.bin"
+mlai_v337_adaptive_edge_discovery.py:69:# LOAD DATA
+mlai_v337_adaptive_edge_discovery.py:90:print("market_data.bin: READ ONLY")
+mlai_v337_adaptive_edge_discovery.py:92:print("learning memory: NOT 
+MODIFIED")
+mlai_v337_adaptive_edge_discovery.py:98:with open(MARKET_FILE, "rb") as f:
+mlai_v337_adaptive_edge_discovery.py:99:    market_data = pickle.load(f)
+mlai_v337_adaptive_edge_discovery.py:102:print("Data type:", 
+type(market_data).__name__)
+mlai_v337_adaptive_edge_discovery.py:112:        for key in ["candles", 
+"data", "market_data", "ohlcv"]:
+mlai_v337_adaptive_edge_discovery.py:142:    raise ValueError("Unsupported 
+market_data.bin structure.")
+mlai_v337_adaptive_edge_discovery.py:145:candles = 
+extract_candles(market_data)
+mlai_v337_adaptive_edge_discovery.py:148:print("PASS: market_data.bin 
+loaded.")
+mlai_v337_adaptive_edge_discovery.py:150:print("PASS: market_data.bin will 
+NOT be modified.")
+mlai_v337_adaptive_edge_discovery.py:1728:No learning memory was changed.
+mlai_v337_adaptive_edge_discovery.py:1729:market_data.bin was READ ONLY.
+mlai_v338.py:2:import pickle
+mlai_v338.py:26:# market_data.bin : READ ONLY
+mlai_v338.py:28:# learning memory  : NOT MODIFIED
+mlai_v338.py:32:MARKET_FILE = "market_data.bin"
+mlai_v338.py:51:# LOAD MARKET DATA
+mlai_v338.py:74:print("market_data.bin: READ ONLY")
+mlai_v338.py:76:print("learning memory: NOT MODIFIED")
+mlai_v338.py:82:with open(MARKET_FILE, "rb") as f:
+mlai_v338.py:83:    market_data = pickle.load(f)
+mlai_v338.py:86:print("Data type:", type(market_data).__name__)
+mlai_v338.py:88:if isinstance(market_data, dict):
+mlai_v338.py:89:    print("Total candles:", len(market_data.get("candles", 
+[])))
+mlai_v338.py:91:    raise ValueError("Unexpected market_data.bin structure")
+mlai_v338.py:98:candles = market_data.get("candles", [])
+mlai_v338.py:121:print("PASS: market_data.bin loaded.")
+mlai_v338.py:123:print("PASS: market_data.bin will NOT be modified.")
+mlai_v338.py:301:    # market_data.bin may contain OHLC candles, but this
+mlai_v338.py:1429:No learning memory was changed.
+mlai_v338.py:1430:market_data.bin was READ ONLY.
+mlai_v338_calibration_locked_quantile_validation.py:2:import pickle
+mlai_v338_calibration_locked_quantile_validation.py:26:# market_data.bin : 
+READ ONLY
+mlai_v338_calibration_locked_quantile_validation.py:28:# learning memory  : 
+NOT MODIFIED
+mlai_v338_calibration_locked_quantile_validation.py:32:MARKET_FILE = 
+"market_data.bin"
+mlai_v338_calibration_locked_quantile_validation.py:51:# LOAD MARKET DATA
+mlai_v338_calibration_locked_quantile_validation.py:74:print("market_data.bin
+: READ ONLY")
+mlai_v338_calibration_locked_quantile_validation.py:76:print("learning 
+memory: NOT MODIFIED")
+mlai_v338_calibration_locked_quantile_validation.py:82:with 
+open(MARKET_FILE, "rb") as f:
+mlai_v338_calibration_locked_quantile_validation.py:83:    market_data = 
+pickle.load(f)
+mlai_v338_calibration_locked_quantile_validation.py:86:print("Data type:", 
+type(market_data).__name__)
+mlai_v338_calibration_locked_quantile_validation.py:88:if 
+isinstance(market_data, dict):
+mlai_v338_calibration_locked_quantile_validation.py:89:    print("Total 
+candles:", len(market_data.get("candles", [])))
+mlai_v338_calibration_locked_quantile_validation.py:91:    raise 
+ValueError("Unexpected market_data.bin structure")
+mlai_v338_calibration_locked_quantile_validation.py:98:candles = 
+market_data.get("candles", [])
+mlai_v338_calibration_locked_quantile_validation.py:121:print("PASS: 
+market_data.bin loaded.")
+mlai_v338_calibration_locked_quantile_validation.py:123:print("PASS: 
+market_data.bin will NOT be modified.")
+mlai_v338_calibration_locked_quantile_validation.py:301:    # 
+market_data.bin may contain OHLC candles, but this
+mlai_v338_calibration_locked_quantile_validation.py:1429:No learning memory 
+was changed.
+mlai_v338_calibration_locked_quantile_validation.py:1430:market_data.bin was 
+READ ONLY.
+mlai_v339.py:3:import pickle
+mlai_v339.py:40:# market_data.bin : READ ONLY
+mlai_v339.py:42:# learning memory  : NOT MODIFIED
+mlai_v339.py:46:MARKET_FILE = "market_data.bin"
+mlai_v339.py:65:# LOAD MARKET DATA
+mlai_v339.py:89:print("market_data.bin: READ ONLY")
+mlai_v339.py:91:print("learning memory: NOT MODIFIED")
+mlai_v339.py:100:with open(MARKET_FILE, "rb") as f:
+mlai_v339.py:101:    market_data = pickle.load(f)
+mlai_v339.py:104:print("Data type:", type(market_data).__name__)
+mlai_v339.py:106:if isinstance(market_data, dict):
+mlai_v339.py:107:    print("Total candles:", len(market_data.get("candles", 
+[])))
+mlai_v339.py:109:    raise ValueError("Unexpected market_data.bin structure")
+mlai_v339.py:116:candles = market_data.get("candles", [])
+mlai_v339.py:151:print("PASS: market_data.bin loaded.")
+mlai_v339.py:153:print("PASS: market_data.bin will NOT be modified.")
+mlai_v339.py:2237:No learning memory was changed.
+mlai_v339.py:2238:market_data.bin was READ ONLY.
+mlai_v33_feature_test.py:1:import pickle
+mlai_v33_feature_test.py:10:MARKET_FILE = "market_data.bin"
+mlai_v33_feature_test.py:63:# LOAD DATA
+mlai_v33_feature_test.py:70:with open(MARKET_FILE, "rb") as f:
+mlai_v33_feature_test.py:72:    data = pickle.load(f)
+mlai_v33_feature_test.py:856:    "This program does not modify 
+market_data.bin."
+mlai_v33_feature_test.py:864:    "This program does not modify learning 
+memory."
+mlai_v33_model_test.py:1:import pickle
+mlai_v33_model_test.py:14:# - market_data.bin is READ ONLY
+mlai_v33_model_test.py:16:# - learning memory is NOT modified
+mlai_v33_model_test.py:27:DATA_FILE = "market_data.bin"
+mlai_v33_model_test.py:1059:    # LOAD MARKET DATA READ-ONLY
+mlai_v33_model_test.py:1062:    with open(
+mlai_v33_model_test.py:1067:        data = pickle.load(f)
+mlai_v33_model_test.py:1080:    print("market_data.bin: READ ONLY")
+mlai_v33_model_test.py:1082:    print("learning memory: NOT MODIFIED")
+mlai_v33_model_test.py:1214:        "No learning memory was modified."
+mlai_v340.py:3:import pickle
+mlai_v340.py:27:#   1. Keeps market_data.bin READ ONLY.
+mlai_v340.py:45:MARKET_FILE = "market_data.bin"
+mlai_v340.py:98:No learning memory will be modified.
+mlai_v340.py:99:market_data.bin will be READ ONLY.
+mlai_v340.py:107:print("market_data.bin : READ ONLY")
+mlai_v340.py:109:print("learning memory  : NOT MODIFIED")
+mlai_v340.py:114:# LOAD MARKET DATA
+mlai_v340.py:122:with open(MARKET_FILE, "rb") as f:
+mlai_v340.py:123:    market_data = pickle.load(f)
+mlai_v340.py:126:print("Data type:", type(market_data).__name__)
+mlai_v340.py:128:if not isinstance(market_data, dict):
+mlai_v340.py:130:        "Unexpected market_data.bin structure."
+mlai_v340.py:133:candles = market_data.get("candles", [])
+mlai_v340.py:177:print("PASS: market_data.bin loaded.")
+mlai_v340.py:179:print("PASS: market_data.bin remains READ ONLY.")
+mlai_v340.py:2595:No learning memory was changed.
+mlai_v340.py:2596:market_data.bin was READ ONLY.
+mlai_v341.py:3:import pickle
+mlai_v341.py:27:#   1. Keeps market_data.bin READ ONLY.
+mlai_v341.py:45:MARKET_FILE = "market_data.bin"
+mlai_v341.py:98:No learning memory will be modified.
+mlai_v341.py:99:market_data.bin will be READ ONLY.
+mlai_v341.py:107:print("market_data.bin : READ ONLY")
+mlai_v341.py:109:print("learning memory  : NOT MODIFIED")
+mlai_v341.py:114:# LOAD MARKET DATA
+mlai_v341.py:122:with open(MARKET_FILE, "rb") as f:
+mlai_v341.py:123:    market_data = pickle.load(f)
+mlai_v341.py:126:print("Data type:", type(market_data).__name__)
+mlai_v341.py:128:if not isinstance(market_data, dict):
+mlai_v341.py:130:        "Unexpected market_data.bin structure."
+mlai_v341.py:133:candles = market_data.get("candles", [])
+mlai_v341.py:177:print("PASS: market_data.bin loaded.")
+mlai_v341.py:179:print("PASS: market_data.bin remains READ ONLY.")
+mlai_v341.py:2348:No learning memory was changed.
+mlai_v341.py:2349:market_data.bin was READ ONLY.
+mlai_v341_backup.py:3:import pickle
+mlai_v341_backup.py:27:#   1. Keeps market_data.bin READ ONLY.
+mlai_v341_backup.py:45:MARKET_FILE = "market_data.bin"
+mlai_v341_backup.py:98:No learning memory will be modified.
+mlai_v341_backup.py:99:market_data.bin will be READ ONLY.
+mlai_v341_backup.py:107:print("market_data.bin : READ ONLY")
+mlai_v341_backup.py:109:print("learning memory  : NOT MODIFIED")
+mlai_v341_backup.py:114:# LOAD MARKET DATA
+mlai_v341_backup.py:122:with open(MARKET_FILE, "rb") as f:
+mlai_v341_backup.py:123:    market_data = pickle.load(f)
+mlai_v341_backup.py:126:print("Data type:", type(market_data).__name__)
+mlai_v341_backup.py:128:if not isinstance(market_data, dict):
+mlai_v341_backup.py:130:        "Unexpected market_data.bin structure."
+mlai_v341_backup.py:133:candles = market_data.get("candles", [])
+mlai_v341_backup.py:177:print("PASS: market_data.bin loaded.")
+mlai_v341_backup.py:179:print("PASS: market_data.bin remains READ ONLY.")
+mlai_v341_backup.py:2595:No learning memory was changed.
+mlai_v341_backup.py:2596:market_data.bin was READ ONLY.
+mlai_v342.py:4:import pickle
+mlai_v342.py:28:#   1. Keeps market_data.bin READ ONLY.
+mlai_v342.py:46:MARKET_FILE = "market_data.bin"
+mlai_v342.py:99:No learning memory will be modified.
+mlai_v342.py:100:market_data.bin will be READ ONLY.
+mlai_v342.py:108:print("market_data.bin : READ ONLY")
+mlai_v342.py:110:print("learning memory  : NOT MODIFIED")
+mlai_v342.py:115:# LOAD MARKET DATA
+mlai_v342.py:123:with open(MARKET_FILE, "rb") as f:
+mlai_v342.py:124:    market_data = pickle.load(f)
+mlai_v342.py:127:print("Data type:", type(market_data).__name__)
+mlai_v342.py:129:if not isinstance(market_data, dict):
+mlai_v342.py:131:        "Unexpected market_data.bin structure."
+mlai_v342.py:134:candles = market_data.get("candles", [])
+mlai_v342.py:178:print("PASS: market_data.bin loaded.")
+mlai_v342.py:180:print("PASS: market_data.bin remains READ ONLY.")
+mlai_v342.py:2921:No learning memory was changed.
+mlai_v342.py:2922:market_data.bin was READ ONLY.
+mlai_v342_backup_before_null_fix.py:3:import pickle
+mlai_v342_backup_before_null_fix.py:27:#   1. Keeps market_data.bin READ 
+ONLY.
+mlai_v342_backup_before_null_fix.py:45:MARKET_FILE = "market_data.bin"
+mlai_v342_backup_before_null_fix.py:98:No learning memory will be modified.
+mlai_v342_backup_before_null_fix.py:99:market_data.bin will be READ ONLY.
+mlai_v342_backup_before_null_fix.py:107:print("market_data.bin : READ ONLY")
+mlai_v342_backup_before_null_fix.py:109:print("learning memory  : NOT 
+MODIFIED")
+mlai_v342_backup_before_null_fix.py:114:# LOAD MARKET DATA
+mlai_v342_backup_before_null_fix.py:122:with open(MARKET_FILE, "rb") as f:
+mlai_v342_backup_before_null_fix.py:123:    market_data = pickle.load(f)
+mlai_v342_backup_before_null_fix.py:126:print("Data type:", 
+type(market_data).__name__)
+mlai_v342_backup_before_null_fix.py:128:if not isinstance(market_data, dict):
+mlai_v342_backup_before_null_fix.py:130:        "Unexpected market_data.bin 
+structure."
+mlai_v342_backup_before_null_fix.py:133:candles = market_data.get("candles", 
+[])
+mlai_v342_backup_before_null_fix.py:177:print("PASS: market_data.bin 
+loaded.")
+mlai_v342_backup_before_null_fix.py:179:print("PASS: market_data.bin remains 
+READ ONLY.")
+mlai_v342_backup_before_null_fix.py:2862:No learning memory was changed.
+mlai_v342_backup_before_null_fix.py:2863:market_data.bin was READ ONLY.
+mlai_v342_backup_before_null_integration.py:3:import pickle
+mlai_v342_backup_before_null_integration.py:27:#   1. Keeps market_data.bin 
+READ ONLY.
+mlai_v342_backup_before_null_integration.py:45:MARKET_FILE = 
+"market_data.bin"
+mlai_v342_backup_before_null_integration.py:98:No learning memory will be 
+modified.
+mlai_v342_backup_before_null_integration.py:99:market_data.bin will be READ 
+ONLY.
+mlai_v342_backup_before_null_integration.py:107:print("market_data.bin : 
+READ ONLY")
+mlai_v342_backup_before_null_integration.py:109:print("learning memory  : 
+NOT MODIFIED")
+mlai_v342_backup_before_null_integration.py:114:# LOAD MARKET DATA
+mlai_v342_backup_before_null_integration.py:122:with open(MARKET_FILE, "rb") 
+as f:
+mlai_v342_backup_before_null_integration.py:123:    market_data = 
+pickle.load(f)
+mlai_v342_backup_before_null_integration.py:126:print("Data type:", 
+type(market_data).__name__)
+mlai_v342_backup_before_null_integration.py:128:if not 
+isinstance(market_data, dict):
+mlai_v342_backup_before_null_integration.py:130:        "Unexpected 
+market_data.bin structure."
+mlai_v342_backup_before_null_integration.py:133:candles = 
+market_data.get("candles", [])
+mlai_v342_backup_before_null_integration.py:177:print("PASS: market_data.bin 
+loaded.")
+mlai_v342_backup_before_null_integration.py:179:print("PASS: market_data.bin 
+remains READ ONLY.")
+mlai_v342_backup_before_null_integration.py:2862:No learning memory was 
+changed.
+mlai_v342_backup_before_null_integration.py:2863:market_data.bin was READ 
+ONLY.
+mlai_v343.py:3:import pickle
+mlai_v343.py:18:#   1. Keeps market_data.bin READ ONLY.
+mlai_v343.py:37:MARKET_FILE = "market_data.bin"
+mlai_v343.py:87:No learning memory will be modified.
+mlai_v343.py:88:market_data.bin will be READ ONLY.
+mlai_v343.py:96:print("market_data.bin : READ ONLY")
+mlai_v343.py:98:print("learning memory  : NOT MODIFIED")
+mlai_v343.py:103:# LOAD MARKET DATA
+mlai_v343.py:111:with open(MARKET_FILE, "rb") as f:
+mlai_v343.py:112:    market_data = pickle.load(f)
+mlai_v343.py:115:print("Data type:", type(market_data).__name__)
+mlai_v343.py:117:if not isinstance(market_data, dict):
+mlai_v343.py:119:        "Unexpected market_data.bin structure."
+mlai_v343.py:122:candles = market_data.get("candles", [])
+mlai_v343.py:166:print("PASS: market_data.bin loaded.")
+mlai_v343.py:168:print("PASS: market_data.bin remains READ ONLY.")
+mlai_v343.py:2946:No learning memory was changed.
+mlai_v343.py:2947:market_data.bin was READ ONLY.
+mlai_v343_backup_before_null_fix.py:4:import pickle
+mlai_v343_backup_before_null_fix.py:28:#   1. Keeps market_data.bin READ 
+ONLY.
+mlai_v343_backup_before_null_fix.py:46:MARKET_FILE = "market_data.bin"
+mlai_v343_backup_before_null_fix.py:99:No learning memory will be modified.
+mlai_v343_backup_before_null_fix.py:100:market_data.bin will be READ ONLY.
+mlai_v343_backup_before_null_fix.py:108:print("market_data.bin : READ ONLY")
+mlai_v343_backup_before_null_fix.py:110:print("learning memory  : NOT 
+MODIFIED")
+mlai_v343_backup_before_null_fix.py:115:# LOAD MARKET DATA
+mlai_v343_backup_before_null_fix.py:123:with open(MARKET_FILE, "rb") as f:
+mlai_v343_backup_before_null_fix.py:124:    market_data = pickle.load(f)
+mlai_v343_backup_before_null_fix.py:127:print("Data type:", 
+type(market_data).__name__)
+mlai_v343_backup_before_null_fix.py:129:if not isinstance(market_data, dict):
+mlai_v343_backup_before_null_fix.py:131:        "Unexpected market_data.bin 
+structure."
+mlai_v343_backup_before_null_fix.py:134:candles = market_data.get("candles", 
+[])
+mlai_v343_backup_before_null_fix.py:178:print("PASS: market_data.bin 
+loaded.")
+mlai_v343_backup_before_null_fix.py:180:print("PASS: market_data.bin remains 
+READ ONLY.")
+mlai_v343_backup_before_null_fix.py:2921:No learning memory was changed.
+mlai_v343_backup_before_null_fix.py:2922:market_data.bin was READ ONLY.
+mlai_v343_backup_before_selection_null_fix.py:4:import pickle
+mlai_v343_backup_before_selection_null_fix.py:28:#   1. Keeps 
+market_data.bin READ ONLY.
+mlai_v343_backup_before_selection_null_fix.py:46:MARKET_FILE = 
+"market_data.bin"
+mlai_v343_backup_before_selection_null_fix.py:99:No learning memory will be 
+modified.
+mlai_v343_backup_before_selection_null_fix.py:100:market_data.bin will be 
+READ ONLY.
+mlai_v343_backup_before_selection_null_fix.py:108:print("market_data.bin : 
+READ ONLY")
+mlai_v343_backup_before_selection_null_fix.py:110:print("learning memory  : 
+NOT MODIFIED")
+mlai_v343_backup_before_selection_null_fix.py:115:# LOAD MARKET DATA
+mlai_v343_backup_before_selection_null_fix.py:123:with open(MARKET_FILE, 
+"rb") as f:
+mlai_v343_backup_before_selection_null_fix.py:124:    market_data = 
+pickle.load(f)
+mlai_v343_backup_before_selection_null_fix.py:127:print("Data type:", 
+type(market_data).__name__)
+mlai_v343_backup_before_selection_null_fix.py:129:if not 
+isinstance(market_data, dict):
+mlai_v343_backup_before_selection_null_fix.py:131:        "Unexpected 
+market_data.bin structure."
+mlai_v343_backup_before_selection_null_fix.py:134:candles = 
+market_data.get("candles", [])
+mlai_v343_backup_before_selection_null_fix.py:178:print("PASS: 
+market_data.bin loaded.")
+mlai_v343_backup_before_selection_null_fix.py:180:print("PASS: 
+market_data.bin remains READ ONLY.")
+mlai_v343_backup_before_selection_null_fix.py:2921:No learning memory was 
+changed.
+mlai_v343_backup_before_selection_null_fix.py:2922:market_data.bin was READ 
+ONLY.
+mlai_v343_model_test.py:3:import pickle
+mlai_v343_model_test.py:28:#   1. Keeps market_data.bin READ ONLY.
+mlai_v343_model_test.py:30:#   3. Does not modify learning memory.
+mlai_v343_model_test.py:49:MARKET_FILE = "market_data.bin"
+mlai_v343_model_test.py:101:No learning memory will be modified.
+mlai_v343_model_test.py:102:market_data.bin will be READ ONLY.
+mlai_v343_model_test.py:110:print("market_data.bin : READ ONLY")
+mlai_v343_model_test.py:112:print("learning memory  : NOT MODIFIED")
+mlai_v343_model_test.py:117:# LOAD MARKET DATA
+mlai_v343_model_test.py:125:with open(MARKET_FILE, "rb") as f:
+mlai_v343_model_test.py:126:    market_data = pickle.load(f)
+mlai_v343_model_test.py:129:print("Data type:", type(market_data).__name__)
+mlai_v343_model_test.py:131:if not isinstance(market_data, dict):
+mlai_v343_model_test.py:133:        "Unexpected market_data.bin structure."
+mlai_v343_model_test.py:136:candles = market_data.get("candles", [])
+mlai_v343_model_test.py:180:print("PASS: market_data.bin loaded.")
+mlai_v343_model_test.py:182:print("PASS: market_data.bin remains READ ONLY.")
+mlai_v343_model_test.py:3199:    # SAVE IN MEMORY ONLY
+mlai_v343_model_test.py:3227:No learning memory was changed.
+mlai_v343_model_test.py:3228:market_data.bin was READ ONLY.
+mlai_v35_market_structure.py:382:    # 9. STRUCTURAL DIRECTION MEMORY
+mlai_v35_market_structure_test.py:2:import pickle
+mlai_v35_market_structure_test.py:20:#     market_data.bin
+mlai_v35_market_structure_test.py:45:#     - modify market_data.bin
+mlai_v35_market_structure_test.py:47:#     - modify learning memory
+mlai_v35_market_structure_test.py:71:MARKET_FILE = "market_data.bin"
+mlai_v35_market_structure_test.py:127:The program reads market_data.bin and 
+attempts to identify:
+mlai_v35_market_structure_test.py:147:market_data.bin        = READ ONLY
+mlai_v35_market_structure_test.py:149:Learning memory        = NOT MODIFIED
+mlai_v35_market_structure_test.py:169:print("market_data.bin : READ ONLY")
+mlai_v35_market_structure_test.py:171:print("learning memory : NOT MODIFIED")
+mlai_v35_market_structure_test.py:176:# LOAD MARKET DATA
+mlai_v35_market_structure_test.py:185:with open(MARKET_FILE, "rb") as f:
+mlai_v35_market_structure_test.py:186:    market_data = pickle.load(f)
+mlai_v35_market_structure_test.py:190:print("Data type:", 
+type(market_data).__name__)
+mlai_v35_market_structure_test.py:193:if not isinstance(market_data, dict):
+mlai_v35_market_structure_test.py:195:        "Unexpected market_data.bin 
+structure. "
+mlai_v35_market_structure_test.py:200:candles = market_data.get("candles", 
+[])
+mlai_v35_market_structure_test.py:390:print("PASS: market_data.bin loaded.")
+mlai_v35_market_structure_test.py:392:print("PASS: market_data.bin remains 
+READ ONLY.")
+mlai_v35_market_structure_test.py:1992:    "market_data.bin : READ ONLY"
+mlai_v35_market_structure_test.py:2000:    "Learning memory : NOT MODIFIED"
+mlai_v36_market_context_test.py:3:import pickle
+mlai_v36_market_context_test.py:21:#     market_data.bin
+mlai_v36_market_context_test.py:73:#     - modify market_data.bin
+mlai_v36_market_context_test.py:76:#     - modify learning memory
+mlai_v36_market_context_test.py:92:MARKET_FILE = "market_data.bin"
+mlai_v36_market_context_test.py:174:market_data.bin        = READ ONLY
+mlai_v36_market_context_test.py:176:Learning memory        = NOT MODIFIED
+mlai_v36_market_context_test.py:194:print("market_data.bin : READ ONLY")
+mlai_v36_market_context_test.py:196:print("learning memory : NOT MODIFIED")
+mlai_v36_market_context_test.py:201:# LOAD MARKET DATA
+mlai_v36_market_context_test.py:211:with open(MARKET_FILE, "rb") as f:
+mlai_v36_market_context_test.py:213:    market_data = pickle.load(f)
+mlai_v36_market_context_test.py:219:    type(market_data).__name__
+mlai_v36_market_context_test.py:223:if not isinstance(market_data, dict):
+mlai_v36_market_context_test.py:226:        "Unexpected market_data.bin 
+structure. "
+mlai_v36_market_context_test.py:231:candles = market_data.get(
+mlai_v36_market_context_test.py:433:    "PASS: market_data.bin loaded."
+mlai_v36_market_context_test.py:441:    "PASS: market_data.bin remains READ 
+ONLY."
+mlai_v36_market_context_test.py:3185:    "market_data.bin : READ ONLY"
+mlai_v36_market_context_test.py:3193:    "Learning memory : NOT MODIFIED"
+mlai_v37_data_foundation_test.py:3:import pickle
+mlai_v37_data_foundation_test.py:25:#   - modify market_data.bin
+mlai_v37_data_foundation_test.py:26:#   - modify learning memory
+mlai_v37_data_foundation_test.py:40:DATA_FILE = "market_data.bin"
+mlai_v37_data_foundation_test.py:276:            "market_data",
+mlai_v37_data_foundation_test.py:328:# FILE LOADING
+mlai_v37_data_foundation_test.py:331:def load_market_data(path):
+mlai_v37_data_foundation_test.py:340:    with open(path, "rb") as file:
+mlai_v37_data_foundation_test.py:341:        data = pickle.load(file)
+mlai_v37_data_foundation_test.py:530:market_data.bin        = READ ONLY
+mlai_v37_data_foundation_test.py:532:Learning memory        = NOT MODIFIED
+mlai_v37_data_foundation_test.py:545:    print("market_data.bin : READ ONLY")
+mlai_v37_data_foundation_test.py:547:    print("learning memory : NOT 
+MODIFIED")
+mlai_v37_data_foundation_test.py:568:    # LOAD
+mlai_v37_data_foundation_test.py:571:    section("DATA LOADING")
+mlai_v37_data_foundation_test.py:574:        raw_data = 
+load_market_data(DATA_FILE)
+mlai_v37_data_foundation_test.py:577:            f"Could not load 
+{DATA_FILE}: {exc}"
+mlai_v37_data_foundation_test.py:600:        f"{DATA_FILE} loaded 
+successfully."
+mlai_v37_data_foundation_test.py:1030:            "market_data.bin size 
+unchanged."
+mlai_v37_data_foundation_test.py:1034:            "market_data.bin size 
+changed."
+mlai_v37_data_foundation_test.py:1143:    print("market_data.bin : READ 
+ONLY")
+mlai_v37_data_foundation_test.py:1145:    print("Learning memory : NOT 
+MODIFIED")
+mlai_v38_unified_market_representation_test.py:22:# It does NOT modify 
+market_data.bin.
+mlai_v38_unified_market_representation_test.py:28:import pickle
+mlai_v38_unified_market_representation_test.py:37:DATA_FILE = 
+"market_data.bin"
+mlai_v38_unified_market_representation_test.py:90:# DATA LOADING
+mlai_v38_unified_market_representation_test.py:93:def load_market_data(path):
+mlai_v38_unified_market_representation_test.py:94:    with open(path, "rb") 
+as f:
+mlai_v38_unified_market_representation_test.py:95:        return 
+pickle.load(f)
+mlai_v38_unified_market_representation_test.py:1257:market_data.bin        = 
+READ ONLY
+mlai_v38_unified_market_representation_test.py:1259:Learning memory        = 
+NOT MODIFIED
+mlai_v38_unified_market_representation_test.py:1271:    
+print("market_data.bin : READ ONLY")
+mlai_v38_unified_market_representation_test.py:1273:    print("learning 
+memory : NOT MODIFIED")
+mlai_v38_unified_market_representation_test.py:1281:        print("FAIL: 
+market_data.bin was not found.")
+mlai_v38_unified_market_representation_test.py:1291:    # LOAD
+mlai_v38_unified_market_representation_test.py:1294:    section("DATA 
+LOADING")
+mlai_v38_unified_market_representation_test.py:1298:        raw = 
+load_market_data(DATA_FILE)
+mlai_v38_unified_market_representation_test.py:1302:        print("FAIL: 
+Could not load market_data.bin.")
+mlai_v38_unified_market_representation_test.py:1317:    print("PASS: 
+market_data.bin loaded.")
+mlai_v38_unified_market_representation_test.py:1639:    Memory updates
+mlai_v38_unified_market_representation_test.py:1699:            "PASS: 
+market_data.bin size unchanged."
+mlai_v38_unified_market_representation_test.py:1705:            "FAIL: 
+market_data.bin size changed."
+mlai_v38_unified_market_representation_test.py:1794:    
+print("market_data.bin : READ ONLY")
+mlai_v38_unified_market_representation_test.py:1796:    print("Learning 
+memory : NOT MODIFIED")
+mlai_v39_sequence_context_test.py:3:import pickle
+mlai_v39_sequence_context_test.py:36:#     - modify market_data.bin
+mlai_v39_sequence_context_test.py:38:#     - modify learning memory
+mlai_v39_sequence_context_test.py:49:DATA_FILE = "market_data.bin"
+mlai_v39_sequence_context_test.py:137:# DATA LOADING
+mlai_v39_sequence_context_test.py:140:def load_data():
+mlai_v39_sequence_context_test.py:147:    with open(DATA_FILE, "rb") as f:
+mlai_v39_sequence_context_test.py:148:        return pickle.load(f)
+mlai_v39_sequence_context_test.py:164:            "market_data",
+mlai_v39_sequence_context_test.py:986:    print("market_data.bin : READ 
+ONLY")
+mlai_v39_sequence_context_test.py:988:    print("Learning memory : NOT 
+MODIFIED")
+mlai_v39_sequence_context_test.py:1006:    # LOAD
+mlai_v39_sequence_context_test.py:1009:    section("DATA LOADING")
+mlai_v39_sequence_context_test.py:1012:        raw_data = load_data()
+mlai_v39_sequence_context_test.py:1017:            f"Unable to load data: 
+{exc}"
+mlai_v39_sequence_context_test.py:1039:        "market_data.bin loaded 
+successfully."
+mlai_v39_sequence_context_test.py:1440:            "market_data.bin remains 
+unchanged."
+mlai_v39_sequence_context_test.py:1446:            "market_data.bin size 
+changed."
+mlai_v39_sequence_context_test.py:1499:            "P3 will connect sequence 
+context with:"
+mlai_v39_sequence_context_test.py:1564:    print("market_data.bin : READ 
+ONLY")
+mlai_v39_sequence_context_test.py:1566:    print("Learning memory : NOT 
+MODIFIED")
+mlai_v3_6_market_structure_predictive_validation.py:31:# market_data.bin     
+   = READ ONLY
+mlai_v3_6_market_structure_predictive_validation.py:33:# Learning memory     
+   = NOT MODIFIED
+mlai_v3_6_market_structure_predictive_validation.py:113:    "market_data.bin 
+       = READ ONLY"
+mlai_v3_6_market_structure_predictive_validation.py:119:    "Learning memory 
+       = NOT MODIFIED"
+mlai_v3_6_market_structure_predictive_validation.py:143:# LOAD EXACT v3.5.1 
+RESULTS
+mlai_v3_6_market_structure_predictive_validation.py:157:print("LOADING 
+v3.5.1 STRUCTURE RESULTS")
+mlai_v3_6_market_structure_predictive_validation.py:1397:9. No learning 
+memory is updated.
+mlai_v3_6_market_structure_predictive_validation.py:1453:    
+"market_data.bin : READ ONLY"
+mlai_v3_6_market_structure_predictive_validation.py:1461:    "Learning 
+memory : NOT MODIFIED"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:2:import
+ pickle
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:24:#    
+ - modify market_data.bin
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:27:#    
+ - modify learning memory
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:68:MARKE
+T_FILE = "market_data.bin"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:221:prin
+t("market_data.bin : READ ONLY")
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:223:prin
+t("Learning memory : NOT MODIFIED")
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:231:# 
+LOAD MARKET DATA
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:241:with
+ open(MARKET_FILE, "rb") as f:
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:243:    
+market_data = pickle.load(f)
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:247:prin
+t("Data type:", type(market_data).__name__)
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:250:if 
+not isinstance(market_data, dict):
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:253:    
+    "Unexpected market_data.bin structure. "
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:258:cand
+les = market_data.get("candles", [])
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:2923:   
+ "learning_memory_modified":
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3003:   
+     "market_data_read_only":
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3009:   
+     "learning_memory_not_modified":
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3019:# 
+WRITE SEPARATE BINARY VALIDATION RESULT
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3022:wit
+h open(
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3027:   
+ pickle.dump(
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3063:   
+ "- market_data.bin: READ ONLY"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3071:   
+ "- Learning memory: NOT MODIFIED"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3341:   
+ "- market_data.bin: READ ONLY"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3349:   
+ "- Learning memory: NOT MODIFIED"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3357:wit
+h open(
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3363:   
+ f.write(
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3380:   
+ "market_data.bin : READ ONLY"
+mlai_v3_7_chronological_out_of_sample_market_structure_validation.py:3388:   
+ "Learning memory  : NOT MODIFIED"
+mlai_v3_8_market_structure_predictive_validation.py:39:# market_data.bin is 
+READ ONLY.
+mlai_v3_8_market_structure_predictive_validation.py:46:import pickle
+mlai_v3_8_market_structure_predictive_validation.py:59:    "market_data.bin"
+mlai_v3_8_market_structure_predictive_validation.py:203:    Supports common 
+market_data.bin candle formats.
+mlai_v3_8_market_structure_predictive_validation.py:299:# DATA LOADING
+mlai_v3_8_market_structure_predictive_validation.py:320:        
+"market_data",
+mlai_v3_8_market_structure_predictive_validation.py:334:    # Some 
+market_data.bin files are dictionaries whose values
+mlai_v3_8_market_structure_predictive_validation.py:348:def 
+load_market_data():
+mlai_v3_8_market_structure_predictive_validation.py:352:            
+f"market_data.bin not found:\n{DATA_FILE}"
+mlai_v3_8_market_structure_predictive_validation.py:355:    with open(
+mlai_v3_8_market_structure_predictive_validation.py:360:        data = 
+pickle.load(f)
+mlai_v3_8_market_structure_predictive_validation.py:1821:        with open(
+mlai_v3_8_market_structure_predictive_validation.py:1826:            f.write(
+mlai_v3_8_market_structure_predictive_validation.py:1903:        
+"market_data.bin : READ ONLY"
+mlai_v3_8_market_structure_predictive_validation.py:1909:        "Learning 
+memory : NOT MODIFIED"
+mlai_v3_8_market_structure_predictive_validation.py:1925:    # Load
+mlai_v3_8_market_structure_predictive_validation.py:1928:    data, candles, 
+invalid = load_market_data()
+mlai_v3_8_market_structure_predictive_validation.py:1944:        
+"market_data.bin : READ ONLY"
+mlai_v3_8_market_structure_predictive_validation.py:1950:        "Learning 
+memory : NOT MODIFIED"
+mlai_v3_8_market_structure_predictive_validation.py:2763:        
+"market_data.bin : READ ONLY"
+mlai_v3_8_market_structure_predictive_validation.py:2771:        "Learning 
+memory  : NOT MODIFIED"
+mlai_v3_8_market_structure_predictive_validation.py:2857:            
+"market_data_read_only": True,
+mlai_v3_8_market_structure_predictive_validation.py:2859:            
+"learning_memory_modified": False,
+mlai_v3_8_market_structure_predictive_validation.py:2886:    with open(
+mlai_v3_8_market_structure_predictive_validation.py:2891:        pickle.dump(
+mlai_v3_8_market_structure_predictive_validation.py:2894:            
+protocol=pickle.HIGHEST_PROTOCOL
+mlai_v3_8_market_structure_predictive_validation.py:3022:        
+"market_data.bin : READ ONLY"
+mlai_v3_8_market_structure_predictive_validation.py:3030:        "Learning 
+memory : NOT MODIFIED"
+patch_v342_diagnostics.py:561:path.write_text(
+replace_v341_main.py:634:path.write_text(
+
+

@@ -1,0 +1,400 @@
+import pickle
+import math
+import statistics
+from collections import Counter, defaultdict
+
+
+# ============================================================
+# MLAI v3.3.3
+# SIMILAR STRUCTURE + REGIME CONDITIONAL MODEL
+#
+# DIAGNOSTIC ONLY
+#
+# market_data.bin       -> READ ONLY
+# mlai_v31.py           -> NOT MODIFIED
+# learning memory       -> NOT MODIFIED
+# production logic      -> NOT MODIFIED
+#
+# Goal:
+# Find historically similar 60-candle structures and determine
+# whether those structures historically led to:
+#
+#     BUY
+#     SELL
+#     NO TRADE
+#
+# using strictly chronological walk-forward validation.
+# ============================================================
+
+
+DATA_FILE = "market_data.bin"
+
+WINDOW = 60
+
+HORIZONS = [4, 8, 16]
+
+THRESHOLD = 0.15
+
+CALIBRATION_RATIO = 0.70
+
+# Number of historical structures used for prediction.
+NEIGHBOR_COUNTS = [10, 20, 40]
+
+# Minimum similarity required.
+MAX_DISTANCE = 8.0
+
+# If directional probability is too weak, return NO TRADE.
+DIRECTION_MARGIN = 0.10
+
+# Minimum confidence for directional prediction.
+MIN_CONFIDENCE = 0.45
+
+
+# ============================================================
+# BASIC HELPERS
+# ============================================================
+
+def average(values):
+    if not values:
+        return 0.0
+
+    return sum(values) / len(values)
+
+
+def percentage_change(old, new):
+    if old == 0:
+        return 0.0
+
+    return (new - old) / abs(old) * 100.0
+
+
+def safe_ratio(a, b):
+    if b == 0:
+        return 0.0
+
+    return a / b
+
+
+def clamp(value, low, high):
+    return max(low, min(high, value))
+
+
+# ============================================================
+# CANDLE FEATURES
+# ============================================================
+
+def extract_features(candles):
+
+    if len(candles) < WINDOW:
+        raise ValueError(
+            f"At least {WINDOW} candles are required."
+        )
+
+    window = candles[-WINDOW:]
+
+    closes = [float(c["close"]) for c in window]
+
+    opens = [float(c["open"]) for c in window]
+
+    highs = [float(c["high"]) for c in window]
+
+    lows = [float(c["low"]) for c in window]
+
+    ranges = []
+
+    bodies = []
+
+    bullish = 0
+
+    bearish = 0
+
+    neutral = 0
+
+    strong_body = 0
+
+    upper_rejection = 0
+
+    lower_rejection = 0
+
+    for candle in window:
+
+        o = float(candle["open"])
+        h = float(candle["high"])
+        l = float(candle["low"])
+        c = float(candle["close"])
+
+        candle_range = h - l
+
+        body = abs(c - o)
+
+        ranges.append(candle_range)
+
+        bodies.append(body)
+
+        if c > o:
+            bullish += 1
+
+        elif c < o:
+            bearish += 1
+
+        else:
+            neutral += 1
+
+        candle_type = candle.get("candle_type", "")
+
+        if candle_type == "strong_body":
+            strong_body += 1
+
+        elif candle_type == "upper_rejection":
+            upper_rejection += 1
+
+        elif candle_type == "lower_rejection":
+            lower_rejection += 1
+
+    # --------------------------------------------------------
+    # Returns
+    # --------------------------------------------------------
+
+    latest = closes[-1]
+
+    return_5 = percentage_change(
+        closes[-6],
+        closes[-1]
+    )
+
+    return_10 = percentage_change(
+        closes[-11],
+        closes[-1]
+    )
+
+    return_15 = percentage_change(
+        closes[-16],
+        closes[-1]
+    )
+
+    return_30 = percentage_change(
+        closes[-31],
+        closes[-1]
+    )
+
+    return_60 = percentage_change(
+        closes[0],
+        closes[-1]
+    )
+
+    # --------------------------------------------------------
+    # Directional balance
+    # --------------------------------------------------------
+
+    bullish_ratio = bullish / WINDOW
+
+    bearish_ratio = bearish / WINDOW
+
+    neutral_ratio = neutral / WINDOW
+
+    directional_imbalance = (
+        bullish_ratio
+        - bearish_ratio
+    )
+
+    # --------------------------------------------------------
+    # Strong body
+    # --------------------------------------------------------
+
+    strong_body_ratio = (
+        strong_body / WINDOW
+    )
+
+    average_body = average(bodies)
+
+    average_range = average(ranges)
+
+    average_body_ratio = safe_ratio(
+        average_body,
+        average_range
+    )
+
+    # --------------------------------------------------------
+    # Rejection
+    # --------------------------------------------------------
+
+    rejection_imbalance = (
+        lower_rejection
+        - upper_rejection
+    ) / WINDOW
+
+    # --------------------------------------------------------
+    # Volatility
+    # --------------------------------------------------------
+
+    normalized_ranges = []
+
+    for i in range(len(window)):
+
+        close = closes[i]
+
+        if close == 0:
+            continue
+
+        normalized_ranges.append(
+            ranges[i] / abs(close) * 100.0
+        )
+
+    volatility = average(
+        normalized_ranges
+    )
+
+    older = normalized_ranges[:-10]
+
+    recent = normalized_ranges[-10:]
+
+    older_volatility = average(older)
+
+    recent_volatility = average(recent)
+
+    if older_volatility == 0:
+        volatility_ratio = 1.0
+    else:
+        volatility_ratio = (
+            recent_volatility
+            / older_volatility
+        )
+
+    # --------------------------------------------------------
+    # Range position
+    # --------------------------------------------------------
+
+    highest = max(highs)
+
+    lowest = min(lows)
+
+    total_range = highest - lowest
+
+    if total_range == 0:
+
+        location_in_range = 0.5
+
+    else:
+
+        location_in_range = (
+            latest - lowest
+        ) / total_range
+
+    distance_from_high = safe_ratio(
+        highest - latest,
+        latest
+    ) * 100.0
+
+    distance_from_low = safe_ratio(
+        latest - lowest,
+        latest
+    ) * 100.0
+
+    # --------------------------------------------------------
+    # Normalized slope
+    # --------------------------------------------------------
+
+    first_close = closes[0]
+
+    last_close = closes[-1]
+
+    normalized_slope = safe_ratio(
+        last_close - first_close,
+        first_close
+    ) * 100.0
+
+    # --------------------------------------------------------
+    # Momentum acceleration
+    # --------------------------------------------------------
+
+    if len(closes) >= 30:
+
+        old_momentum = percentage_change(
+            closes[-30],
+            closes[-15]
+        )
+
+        recent_momentum = percentage_change(
+            closes[-15],
+            closes[-1]
+        )
+
+        momentum_acceleration = (
+            recent_momentum
+            - old_momentum
+        )
+
+    else:
+
+        momentum_acceleration = 0.0
+
+    return {
+
+        "return_5": return_5,
+        "return_10": return_10,
+        "return_15": return_15,
+        "return_30": return_30,
+        "return_60": return_60,
+
+        "bullish_ratio": bullish_ratio,
+        "bearish_ratio": bearish_ratio,
+        "neutral_ratio": neutral_ratio,
+
+        "directional_imbalance":
+            directional_imbalance,
+
+        "strong_body_ratio":
+            strong_body_ratio,
+
+        "average_body_ratio":
+            average_body_ratio,
+
+        "rejection_imbalance":
+            rejection_imbalance,
+
+        "volatility":
+            volatility,
+
+        "volatility_ratio":
+            volatility_ratio,
+
+        "location_in_range":
+            location_in_range,
+
+        "distance_from_high":
+            distance_from_high,
+
+        "distance_from_low":
+            distance_from_low,
+
+        "normalized_slope":
+            normalized_slope,
+
+        "momentum_acceleration":
+            momentum_acceleration,
+    }
+
+
+# ============================================================
+# REGIME CLASSIFICATION
+# ============================================================
+
+def determine_regime(features):
+
+    slope = features["normalized_slope"]
+
+    imbalance = features[
+        "directional_imbalance"
+    ]
+
+    volatility_ratio = features[
+        "volatility_ratio"
+    ]
+
+    # --------------------------------------------------------
+    # Directional regime
+    # --------------------------------------------------------
+
+    if slope > 0.25 and imbalance > 0.05:
+
+        direction = "bullish"

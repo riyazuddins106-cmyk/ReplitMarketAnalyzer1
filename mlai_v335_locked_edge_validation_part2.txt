@@ -1,0 +1,400 @@
+
+# ============================================================
+# RECORD CREATION
+# ============================================================
+
+def build_records(closes, horizon):
+    records = []
+
+    last_index = (
+        len(closes)
+        - horizon
+        - 1
+    )
+
+    for index in range(
+        CURRENT_WINDOW - 1,
+        last_index + 1
+    ):
+        features = calculate_features(
+            closes,
+            index
+        )
+
+        if features is None:
+            continue
+
+        outcome = classify_outcome(
+            closes,
+            index,
+            horizon
+        )
+
+        if outcome is None:
+            continue
+
+        records.append({
+            "index": index,
+            "features": features,
+            "outcome": outcome,
+        })
+
+    return records
+
+
+# ============================================================
+# STRUCTURE KEY
+# ============================================================
+
+def structure_key(record):
+    f = record["features"]
+
+    return (
+        f["directional_regime"],
+        f["volatility_regime"],
+    )
+
+
+# ============================================================
+# DISCOVER RULES FROM CALIBRATION ONLY
+# ============================================================
+
+def discover_rules(calibration):
+    groups = defaultdict(list)
+
+    for record in calibration:
+        groups[
+            structure_key(record)
+        ].append(record["outcome"])
+
+    rules = {}
+
+    for key, outcomes in groups.items():
+        n = len(outcomes)
+
+        if n < MIN_CALIBRATION_SAMPLES:
+            continue
+
+        bullish = outcomes.count("bullish")
+        neutral = outcomes.count("neutral")
+        bearish = outcomes.count("bearish")
+
+        directional_total = (
+            bullish + bearish
+        )
+
+        if directional_total == 0:
+            continue
+
+        if bullish > bearish:
+            prediction = "BUY"
+            directional_count = bullish
+        elif bearish > bullish:
+            prediction = "SELL"
+            directional_count = bearish
+        else:
+            prediction = "NO TRADE"
+            directional_count = 0
+
+        confidence = (
+            directional_count / n
+        ) * 100
+
+        # Only lock a directional rule.
+        if prediction in ("BUY", "SELL"):
+            rules[key] = {
+                "prediction": prediction,
+                "confidence": confidence,
+                "samples": n,
+                "bullish": bullish,
+                "neutral": neutral,
+                "bearish": bearish,
+            }
+
+    return rules
+
+
+# ============================================================
+# LOCKED VALIDATION
+# ============================================================
+
+def evaluate_locked_rule(
+    validation,
+    rule
+):
+    selected = []
+
+    for record in validation:
+        key = structure_key(record)
+
+        if key not in rule:
+            continue
+
+        locked = rule[key]
+
+        selected.append({
+            "prediction": locked["prediction"],
+            "confidence": locked["confidence"],
+            "outcome": record["outcome"],
+            "key": key,
+        })
+
+    if not selected:
+        return None
+
+    correct = 0
+    buy_predictions = 0
+    sell_predictions = 0
+
+    buy_correct = 0
+    sell_correct = 0
+
+    for item in selected:
+        prediction = item["prediction"]
+        outcome = item["outcome"]
+
+        if prediction == "BUY":
+            buy_predictions += 1
+
+            if outcome == "bullish":
+                correct += 1
+                buy_correct += 1
+
+        elif prediction == "SELL":
+            sell_predictions += 1
+
+            if outcome == "bearish":
+                correct += 1
+                sell_correct += 1
+
+    total = len(selected)
+
+    directional_accuracy = (
+        correct / total * 100
+        if total
+        else 0.0
+    )
+
+    buy_precision = (
+        buy_correct / buy_predictions * 100
+        if buy_predictions
+        else 0.0
+    )
+
+    sell_precision = (
+        sell_correct / sell_predictions * 100
+        if sell_predictions
+        else 0.0
+    )
+
+    return {
+        "total": total,
+        "correct": correct,
+        "directional_accuracy":
+            directional_accuracy,
+        "coverage": total,
+        "buy_predictions":
+            buy_predictions,
+        "sell_predictions":
+            sell_predictions,
+        "buy_precision":
+            buy_precision,
+        "sell_precision":
+            sell_precision,
+        "selected":
+            selected,
+    }
+
+
+# ============================================================
+# WALK-FORWARD FOLD CREATION
+# ============================================================
+
+def make_folds(records):
+    n = len(records)
+
+    folds = []
+
+    validation_size = max(
+        1,
+        int(n * VALIDATION_RATIO)
+    )
+
+    # Leave enough history before every validation block.
+    for fold in range(N_FOLDS):
+
+        validation_end = (
+            n - fold * validation_size
+        )
+
+        validation_start = (
+            validation_end
+            - validation_size
+        )
+
+        if validation_start <= 0:
+            break
+
+        calibration = records[
+            :validation_start
+        ]
+
+        validation = records[
+            validation_start:
+            validation_end
+        ]
+
+        if (
+            len(calibration)
+            < MIN_CALIBRATION_SAMPLES
+            or len(validation) == 0
+        ):
+            continue
+
+        folds.append(
+            (
+                len(folds) + 1,
+                calibration,
+                validation
+            )
+        )
+
+    folds.reverse()
+
+    return folds
+
+
+# ============================================================
+# CONFIDENCE TEST
+# ============================================================
+
+def confidence_test(
+    selected,
+    thresholds
+):
+    results = []
+
+    for threshold in thresholds:
+        usable = [
+            x for x in selected
+            if x["confidence"] >= threshold
+        ]
+
+        if not usable:
+            continue
+
+        correct = sum(
+            1
+            for x in usable
+            if (
+                (x["prediction"] == "BUY"
+                 and x["outcome"] == "bullish")
+                or
+                (x["prediction"] == "SELL"
+                 and x["outcome"] == "bearish")
+            )
+        )
+
+        buys = [
+            x for x in usable
+            if x["prediction"] == "BUY"
+        ]
+
+        sells = [
+            x for x in usable
+            if x["prediction"] == "SELL"
+        ]
+
+        buy_correct = sum(
+            1
+            for x in buys
+            if x["outcome"] == "bullish"
+        )
+
+        sell_correct = sum(
+            1
+            for x in sells
+            if x["outcome"] == "bearish"
+        )
+
+        accuracy = (
+            correct / len(usable) * 100
+        )
+
+        coverage = (
+            len(usable)
+            / len(selected)
+            * 100
+        )
+
+        buy_precision = (
+            buy_correct / len(buys) * 100
+            if buys
+            else 0.0
+        )
+
+        sell_precision = (
+            sell_correct / len(sells) * 100
+            if sells
+            else 0.0
+        )
+
+        results.append({
+            "threshold": threshold,
+            "accuracy": accuracy,
+            "coverage": coverage,
+            "buy_precision":
+                buy_precision,
+            "sell_precision":
+                sell_precision,
+            "count": len(usable),
+        })
+
+    return results
+
+
+# ============================================================
+# MAIN HORIZON TEST
+# ============================================================
+
+def run_horizon(
+    closes,
+    horizon
+):
+    print()
+    print("=" * 70)
+    print(
+        f"HORIZON: {horizon} CANDLES"
+    )
+    print("=" * 70)
+
+    records = build_records(
+        closes,
+        horizon
+    )
+
+    print(
+        f"Historical records: "
+        f"{len(records)}"
+    )
+
+    folds = make_folds(records)
+
+    print(
+        f"Walk-forward folds: "
+        f"{len(folds)}"
+    )
+
+    print()
+
+    all_validation_predictions = []
+
+    fold_results = []
+
+    for (
+        fold_number,
+        calibration,
+        validation
+    ) in folds:
+
+        print("-" * 70)

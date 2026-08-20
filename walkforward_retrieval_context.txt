@@ -1,0 +1,149 @@
+﻿    if not chronology["ordered"] or chronology["duplicates"]:
+        raise RuntimeError("Chronology audit failed.")
+    if len(candles) < 500:
+        raise RuntimeError("Insufficient candle history.")
+
+    windows = create_walk_forward_windows(
+        len(candles),
+        DEFAULT_TRAIN_WINDOWS,
+        DEFAULT_OOS_SIZE,
+    )
+
+    atr = calculate_atr(candles)
+    engine = CausalStructureEngine(candles)
+    structure_states = engine.build()
+
+    causality = audit_structure_causality(
+        candles,
+        engine.swings,
+        structure_states,
+        engine.events,
+    )
+    if not causality["passed"]:
+        raise RuntimeError("Causality audit failed.")
+
+    market_states = build_market_states(
+        candles,
+        structure_states,
+        atr,
+    )
+
+    episode_ids = assign_episode_ids(market_states)
+
+    print()
+    print("=" * 96)
+    print("FOUNDATION STATUS")
+    print("=" * 96)
+    print(f"Valid candles             : {len(candles)}")
+    print(f"Invalid candles           : {invalid}")
+    print(f"Confirmed swings          : {len(engine.swings)}")
+    print(
+        f"Structural events         : "
+        f"{sum(1 for e in engine.events.values() if e != 'NONE')}"
+    )
+    print("Chronology                : PASS")
+    print("Causal structure          : PASS")
+    print(f"Episodes                  : {len(set(episode_ids.values()))}")
+
+    print()
+    print("Sequence states:")
+    for name, count in Counter(state.sequence_state for state in market_states).most_common():
+        print(f"  {name:<34}: {count}")
+
+    print()
+    print("Regimes:")
+    for name, count in Counter(state.regime for state in market_states).most_common():
+        print(f"  {name:<34}: {count}")
+
+    all_windows: List[Dict[str, Any]] = []
+    bucket_rows: List[Dict[str, Any]] = []
+    null_rows: List[Dict[str, Any]] = []
+
+    print()
+    print("=" * 96)
+    print("STRICT WALK-FORWARD HISTORICAL RETRIEVAL")
+    print("=" * 96)
+
+    for window in windows:
+        window_result = {
+            "window": asdict(window),
+            "horizons": {},
+        }
+
+        print()
+        print("-" * 96)
+        print(
+            f"WINDOW {window.number} | "
+            f"TRAIN [{window.train_start}:{window.train_end}] | "
+            f"OOS [{window.oos_start}:{window.oos_end}]"
+        )
+
+        for horizon in HORIZONS:
+            records = build_experience_records(
+                candles,
+                atr,
+                market_states,
+                episode_ids,
+                window.train_start,
+                window.train_end,
+                horizon,
+            )
+
+            evaluations = []
+
+            for query_index in range(window.oos_start, window.oos_end):
+                if query_index + horizon >= len(candles):
+                    continue
+
+                query_state = market_states[query_index]
+                retrieval = retrieve_historical_experience(
+                    query_state,
+                    records,
+                    horizon,
+                    query_index,
+                )
+
+                outcome = make_outcome(
+                    candles,
+                    atr,
+                    query_index,
+                    horizon,
+                )
+                if outcome is None:
+                    continue
+
+                retrieval_distribution = {
+                    "UP": retrieval.up_share,
+                    "DOWN": retrieval.down_share,
+                    "NEUTRAL": retrieval.neutral_share,
+                }
+
+                retrieval_eval = evaluate_distribution(
+                    retrieval_distribution,
+                    outcome.direction,
+                )
+
+                baseline_level, baseline_distribution, baseline_samples = conditional_baseline(
+                    query_state,
+                    records,
+                )
+
+                baseline_eval = evaluate_distribution(
+                    baseline_distribution,
+                    outcome.direction,
+                )
+
+                row = {
+                    "query_index": query_index,
+                    "actual": outcome.direction,
+                    "retrieval": asdict(retrieval),
+                    "retrieval_evaluation": retrieval_eval,
+                    "baseline": baseline_distribution,
+                    "baseline_level": baseline_level,
+                    "baseline_samples": baseline_samples,
+                    "baseline_evaluation": baseline_eval,
+                    "brier_lift": baseline_eval["brier"] - retrieval_eval["brier"],
+                    "log_loss_lift": baseline_eval["log_loss"] - retrieval_eval["log_loss"],
+                    "similarity_bucket": bucket_name(retrieval.top_similarity),
+                }
+

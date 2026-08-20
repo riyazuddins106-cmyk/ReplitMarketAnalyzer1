@@ -1,44 +1,52 @@
-# [Project name]
+# Market Language AI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Deterministic, evidence-traceable market-state analysis from completed OHLCV candles. The current interface is command-line output only; no UI or live-data connector is required.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `python mlai_unified.py audit` — validate the imported knowledge book and raw market corpus
+- `python mlai_unified.py translate --index 1308` — translate one completed candle using prior context
+- `python mlai_unified.py walk-forward --horizon 4 --start 60 --limit 200` — run causal predict/reveal/learn evaluation
+- Add `--persist` to the walk-forward command to write `data/market_experience.bin`
+- The console does not require a database, UI, or external service.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Python 3 standard library for the unified console path
+- Auditable pickle-compatible binary knowledge and experience files
+- Existing pnpm/TypeScript scaffolding is preserved but is not part of the MLAI console runtime
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `mlai_unified.py` — single integration entry point and causal pipeline
+- `data/candle_language_v2.bin` — corrected 179-record foundational knowledge
+- `data/market_data.bin` — imported 1,309-candle OHLCV corpus
+- `data/market_experience.bin` — generated chronological evidence memory
+- `MLAI_ARCHITECTURE.md` — integration contracts and preserved-component policy
+- `mlai_market_structure_v*.py` and `MLAI_V418_*`/`MLAI_V420_*` — preserved reference/audit implementations
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Foundational candle knowledge and learned market experience are separate binary contracts.
+- The unified path enforces `predict -> reveal -> learn`; future candles are never read before prediction.
+- Existing v4.x retrieval and causal implementations are preserved and remain a later comparison layer.
+- Evidence is reported with sample size and uncertainty; the engine does not manufacture certainty.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+The console translates completed OHLCV candles into measurable candle language,
+market context, historical evidence, probabilistic scenarios, and auditable
+human-language explanations.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- The user wants command output only; do not add a UI unless explicitly requested.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- The imported market corpus currently has four timestamp gaps; `audit` reports them as REVIEW.
+- A walk-forward run only persists experience when `--persist` is explicitly supplied.
+- Existing v4.x files are reference implementations and should not be modified as part of the unified foundation without a measured comparison.
 
 ## Pointers
 

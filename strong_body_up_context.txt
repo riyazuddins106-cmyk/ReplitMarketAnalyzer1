@@ -1,0 +1,181 @@
+﻿
+def build_candle_anatomy(candles, atr):
+    output = []
+
+    for i, candle in enumerate(candles):
+        current_atr = max(
+            atr[i] or candle.high - candle.low,
+            EPS,
+        )
+
+        candle_range = max(candle.high - candle.low, EPS)
+        body = abs(candle.close - candle.open)
+
+        upper_wick = max(
+            candle.high - max(candle.open, candle.close),
+            0.0,
+        )
+
+        lower_wick = max(
+            min(candle.open, candle.close) - candle.low,
+            0.0,
+        )
+
+        close_location = (
+            candle.close - candle.low
+        ) / candle_range
+
+        body_position = (
+            ((candle.open + candle.close) / 2.0)
+            - candle.low
+        ) / candle_range
+
+        previous_close = (
+            candles[i - 1].close
+            if i > 0
+            else candle.close
+        )
+
+        directional_efficiency = abs(
+            candle.close - previous_close
+        ) / candle_range
+
+        previous_ranges = [
+            candles[j].high - candles[j].low
+            for j in range(
+                max(0, i - RANGE_LOOKBACK),
+                i,
+            )
+        ]
+
+        baseline_range = median_or(
+            previous_ranges,
+            current_atr,
+        )
+
+        range_expansion = (
+            candle_range / max(baseline_range, EPS)
+        )
+
+        direction = (
+            "UP"
+            if candle.close > candle.open
+            else "DOWN"
+            if candle.close < candle.open
+            else "FLAT"
+        )
+
+        body_to_range = body / candle_range
+        upper_wick_ratio = upper_wick / candle_range
+        lower_wick_ratio = lower_wick / candle_range
+        body_atr = body / current_atr
+        range_atr = candle_range / current_atr
+
+        if body_to_range <= 0.15:
+            candle_type = "DOJI"
+        elif (
+            body_to_range >= 0.70
+            and direction == "UP"
+        ):
+            candle_type = "STRONG_BODY_UP"
+        elif (
+            body_to_range >= 0.70
+            and direction == "DOWN"
+        ):
+            candle_type = "STRONG_BODY_DOWN"
+        elif (
+            lower_wick >= body * 1.8
+            and close_location >= 0.60
+        ):
+            candle_type = "BULLISH_REJECTION"
+        elif (
+            upper_wick >= body * 1.8
+            and close_location <= 0.40
+        ):
+            candle_type = "BEARISH_REJECTION"
+        elif (
+            range_expansion >= 1.8
+            and direction == "UP"
+        ):
+            candle_type = "WIDE_RANGE_UP"
+        elif (
+            range_expansion >= 1.8
+            and direction == "DOWN"
+        ):
+            candle_type = "WIDE_RANGE_DOWN"
+        elif range_expansion <= 0.65:
+            candle_type = "COMPRESSION"
+        else:
+            candle_type = "NORMAL"
+
+        if (
+            lower_wick >= max(body * 1.5, candle_range * 0.45)
+            and close_location > 0.55
+        ):
+            rejection = "BULLISH"
+        elif (
+            upper_wick >= max(body * 1.5, candle_range * 0.45)
+            and close_location < 0.45
+        ):
+            rejection = "BEARISH"
+        else:
+            rejection = "NONE"
+
+        if close_location >= 0.75 and direction == "UP":
+            pressure = "BUYING"
+        elif close_location <= 0.25 and direction == "DOWN":
+            pressure = "SELLING"
+        else:
+            pressure = "MIXED"
+
+        output.append(
+            CandleAnatomy(
+                index=i,
+                direction=direction,
+                body_atr=body_atr,
+                range_atr=range_atr,
+                body_to_range=body_to_range,
+                upper_wick_to_range=upper_wick_ratio,
+                lower_wick_to_range=lower_wick_ratio,
+                close_location=close_location,
+                body_position=body_position,
+                directional_efficiency=directional_efficiency,
+                range_expansion=range_expansion,
+                candle_type=candle_type,
+                rejection=rejection,
+                pressure=pressure,
+            )
+        )
+
+    return output
+
+
+def build_sequence_states(candles, candle_states, structure_states):
+    output = []
+
+    for i in range(len(candles)):
+        start = max(
+            0,
+            i - SEQUENCE_LENGTH + 1,
+        )
+
+        rows = candle_states[start : i + 1]
+
+        prior_state = (
+            output[-1].state
+            if output
+            else "INITIAL"
+        )
+
+        state = "MIXED"
+
+        impulse_count = sum(
+            row.body_to_range >= 0.60
+            and row.range_expansion >= 1.10
+            for row in rows
+        )
+
+        if structure_states[i].trend == "BULLISH":
+            pullback_count = sum(
+                row.direction == "DOWN"
+                for row in rows

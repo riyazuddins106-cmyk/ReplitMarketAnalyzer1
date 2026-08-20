@@ -1,0 +1,277 @@
+    )
+
+    print(
+        f"  bearish_ratio:         "
+        f"{features['bearish_ratio']:.4f}"
+    )
+
+    print(
+        f"  directional_imbalance: "
+        f"{features['directional_imbalance']:.4f}"
+    )
+
+    print(
+        f"  volatility:            "
+        f"{features['volatility']:.4f}"
+    )
+
+    print(
+        f"  volatility_ratio:      "
+        f"{features['volatility_ratio']:.4f}"
+    )
+
+    print(
+        f"  location_in_range:     "
+        f"{features['location_in_range']:.4f}"
+    )
+
+    print(
+        f"  normalized_slope:      "
+        f"{features['normalized_slope']:.4f}"
+    )
+
+    print()
+
+    print(
+        "IMPORTANT:"
+    )
+
+    print(
+        "This section describes the current "
+        "60-candle structure only."
+    )
+
+    print(
+        "It is NOT a trading signal."
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    print("=" * 70)
+
+    print(
+        "MLAI v3.3.3 "
+        "SIMILAR STRUCTURE + REGIME MODEL"
+    )
+
+    print("=" * 70)
+
+    print()
+
+    print(
+        f"Market file: {DATA_FILE}"
+    )
+
+    print(
+        f"Current window: {WINDOW}"
+    )
+
+    print(
+        f"Horizons: {HORIZONS}"
+    )
+
+    print(
+        f"Threshold: +/-{THRESHOLD}%"
+    )
+
+    print(
+        f"Calibration ratio: "
+        f"{CALIBRATION_RATIO}"
+    )
+
+    # --------------------------------------------------------
+    # Load market data READ ONLY.
+    # --------------------------------------------------------
+
+    with open(
+        DATA_FILE,
+        "rb"
+    ) as f:
+
+        data = pickle.load(f)
+
+    candles = data["candles"]
+
+    print()
+
+    print(
+        f"Total candles: {len(candles)}"
+    )
+
+    # --------------------------------------------------------
+    # Protection
+    # --------------------------------------------------------
+
+    print()
+
+    print("=" * 70)
+
+    print(
+        "PROTECTION CHECK"
+    )
+
+    print("=" * 70)
+
+    print(
+        "market_data.bin: READ ONLY"
+    )
+
+    print(
+        "mlai_v31.py: NOT MODIFIED"
+    )
+
+    print(
+        "learning memory: NOT MODIFIED"
+    )
+
+    print(
+        "production logic: NOT MODIFIED"
+    )
+
+    # --------------------------------------------------------
+    # Historical tests
+    # --------------------------------------------------------
+
+    for horizon in HORIZONS:
+
+        records = build_records(
+            candles,
+            horizon
+        )
+
+        run_horizon(
+            records,
+            horizon
+        )
+
+    # --------------------------------------------------------
+    # Current state
+    # --------------------------------------------------------
+
+    current_market_analysis(
+        candles
+    )
+
+    # --------------------------------------------------------
+    # Final verdict
+    # --------------------------------------------------------
+
+    print()
+
+    print("=" * 70)
+
+    print(
+        "MLAI v3.3.3 DIAGNOSTIC VERDICT"
+    )
+
+    print("=" * 70)
+
+    print()
+
+    print(
+        "This experiment tests whether the current "
+        "60-candle structure resembles earlier "
+        "historical structures."
+    )
+
+    print()
+
+    print(
+        "Historical neighbors are selected only "
+        "from data occurring before the validation "
+        "period."
+    )
+
+    print()
+
+    print(
+        "The model evaluates:"
+    )
+
+    print(
+        "  BUY"
+    )
+
+    print(
+        "  SELL"
+    )
+
+    print(
+        "  NO TRADE"
+    )
+
+    print()
+
+    print(
+        "The regime is also included:"
+    )
+
+    print(
+        "  Directional regime"
+    )
+
+    print(
+        "  Volatility regime"
+    )
+
+    print()
+
+    print(
+        "IMPORTANT:"
+    )
+
+    print(
+        "This is a diagnostic experiment only."
+    )
+
+    print(
+        "It does NOT create a trading signal."
+    )
+
+    print(
+        "It does NOT modify market_data.bin."
+    )
+
+    print(
+        "It does NOT modify mlai_v31.py."
+    )
+
+    print(
+        "It does NOT modify learning memory."
+    )
+
+    print(
+        "It does NOT change production thresholds."
+    )
+
+    print()
+
+    print(
+        "The main question is:"
+    )
+
+    print(
+        "Does a similar historical 60-candle "
+        "structure produce a repeatable outcome "
+        "on completely unseen chronological data?"
+    )
+
+    print()
+
+    print("=" * 70)
+
+    print(
+        "MLAI v3.3.3 TEST COMPLETE"
+    )
+
+    print("=" * 70)
+
+
+if __name__ == "__main__":
+
+    main()
