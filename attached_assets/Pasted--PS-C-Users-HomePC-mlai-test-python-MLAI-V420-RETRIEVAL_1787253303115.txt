@@ -1,0 +1,502 @@
+
+PS C:\Users\HomePC\mlai-test> python MLAI_V420_RETRIEVAL_FORENSIC_REPAIR.py
+==============================================================================================================
+MLAI V4.2.0 — DEFINITIVE RETRIEVAL FORENSIC REPAIR
+==============================================================================================================
+Research only
+Production MLAI        : READ ONLY
+Historical data        : READ ONLY
+OOS tuning             : DISABLED
+Causal inner baseline  : ENABLED
+Disjoint calibration   : ENABLED
+Nested chronological   : ENABLED
+Fast causal cache      : ENABLED
+Configuration grid     : 36
+
+FOUNDATION
+  Candles           : 1309
+  Invalid           : 0
+  Windows           : 5
+  Swings            : 225
+  Structural events : 77
+  Episodes          : 1202
+  Chronology        : PASS
+  Causal structure  : PASS
+
+==============================================================================================================
+WINDOW 1
+TRAIN [0:904]
+OOS   [904:985]
+==============================================================================================================
+
+  H+4
+  Training records : 887
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : structure_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 30.864%
+    Retrieval Acc     : 34.568%
+    Accuracy lift     : 3.704%
+    Brier lift        : -0.00403124
+    LogLoss lift      : -0.03660296
+    Coverage          : 100.00%
+    Mean similarity   : 0.755405862861365
+    Homogeneity       : 0.1345425302951172
+
+  H+8
+  Training records : 883
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : balanced
+    Calibration shrink : 0.150
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 43.210%
+    Retrieval Acc     : 45.679%
+    Accuracy lift     : 2.469%
+    Brier lift        : -0.01386580
+    LogLoss lift      : -0.07987329
+    Coverage          : 100.00%
+    Mean similarity   : 0.7503289668984735
+    Homogeneity       : 0.18461244590789197
+
+  H+16
+  Training records : 875
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : context_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 41.975%
+    Retrieval Acc     : 45.679%
+    Accuracy lift     : 3.704%
+    Brier lift        : 0.04030337
+    LogLoss lift      : 0.36223772
+    Coverage          : 100.00%
+    Mean similarity   : 0.7689306085610835
+    Homogeneity       : 0.2608863374922773
+==============================================================================================================
+WINDOW 2
+TRAIN [0:985]
+OOS   [985:1066]
+==============================================================================================================
+
+  H+4
+  Training records : 968
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : structure_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 37.037%
+    Retrieval Acc     : 35.802%
+    Accuracy lift     : -1.235%
+    Brier lift        : 0.00350223
+    LogLoss lift      : 0.00665630
+    Coverage          : 100.00%
+    Mean similarity   : 0.7738674763338413
+    Homogeneity       : 0.12048914442303284
+
+  H+8
+  Training records : 964
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : structure_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 32.099%
+    Retrieval Acc     : 45.679%
+    Accuracy lift     : 13.580%
+    Brier lift        : -0.00420625
+    LogLoss lift      : -0.05363671
+    Coverage          : 100.00%
+    Mean similarity   : 0.7736594298906947
+    Homogeneity       : 0.18480741940743062
+
+  H+16
+  Training records : 956
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : context_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 55.556%
+    Retrieval Acc     : 54.321%
+    Accuracy lift     : -1.235%
+    Brier lift        : -0.03811737
+    LogLoss lift      : 0.19919996
+    Coverage          : 100.00%
+    Mean similarity   : 0.7845812458719351
+    Homogeneity       : 0.2545351214486472
+==============================================================================================================
+WINDOW 3
+TRAIN [0:1066]
+OOS   [1066:1147]
+==============================================================================================================
+
+  H+4
+  Training records : 1049
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : structure_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 43.210%
+    Retrieval Acc     : 44.444%
+    Accuracy lift     : 1.235%
+    Brier lift        : -0.00785463
+    LogLoss lift      : -0.01084126
+    Coverage          : 100.00%
+    Mean similarity   : 0.7534959640899168
+    Homogeneity       : 0.11046237374365775
+
+  H+8
+  Training records : 1045
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : balanced
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 55.556%
+    Retrieval Acc     : 50.617%
+    Accuracy lift     : -4.938%
+    Brier lift        : -0.01573314
+    LogLoss lift      : 0.29545389
+    Coverage          : 100.00%
+    Mean similarity   : 0.7483060135051681
+    Homogeneity       : 0.19295777407335524
+
+  H+16
+  Training records : 1037
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : balanced
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 49.383%
+    Retrieval Acc     : 38.272%
+    Accuracy lift     : -11.111%
+    Brier lift        : -0.01464957
+    LogLoss lift      : -0.03830863
+    Coverage          : 100.00%
+    Mean similarity   : 0.7451209786620567
+    Homogeneity       : 0.23937285677364112
+==============================================================================================================
+WINDOW 4
+TRAIN [0:1147]
+OOS   [1147:1228]
+==============================================================================================================
+
+  H+4
+  Training records : 1130
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : structure_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 60.494%
+    Retrieval Acc     : 53.086%
+    Accuracy lift     : -7.407%
+    Brier lift        : -0.05257984
+    LogLoss lift      : -0.06525855
+    Coverage          : 100.00%
+    Mean similarity   : 0.7950557848900135
+    Homogeneity       : 0.11965556935886006
+
+  H+8
+  Training records : 1126
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : context_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 62.963%
+    Retrieval Acc     : 56.790%
+    Accuracy lift     : -6.173%
+    Brier lift        : -0.02044723
+    LogLoss lift      : -0.01888133
+    Coverage          : 100.00%
+    Mean similarity   : 0.8064648587783791
+    Homogeneity       : 0.18965839818586813
+
+  H+16
+  Training records : 1118
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : balanced
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 81
+    Baseline Acc      : 56.790%
+    Retrieval Acc     : 56.790%
+    Accuracy lift     : 0.000%
+    Brier lift        : -0.00619594
+    LogLoss lift      : -0.01597351
+    Coverage          : 100.00%
+    Mean similarity   : 0.7835358916746191
+    Homogeneity       : 0.23849129176289746
+==============================================================================================================
+WINDOW 5
+TRAIN [0:1228]
+OOS   [1228:1309]
+==============================================================================================================
+
+  H+4
+  Training records : 1211
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : soft
+    Similarity    : structure_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 77
+    Baseline Acc      : 53.247%
+    Retrieval Acc     : 48.052%
+    Accuracy lift     : -5.195%
+    Brier lift        : -0.03610026
+    LogLoss lift      : -0.06433976
+    Coverage          : 100.00%
+    Mean similarity   : 0.7734569209692548
+    Homogeneity       : 0.13375393653426895
+
+  H+8
+  Training records : 1207
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : context_first
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 73
+    Baseline Acc      : 57.534%
+    Retrieval Acc     : 52.055%
+    Accuracy lift     : -5.479%
+    Brier lift        : -0.03265971
+    LogLoss lift      : 0.61570268
+    Coverage          : 100.00%
+    Mean similarity   : 0.7907896973297629
+    Homogeneity       : 0.1788054670817337
+
+  H+16
+  Training records : 1199
+    Configuration search : 36 candidates (cached)
+      tested 6/36
+      tested 12/36
+      tested 18/36
+      tested 24/36
+      tested 30/36
+      tested 36/36
+  SELECTED
+    K             : 24
+    Half-life     : None
+    Regime        : none
+    Similarity    : balanced
+    Calibration shrink : 0.000
+    Calibration temp  : 0.800
+    OOS N             : 65
+    Baseline Acc      : 41.538%
+    Retrieval Acc     : 49.231%
+    Accuracy lift     : 7.692%
+    Brier lift        : 0.00387633
+    LogLoss lift      : -0.02078415
+    Coverage          : 100.00%
+    Mean similarity   : 0.763719268131491
+    Homogeneity       : 0.25948234518571295
+
+==============================================================================================================
+FINAL DEFINITIVE RETRIEVAL FORENSIC RESULT
+==============================================================================================================
+
+H+4
+  Verdict            : NO_EVIDENCE
+  Baseline Acc       : 44.8878%
+  Retrieval Acc      : 43.1421%
+  Accuracy lift      : -1.7456%
+  Brier lift         : -0.01924629
+  LogLoss lift       : -0.03377537
+  Positive Brier     : 1/5
+  Positive LogLoss   : 1/5
+  Similarity/Brier   : -0.021589682510142556
+  Rank top>bottom    : True
+  Permutation p      : 0.5338645418326693
+  Brier 95% CI      : [-0.03547811, -0.00270339]
+
+H+8
+  Verdict            : NO_EVIDENCE
+  Baseline Acc       : 50.1259%
+  Retrieval Acc      : 50.1259%
+  Accuracy lift      : 0.0000%
+  Brier lift         : -0.01707457
+  LogLoss lift       : 0.14240394
+  Positive Brier     : 0/5
+  Positive LogLoss   : 2/5
+  Similarity/Brier   : 0.01750604790995662
+  Rank top>bottom    : False
+  Permutation p      : 0.5139442231075697
+  Brier 95% CI      : [-0.03788511, 0.00179954]
+
+H+16
+  Verdict            : NO_EVIDENCE
+  Baseline Acc       : 49.3573%
+  Retrieval Acc      : 48.8432%
+  Accuracy lift      : -0.5141%
+  Brier lift         : -0.00323769
+  LogLoss lift       : 0.10213015
+  Positive Brier     : 2/5
+  Positive LogLoss   : 2/5
+  Similarity/Brier   : -0.03322025812948878
+  Rank top>bottom    : True
+  Permutation p      : 0.6055776892430279
+  Brier 95% CI      : [-0.02455568, 0.01707654]
+
+FINAL VERDICT: NO CREDIBLE INCREMENTAL EVIDENCE
+
+PROTECTION
+  market_data.bin unchanged : PASS
+  Production modified       : NO
+  Learning memory modified  : NO
+  Trading                   : DISABLED
+  Runtime                   : 2032.54s
+
+ARTIFACTS
+  MLAI_V420_RETRIEVAL_FORENSIC_REPAIR_DEFINITIVE.bin
+  MLAI_V420_RETRIEVAL_FORENSIC_REPAIR_DEFINITIVE_REPORT.md
+
+MLAI production was NOT modified.
+PS C:\Users\HomePC\mlai-test> 

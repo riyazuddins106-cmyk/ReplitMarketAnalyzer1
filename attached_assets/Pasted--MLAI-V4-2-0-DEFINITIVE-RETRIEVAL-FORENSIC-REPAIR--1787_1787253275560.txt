@@ -25,7 +25,7 @@ The only acceptable "genuine predictive result" is one that survives the
 frozen OOS tests. A negative result is a valid result.
 
 Run:
-    python MLAI_V420_RETRIEVAL_FORENSIC_REPAIR.py
+    python MLAI_V420_RETRIEVAL_FORENSIC_REPAIR_DEFINITIVE.py
 """
 
 from __future__ import annotations
@@ -39,7 +39,6 @@ import statistics
 import time
 from collections import Counter
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import mlai_market_structure_v420 as v420
@@ -51,8 +50,7 @@ import mlai_market_structure_v420 as v420
 
 VERSION = "V420-DEFINITIVE-RETRIEVAL-FORENSIC-REPAIR-FAST-3.0"
 
-PROJECT_ROOT = Path(__file__).resolve().parent
-DATA_FILE = str(PROJECT_ROOT / "data" / Path(v420.MARKET_DATA_FILE).name)
+DATA_FILE = v420.MARKET_DATA_FILE
 REPORT_FILE = "MLAI_V420_RETRIEVAL_FORENSIC_REPAIR_DEFINITIVE_REPORT.md"
 ARTIFACT_FILE = "MLAI_V420_RETRIEVAL_FORENSIC_REPAIR_DEFINITIVE.bin"
 

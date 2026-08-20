@@ -124,8 +124,7 @@ class MarketState:
                 "categorical": _state_parts(self),
                 "returns": [round(value, 10) for value in self.returns],
                 "path": [
-                    [round(value, 6) for value in row]
-                    for row in self.path_vector
+                    [round(value, 6) for value in row] for row in self.path_vector
                 ],
             },
             separators=(",", ":"),
@@ -196,7 +195,9 @@ def load_knowledge(path: Path = KB_PATH) -> dict[str, Any]:
     return payload
 
 
-def validate_knowledge(path: Path = KB_PATH, index_path: Path = KB_INDEX_PATH) -> dict[str, Any]:
+def validate_knowledge(
+    path: Path = KB_PATH, index_path: Path = KB_INDEX_PATH
+) -> dict[str, Any]:
     payload = load_knowledge(path)
     actual_hash = sha256(path)
     report: dict[str, Any] = {
@@ -220,9 +221,19 @@ def validate_knowledge(path: Path = KB_PATH, index_path: Path = KB_INDEX_PATH) -
         )
         report["indexed_sha256"] = index.get("kb_sha256")
     text = json.dumps(payload["records"], sort_keys=True).lower()
-    required = ("open", "high", "low", "close", "look_ahead", "higher high", "lower low")
+    required = (
+        "open",
+        "high",
+        "low",
+        "close",
+        "look_ahead",
+        "higher high",
+        "lower low",
+    )
     report["required_terms"] = {term: term in text for term in required}
-    report["vocabulary_status"] = "PASS" if all(report["required_terms"].values()) else "REVIEW"
+    report["vocabulary_status"] = (
+        "PASS" if all(report["required_terms"].values()) else "REVIEW"
+    )
     return report
 
 
@@ -289,12 +300,27 @@ def classify_candle(candle: Candle, recent: list[Candle]) -> CandleLanguage:
     average_body = sum(abs(c.close - c.open) for c in recent) / max(1, len(recent))
     range_ratio = range_value / average_range if average_range else 1.0
     body_ratio_relative = body / average_body if average_body else 1.0
-    direction = "bullish" if candle.close > candle.open else "bearish" if candle.close < candle.open else "neutral"
-    body_size = (
-        "large" if body_ratio_relative >= 1.5 else
-        "small" if body_ratio_relative <= 0.6 else "medium"
+    direction = (
+        "bullish"
+        if candle.close > candle.open
+        else "bearish"
+        if candle.close < candle.open
+        else "neutral"
     )
-    range_size = "expansion" if range_ratio >= 1.5 else "compression" if range_ratio <= 0.6 else "normal"
+    body_size = (
+        "large"
+        if body_ratio_relative >= 1.5
+        else "small"
+        if body_ratio_relative <= 0.6
+        else "medium"
+    )
+    range_size = (
+        "expansion"
+        if range_ratio >= 1.5
+        else "compression"
+        if range_ratio <= 0.6
+        else "normal"
+    )
     upper_ratio = upper / body if body else float("inf")
     lower_ratio = lower / body if body else float("inf")
     if lower_ratio >= 2.0 and lower > upper * 1.25:
@@ -330,19 +356,28 @@ def classify_candle(candle: Candle, recent: list[Candle]) -> CandleLanguage:
         f"and {range_size} range."
     )
     return CandleLanguage(
-        direction, body_size, range_size, wick_profile, tuple(behaviours),
-        body_ratio, range_value, close_location, human,
+        direction,
+        body_size,
+        range_size,
+        wick_profile,
+        tuple(behaviours),
+        body_ratio,
+        range_value,
+        close_location,
+        human,
     )
 
 
-def _causal_structure_snapshot(candles: list[Candle], index: int) -> tuple[str, str, str, str]:
+def _causal_structure_snapshot(
+    candles: list[Candle], index: int
+) -> tuple[str, str, str, str]:
     """Return structure known at index; pivots need two confirming candles."""
     left = right = 2
     highs: list[tuple[int, float, str]] = []
     lows: list[tuple[int, float, str]] = []
     end = min(index, len(candles) - 1)
     for pivot in range(left, end - right + 1):
-        window = candles[pivot - left:pivot + right + 1]
+        window = candles[pivot - left : pivot + right + 1]
         if candles[pivot].high == max(c.high for c in window):
             label = "HH" if not highs or candles[pivot].high > highs[-1][1] else "LH"
             highs.append((pivot, candles[pivot].high, label))
@@ -355,9 +390,15 @@ def _causal_structure_snapshot(candles: list[Candle], index: int) -> tuple[str, 
     last_low = lows[-1] if lows else None
     event = "NONE"
     trend = "range"
-    if last_high and index > last_high[0] + right and candles[index].close > last_high[1]:
+    if (
+        last_high
+        and index > last_high[0] + right
+        and candles[index].close > last_high[1]
+    ):
         event, trend = "BOS_BULLISH", "bullish"
-    elif last_low and index > last_low[0] + right and candles[index].close < last_low[1]:
+    elif (
+        last_low and index > last_low[0] + right and candles[index].close < last_low[1]
+    ):
         event, trend = "BOS_BEARISH", "bearish"
     elif high_label == "HH" and low_label == "HL":
         trend = "bullish"
@@ -368,24 +409,33 @@ def _causal_structure_snapshot(candles: list[Candle], index: int) -> tuple[str, 
 
 def _causal_atr(candles: list[Candle], index: int, period: int = 14) -> float:
     start = max(0, index - period + 1)
-    ranges = [max(0.0, c.high - c.low) for c in candles[start:index + 1]]
+    ranges = [max(0.0, c.high - c.low) for c in candles[start : index + 1]]
     return sum(ranges) / max(1, len(ranges))
 
 
-def _causal_path_vector(candles: list[Candle], index: int, length: int = 12) -> tuple[tuple[float, float, float, float], ...]:
+def _causal_path_vector(
+    candles: list[Candle], index: int, length: int = 12
+) -> tuple[tuple[float, float, float, float], ...]:
     start = max(0, index - length + 1)
     rows: list[tuple[float, float, float, float]] = []
     for i in range(start, index + 1):
         atr = max(_causal_atr(candles, i), 1e-12)
         previous = candles[i - 1].close if i else candles[i].close
         candle = candles[i]
-        rows.append((
-            (candle.close - previous) / atr,
-            (candle.high - candle.low) / atr,
-            1.0 if candle.close > candle.open else -1.0 if candle.close < candle.open else 0.0,
-            abs(candle.close - candle.open) / atr,
-        ))
+        rows.append(
+            (
+                (candle.close - previous) / atr,
+                (candle.high - candle.low) / atr,
+                1.0
+                if candle.close > candle.open
+                else -1.0
+                if candle.close < candle.open
+                else 0.0,
+                abs(candle.close - candle.open) / atr,
+            )
+        )
     return tuple([(0.0, 0.0, 0.0, 0.0)] * (length - len(rows)) + rows)
+
 
 def build_state(candles: list[Candle], index: int) -> Optional[MarketState]:
     if index < 20 or index >= len(candles):
@@ -393,43 +443,86 @@ def build_state(candles: list[Candle], index: int) -> Optional[MarketState]:
     current = candles[index]
     # The current candle is known at prediction time, but must not be part of
     # the baseline used to decide whether it is unusually large or small.
-    recent = candles[max(0, index - 20): index]
+    recent = candles[max(0, index - 20) : index]
     language = classify_candle(current, recent)
     closes = [c.close for c in recent]
-    trend, structure_event, high_label, low_label = _causal_structure_snapshot(candles, index)
+    trend, structure_event, high_label, low_label = _causal_structure_snapshot(
+        candles, index
+    )
     ranges = [max(0.0, c.high - c.low) for c in recent]
     average_range = sum(ranges) / max(1, len(ranges))
     current_range = max(0.0, current.high - current.low)
     range_ratio = current_range / average_range if average_range else 1.0
-    volatility = "high" if range_ratio > 1.5 else "low" if range_ratio < 0.6 else "normal"
+    volatility = (
+        "high" if range_ratio > 1.5 else "low" if range_ratio < 0.6 else "normal"
+    )
     recent_high = max(c.high for c in recent)
     recent_low = min(c.low for c in recent)
-    position = (current.close - recent_low) / (recent_high - recent_low) if recent_high != recent_low else 0.5
-    location = "near_high" if position >= 0.8 else "near_low" if position <= 0.2 else "middle"
-    if high_label in ("HH", "LH") and current.close >= recent_high - _causal_atr(candles, index):
+    position = (
+        (current.close - recent_low) / (recent_high - recent_low)
+        if recent_high != recent_low
+        else 0.5
+    )
+    location = (
+        "near_high" if position >= 0.8 else "near_low" if position <= 0.2 else "middle"
+    )
+    if high_label in ("HH", "LH") and current.close >= recent_high - _causal_atr(
+        candles, index
+    ):
         location = "near_resistance"
-    elif low_label in ("HL", "LL") and current.close <= recent_low + _causal_atr(candles, index):
+    elif low_label in ("HL", "LL") and current.close <= recent_low + _causal_atr(
+        candles, index
+    ):
         location = "near_support"
     directions = [classify_candle(c, recent).direction for c in recent[-4:]]
     sequence = " -> ".join(directions)
     returns = tuple(
         (current.close / candles[index - lookback].close - 1.0)
-        if index >= lookback and candles[index - lookback].close else 0.0
+        if index >= lookback and candles[index - lookback].close
+        else 0.0
         for lookback in (1, 3, 8, 16)
     )
     r1, r3, r8, _ = returns
-    momentum = ("bullish_acceleration" if r1 > 0 and r3 > 0 and r8 > 0 else
-                "bearish_acceleration" if r1 < 0 and r3 < 0 and r8 < 0 else
-                "bullish_momentum_loss" if r8 > 0 and r1 < 0 else
-                "bearish_momentum_loss" if r8 < 0 and r1 > 0 else "mixed")
-    regime = ("volatility_expansion" if range_ratio >= 1.35 else
-              "volatility_contraction" if range_ratio <= 0.75 else
-              "trending_up" if trend == "bullish" and r8 > 0 else
-              "trending_down" if trend == "bearish" and r8 < 0 else
-              "ranging" if trend == "range" else "transition")
-    return MarketState(index, current.timestamp, language, trend, volatility, location, sequence,
-                       structure_event, high_label, low_label, momentum, regime, returns,
-                       _causal_path_vector(candles, index))
+    momentum = (
+        "bullish_acceleration"
+        if r1 > 0 and r3 > 0 and r8 > 0
+        else "bearish_acceleration"
+        if r1 < 0 and r3 < 0 and r8 < 0
+        else "bullish_momentum_loss"
+        if r8 > 0 and r1 < 0
+        else "bearish_momentum_loss"
+        if r8 < 0 and r1 > 0
+        else "mixed"
+    )
+    regime = (
+        "volatility_expansion"
+        if range_ratio >= 1.35
+        else "volatility_contraction"
+        if range_ratio <= 0.75
+        else "trending_up"
+        if trend == "bullish" and r8 > 0
+        else "trending_down"
+        if trend == "bearish" and r8 < 0
+        else "ranging"
+        if trend == "range"
+        else "transition"
+    )
+    return MarketState(
+        index,
+        current.timestamp,
+        language,
+        trend,
+        volatility,
+        location,
+        sequence,
+        structure_event,
+        high_label,
+        low_label,
+        momentum,
+        regime,
+        returns,
+        _causal_path_vector(candles, index),
+    )
 
 
 def outcome_at(candles: list[Candle], index: int, horizon: int) -> str:
@@ -490,16 +583,12 @@ def retrieve_similar(
         if decoded is None:
             continue
         parts, returns, path = decoded
-        categorical_score = sum(
-            1.0 for a, b in zip(current, parts) if a == b
-        ) / len(current)
+        categorical_score = sum(1.0 for a, b in zip(current, parts) if a == b) / len(
+            current
+        )
         return_score = _numeric_similarity(state.returns, returns)
         path_score = _path_similarity(state.path_vector, path)
-        score = (
-            0.55 * categorical_score
-            + 0.20 * return_score
-            + 0.25 * path_score
-        )
+        score = 0.55 * categorical_score + 0.20 * return_score + 0.25 * path_score
         if score >= 0.34:
             matches.append((score, bucket))
     matches.sort(key=lambda item: (item[0], item[1].count), reverse=True)
@@ -556,11 +645,15 @@ def load_experience(path: Path = EXPERIENCE_PATH) -> dict[str, ExperienceBucket]
         if isinstance(value, ExperienceBucket):
             result[key] = value
         elif isinstance(value, dict):
-            result[key] = ExperienceBucket(int(value.get("count", 0)), dict(value.get("outcomes", {})))
+            result[key] = ExperienceBucket(
+                int(value.get("count", 0)), dict(value.get("outcomes", {}))
+            )
     return result
 
 
-def save_experience(buckets: dict[str, ExperienceBucket], path: Path = EXPERIENCE_PATH) -> None:
+def save_experience(
+    buckets: dict[str, ExperienceBucket], path: Path = EXPERIENCE_PATH
+) -> None:
     payload = {
         "format": "MLAI_MARKET_EXPERIENCE",
         "version": "1.0",
@@ -578,7 +671,9 @@ def save_experience(buckets: dict[str, ExperienceBucket], path: Path = EXPERIENC
         "experience_sha256": sha256(path),
         "knowledge_sha256": payload["knowledge_sha256"],
     }
-    path.with_suffix(".index.json").write_text(json.dumps(index, indent=2, sort_keys=True) + "\n")
+    path.with_suffix(".index.json").write_text(
+        json.dumps(index, indent=2, sort_keys=True) + "\n"
+    )
 
 
 def predict(state: MarketState, buckets: dict[str, ExperienceBucket]) -> dict[str, Any]:
@@ -607,7 +702,9 @@ def predict(state: MarketState, buckets: dict[str, ExperienceBucket]) -> dict[st
             outcome: (weighted_counts[outcome] + 1.0) / (total + len(OUTCOMES))
             for outcome in OUTCOMES
         }
-        confidence = "weak" if evidence < 20 else "moderate" if evidence < 100 else "strong"
+        confidence = (
+            "weak" if evidence < 20 else "moderate" if evidence < 100 else "strong"
+        )
     favored = max(probabilities, key=probabilities.get)
     return {
         "favored": favored,
@@ -673,7 +770,7 @@ def resample_candles(candles: list[Candle], group_size: int) -> list[Candle]:
         return list(candles)
     result: list[Candle] = []
     for offset in range(0, len(candles), group_size):
-        group = candles[offset: offset + group_size]
+        group = candles[offset : offset + group_size]
         if len(group) < group_size:
             break
         result.append(
@@ -717,7 +814,9 @@ def run_walk_forward(
         raise ValueError("threshold_fraction must be non-negative")
     buckets: dict[str, ExperienceBucket] = dict(initial_buckets or {})
     rows: list[dict[str, Any]] = []
-    end = min(len(candles) - horizon, start + limit) if limit else len(candles) - horizon
+    end = (
+        min(len(candles) - horizon, start + limit) if limit else len(candles) - horizon
+    )
     for index in range(start, max(start, end)):
         state = build_state(candles, index)
         if state is None:
@@ -732,18 +831,20 @@ def run_walk_forward(
             threshold_fraction=threshold_fraction,
         )
         correct = forecast["favored"] == actual
-        rows.append({
-            "index": index,
-            "timestamp": state.timestamp,
-            "state_key": state.key(),
-            "favored": forecast["favored"],
-            "probabilities": forecast["probabilities"],
-            "evidence": forecast["evidence"],
-            "retrieval_matches": forecast["retrieval_matches"],
-            "actual": actual,
-            "correct": correct,
-            "scenario": scenario_report(state, forecast),
-        })
+        rows.append(
+            {
+                "index": index,
+                "timestamp": state.timestamp,
+                "state_key": state.key(),
+                "favored": forecast["favored"],
+                "probabilities": forecast["probabilities"],
+                "evidence": forecast["evidence"],
+                "retrieval_matches": forecast["retrieval_matches"],
+                "actual": actual,
+                "correct": correct,
+                "scenario": scenario_report(state, forecast),
+            }
+        )
         # The chronological learning cycle is always part of this in-memory
         # run. Persistence is a separate concern controlled by the caller.
         buckets.setdefault(state.key(), ExperienceBucket()).observe(actual)
@@ -770,19 +871,25 @@ def print_audit() -> int:
     market = audit_market(candles)
     print("MLAI UNIFIED FOUNDATION AUDIT")
     print("=============================")
-    print(json.dumps({
-        "knowledge": knowledge,
-        "market": market,
-        "source": metadata,
-        "causality": "PREDICT -> REVEAL -> LEARN",
-        "status": (
-            "PASS"
-            if knowledge["index_status"] == "PASS"
-            and market["status"] == "PASS"
-            and market["gap_status"] == "PASS"
-            else "REVIEW"
-        ),
-    }, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "knowledge": knowledge,
+                "market": market,
+                "source": metadata,
+                "causality": "PREDICT -> REVEAL -> LEARN",
+                "status": (
+                    "PASS"
+                    if knowledge["index_status"] == "PASS"
+                    and market["status"] == "PASS"
+                    and market["gap_status"] == "PASS"
+                    else "REVIEW"
+                ),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 
@@ -831,7 +938,9 @@ def print_walk_forward(args: argparse.Namespace) -> int:
         initial_buckets=starting_buckets,
         threshold_fraction=args.threshold,
     )
-    summary = {key: value for key, value in result.items() if key not in ("rows", "buckets")}
+    summary = {
+        key: value for key, value in result.items() if key not in ("rows", "buckets")
+    }
     print("MLAI CAUSAL WALK-FORWARD")
     print("=======================")
     print(json.dumps(summary, indent=2, sort_keys=True))
@@ -846,11 +955,19 @@ def print_walk_forward(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Causal MLAI market-language console")
     subparsers = parser.add_subparsers(dest="command", required=False)
-    subparsers.add_parser("audit", help="audit the imported knowledge book and market corpus")
-    subparsers.add_parser("inspect-kb", help="print the knowledge-book manifest and vocabulary checks")
-    translate = subparsers.add_parser("translate", help="translate one candle using prior context")
+    subparsers.add_parser(
+        "audit", help="audit the imported knowledge book and market corpus"
+    )
+    subparsers.add_parser(
+        "inspect-kb", help="print the knowledge-book manifest and vocabulary checks"
+    )
+    translate = subparsers.add_parser(
+        "translate", help="translate one candle using prior context"
+    )
     translate.add_argument("--index", type=int, default=-1)
-    walk = subparsers.add_parser("walk-forward", help="run predict -> reveal -> learn chronology")
+    walk = subparsers.add_parser(
+        "walk-forward", help="run predict -> reveal -> learn chronology"
+    )
     walk.add_argument("--horizon", type=int, choices=HORIZONS, default=4)
     walk.add_argument("--start", type=int, default=60)
     walk.add_argument("--limit", type=int)
