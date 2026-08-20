@@ -224,12 +224,16 @@ def audit_market(candles: list[Candle]) -> dict[str, Any]:
     ]
     duplicates = len(timestamps) - len(set(timestamps))
     ordered = timestamps == sorted(timestamps)
-    gaps: list[int] = []
+    gaps: list[dict[str, int]] = []
     if len(timestamps) > 2:
         deltas = [b - a for a, b in zip(timestamps, timestamps[1:]) if b > a]
         if deltas:
             expected = Counter(deltas).most_common(1)[0][0]
-            gaps = [delta for delta in deltas if delta > expected * 1.5]
+            gaps = [
+                {"from": a, "to": b, "seconds": b - a}
+                for a, b in zip(timestamps, timestamps[1:])
+                if b - a > expected * 1.5
+            ]
     return {
         "candle_count": len(candles),
         "first_timestamp": timestamps[0] if timestamps else None,
@@ -237,7 +241,15 @@ def audit_market(candles: list[Candle]) -> dict[str, Any]:
         "ordered": ordered,
         "duplicates": duplicates,
         "invalid_ohlc": len(invalid_ohlc),
+        "expected_interval_seconds": (
+            Counter(
+                b - a for a, b in zip(timestamps, timestamps[1:]) if b > a
+            ).most_common(1)[0][0]
+            if len(timestamps) > 1
+            else None
+        ),
         "gaps": len(gaps),
+        "gap_details": gaps,
         "gap_status": "PASS" if not gaps else "REVIEW",
         "status": (
             "PASS"
@@ -350,6 +362,38 @@ def outcome_at(candles: list[Candle], index: int, horizon: int) -> str:
     return "neutral"
 
 
+def _state_parts(state: MarketState) -> tuple[str, ...]:
+    return (
+        state.language.direction,
+        state.language.body_size,
+        state.language.wick_profile,
+        state.trend,
+        state.volatility,
+        state.location,
+    )
+
+
+def retrieve_similar(
+    state: MarketState,
+    buckets: dict[str, ExperienceBucket],
+    limit: int = 25,
+) -> list[tuple[float, ExperienceBucket]]:
+    """Retrieve comparable prior states using only already revealed evidence."""
+    current = _state_parts(state)
+    matches: list[tuple[float, ExperienceBucket]] = []
+    for key, bucket in buckets.items():
+        if bucket.count < 1:
+            continue
+        parts = tuple(key.split("|")[:6])
+        if len(parts) != len(current):
+            continue
+        score = sum(1.0 for a, b in zip(current, parts) if a == b) / len(current)
+        if score >= 0.34:
+            matches.append((score, bucket))
+    matches.sort(key=lambda item: (item[0], item[1].count), reverse=True)
+    return matches[:limit]
+
+
 def load_experience(path: Path = EXPERIENCE_PATH) -> dict[str, ExperienceBucket]:
     if not path.exists():
         return {}
@@ -387,19 +431,32 @@ def save_experience(buckets: dict[str, ExperienceBucket], path: Path = EXPERIENC
 
 def predict(state: MarketState, buckets: dict[str, ExperienceBucket]) -> dict[str, Any]:
     bucket = buckets.get(state.key())
-    if bucket is None or bucket.count < 1:
+    similar = retrieve_similar(state, buckets)
+    evidence = bucket.count if bucket else 0
+    weighted_counts = {outcome: 0.0 for outcome in OUTCOMES}
+    if bucket is not None:
+        assert bucket.outcomes is not None
+        for outcome in OUTCOMES:
+            weighted_counts[outcome] += bucket.outcomes[outcome]
+    for similarity, candidate in similar:
+        assert candidate.outcomes is not None
+        weight = similarity * min(1.0, candidate.count / 20.0)
+        for outcome in OUTCOMES:
+            weighted_counts[outcome] += candidate.outcomes[outcome] * weight
+        evidence += candidate.count if candidate is not bucket else 0
+    total = sum(weighted_counts.values())
+    if total <= 0:
         probabilities = {outcome: 1.0 / len(OUTCOMES) for outcome in OUTCOMES}
-        evidence = 0
         confidence = "insufficient historical evidence"
     else:
-        probabilities = bucket.distribution()
-        evidence = bucket.count
+        probabilities = {outcome: weighted_counts[outcome] / total for outcome in OUTCOMES}
         confidence = "weak" if evidence < 20 else "moderate" if evidence < 100 else "strong"
     favored = max(probabilities, key=probabilities.get)
     return {
         "favored": favored,
         "probabilities": probabilities,
         "evidence": evidence,
+        "retrieval_matches": len(similar),
         "confidence": confidence,
         "explanation": (
             f"Current state is {state.trend} with a {state.language.wick_profile} "
@@ -407,6 +464,85 @@ def predict(state: MarketState, buckets: dict[str, ExperienceBucket]) -> dict[st
             f"the favored scenario is {favored}, not a certainty."
         ),
     }
+
+
+def calibration_metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    if not rows:
+        return {"samples": 0, "brier_score": None, "log_loss": None}
+    brier_total = 0.0
+    log_loss_total = 0.0
+    for row in rows:
+        probabilities = row["probabilities"]
+        actual = row["actual"]
+        brier_total += sum(
+            (probabilities[outcome] - float(outcome == actual)) ** 2
+            for outcome in OUTCOMES
+        )
+        log_loss_total -= math.log(max(1e-12, probabilities[actual]))
+    return {
+        "samples": len(rows),
+        "brier_score": brier_total / len(rows),
+        "log_loss": log_loss_total / len(rows),
+    }
+
+
+def scenario_report(state: MarketState, forecast: dict[str, Any]) -> dict[str, Any]:
+    favored = forecast["favored"]
+    if favored == "bullish":
+        confirmation = "A sustained close above the recent high."
+        invalidation = "A break below the recent low."
+    elif favored == "bearish":
+        confirmation = "A sustained close below the recent low."
+        invalidation = "A break above the recent high."
+    else:
+        confirmation = "Price remains inside the current recent range."
+        invalidation = "A decisive range breakout or breakdown."
+    return {
+        "favored_scenario": favored,
+        "confirmation": confirmation,
+        "invalidation": invalidation,
+        "uncertainty": (
+            "Evidence is insufficient for a reliable directional edge."
+            if forecast["evidence"] < 20
+            else "The historical edge remains conditional and can fail."
+        ),
+        "market_language": state.language.human,
+    }
+
+
+def resample_candles(candles: list[Candle], group_size: int) -> list[Candle]:
+    """Aggregate consecutive candles without looking beyond each completed group."""
+    if group_size <= 1:
+        return list(candles)
+    result: list[Candle] = []
+    for offset in range(0, len(candles), group_size):
+        group = candles[offset: offset + group_size]
+        if len(group) < group_size:
+            break
+        result.append(
+            Candle(
+                timestamp=group[-1].timestamp,
+                open=group[0].open,
+                high=max(c.high for c in group),
+                low=min(c.low for c in group),
+                close=group[-1].close,
+                volume=sum(c.volume for c in group),
+                instrument=group[-1].instrument,
+                timeframe=f"{group_size}x{group[-1].timeframe}",
+            )
+        )
+    return result
+
+
+def multi_timeframe_snapshot(candles: list[Candle], index: int) -> dict[str, Any]:
+    """Build completed higher-timeframe states ending no later than index."""
+    current = candles[: index + 1]
+    snapshots: dict[str, Any] = {}
+    for group_size in (1, 3, 12):
+        higher = resample_candles(current, group_size)
+        state = build_state(higher, len(higher) - 1)
+        snapshots[f"{group_size}x"] = asdict(state) if state else None
+    return snapshots
 
 
 def run_walk_forward(
@@ -453,6 +589,7 @@ def run_walk_forward(
         "majority_baseline": baseline,
         "incremental_value": accuracy - baseline,
         "experience_buckets": len(buckets),
+        "calibration": calibration_metrics(rows),
         "rows": rows,
         "buckets": buckets,
     }
@@ -487,7 +624,7 @@ def print_translation(index: int) -> int:
         raise ValueError("At least 20 prior candles are required for translation")
     print("MLAI CANDLE LANGUAGE TRANSLATION")
     print("================================")
-    print(json.dumps({
+    output = {
         "index": state.index,
         "timestamp": state.timestamp,
         "technical": {
@@ -502,7 +639,9 @@ def print_translation(index: int) -> int:
             "sequence": state.sequence,
         },
         "human_language": state.language.human,
-    }, indent=2))
+        "multi_timeframe": multi_timeframe_snapshot(candles, index),
+    }
+    print(json.dumps(output, indent=2))
     return 0
 
 
