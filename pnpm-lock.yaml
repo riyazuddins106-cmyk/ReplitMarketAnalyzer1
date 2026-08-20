@@ -443,13 +443,7 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
 
-  lib/market-engine: {}
-
   scripts:
-    dependencies:
-      '@workspace/market-engine':
-        specifier: workspace:*
-        version: link:../lib/market-engine
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
