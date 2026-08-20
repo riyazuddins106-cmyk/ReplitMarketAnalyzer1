@@ -1,0 +1,150 @@
+MLAI v4.1.5 — FULL CAPABILITY FORENSIC AUDIT
+====================================================================================================
+Target: C:\Users\HomePC\mlai-test\mlai_market_structure_v415.py
+Data: C:\Users\HomePC\mlai-test\market_data.bin
+Python: 3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]
+Original source SHA256: e42eacc11885cd408f7301d6f35c3c047f8d8212d02469b60a6ba3e944ad7b89
+Original data SHA256: dd57bccc3526ebaeb900181096adcbf48a84b5a3a334da1f1990a443cde091b5
+
+ENGINE WAS NOT MODIFIED DURING THIS AUDIT.
+
+[PASS] INPUT_INTEGRITY
+    Target source and market_data.bin exist.
+
+[PASS] SOURCE_PARSE
+    v4.1.5 source parsed successfully.
+
+[PASS] SOURCE_FUNCTION_INVENTORY
+    Detected 44 functions and 11 classes.
+
+[PASS] IMPORT
+    v4.1.5 imported successfully.
+
+[PASS] TARGET_LOADER
+    Target loader returned 1309 candles and invalid_count=0.
+
+[PASS] TARGET_LOADER
+    Target loader returned 1309 candles.
+
+[PASS] CANDLE_VALIDATION
+    All 1309 candles structurally valid.
+
+[PASS] CHRONOLOGY
+    Timestamps strictly increase.
+
+[PASS] STRUCTURE_CONFIRMATION
+    Structure engine executed successfully.
+
+[PASS] PATH_CAUSALITY
+    Historical path prefix remained invariant.
+
+[FAIL] MARKET_STATE_CAUSALITY
+    Historical market-state prefix changed after future mutation.
+
+[PASS] HISTORICAL_OUTCOMES
+    Historical outcome construction executed successfully.
+
+[FAIL] EXPERIENCE_MEMORY
+    AttributeError: 'NoneType' object has no attribute 'last_low'
+
+[INCONCLUSIVE] NON_EXACT_SIMILARITY
+    No experience records available for runtime similarity test.
+
+[PASS] RETRIEVAL_RUNTIME
+    Historical retriever function exists.
+
+[PASS] PROBABILITY_ESTIMATION
+    All expected probability components are callable.
+    Evidence: distribution_from_records, conditional_baseline, evaluate_distribution, brier, log_loss
+
+[PASS] PROBABILITY_CALIBRATION
+    Calibration functions=2, indicators=4/6.
+    Evidence: brier, log_loss
+
+[PARTIAL] SCENARIO_REASONING
+    Scenario vocabulary exists but executable scenario framework is incomplete.
+    Evidence: {"bullish": true, "bearish": true, "neutral": true, "alternative": false, "base_case": false}
+
+[PASS] CONFIRMATION_CONDITIONS
+    Executable confirmation-related functions detected.
+    Evidence: _is_confirmed_high, _is_confirmed_low
+
+[MISSING] INVALIDATION_CONDITIONS
+    No sufficient invalidation framework detected.
+
+[PARTIAL] HUMAN_LANGUAGE_EXPLANATION
+    Some explanation vocabulary exists but executable layer is weak.
+    Evidence: {"explanation": true, "narrative": false, "interpretation": true, "summary": true, "reason": true}
+
+[MISSING] MULTI_TIMEFRAME
+    No sufficient multi-timeframe architecture detected.
+
+[PASS] UNSEEN_CHART_GENERALIZATION
+    5 walk-forward windows available for unseen-data evaluation.
+
+[MISSING] CONTROLLED_CONTINUOUS_LEARNING
+    No sufficient controlled continuous-learning system detected.
+
+[NOT_REQUIRED] LIVE_DATA_PIPELINE
+    No live pipeline detected. Appropriate for research-only v4.1.5.
+
+[PASS] WALK_FORWARD
+    5 windows passed structural validation.
+
+[REVIEW] FUTURE_INDEX_STATIC
+    14 positive index expressions require semantic review.
+    Evidence: line 591: index - PATH_LENGTH + 1 | line 593: index + 1 | line 1195: state * 1664525 + 1013904223 | line 1196: i + 1 | line 370: i + 1 | line 629: i + 1 | line 650: i + 1 | line 408: j + SWING_RIGHT + 1 | line 417: j + SWING_RIGHT + 1 | line 725: index + 1 | line 725: target + 1 | line 726: index + 1 | line 726: target + 1 | line 1233: permutation + 1
+
+[FAIL] GLOBAL_PREFIX_CAUSALITY
+    1/2 prefix checks passed.
+
+[PASS] CAPABILITY_STRUCTURE
+    2/3 recognized components available.
+    Evidence: CausalStructureEngine, StructureState
+
+[PASS] CAPABILITY_STATES
+    1/1 recognized components available.
+    Evidence: build_market_states
+
+[PASS] CAPABILITY_EXPERIENCE
+    2/2 recognized components available.
+    Evidence: build_experience_records, assign_episode_ids
+
+[PASS] CAPABILITY_RETRIEVAL
+    2/2 recognized components available.
+    Evidence: similarity_score, retrieve_historical_experience
+
+[PASS] CAPABILITY_OUTCOMES
+    1/1 recognized components available.
+    Evidence: make_outcome
+
+[PASS] CAPABILITY_WALK_FORWARD
+    1/1 recognized components available.
+    Evidence: create_walk_forward_windows
+
+[PASS] CAPABILITY_PATH
+    1/1 recognized components available.
+    Evidence: build_path_vector
+
+[PASS] CAPABILITY_ATR
+    1/2 recognized components available.
+    Evidence: calculate_atr
+
+[PASS] SOURCE_MUTATION_PROTECTION
+    Engine source remained byte-for-byte unchanged.
+
+[PASS] DATA_MUTATION_PROTECTION
+    market_data.bin remained byte-for-byte unchanged.
+
+====================================================================================================
+FINAL COUNTS
+====================================================================================================
+PASS         : 27
+FAIL         : 3
+PARTIAL      : 2
+MISSING      : 3
+REVIEW       : 1
+INCONCLUSIVE : 1
+NOT_REQUIRED : 1
+
+FAIL — VERIFIED DEFECTS REQUIRE FIXING

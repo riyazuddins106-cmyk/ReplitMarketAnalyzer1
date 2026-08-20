@@ -1,0 +1,908 @@
+"""
+MLAI PHASE 10B
+V4.15 / CANONICAL TARGET-OUTCOME EQUIVALENCE AUDIT
+
+READ ONLY.
+
+This audit:
+    - does not modify source files
+    - does not modify market_data.bin
+    - does not perform Git operations
+    - extracts the canonical candle list from market_data.bin
+    - computes a causal ATR sequence
+    - calls the actual v4.15 make_outcome API
+    - compares returned outcomes with the canonical target/outcome contract
+    - distinguishes API/data errors from actual mismatches
+"""
+
+from __future__ import annotations
+
+import hashlib
+import importlib
+import math
+import pickle
+import traceback
+from pathlib import Path
+from typing import Any, Optional, Sequence
+
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+MARKET_DATA_FILE = Path("market_data.bin")
+
+V415_MODULE = "mlai_market_structure_v415"
+CONTRACT_MODULE = "mlai_target_outcome_contract"
+
+HORIZONS = (4, 8, 16)
+
+TEST_INDICES = (
+    0,
+    1,
+    2,
+    10,
+    25,
+    50,
+    100,
+)
+
+ATR_PERIOD = 14
+
+# Numerical comparison tolerance.
+RETURN_TOLERANCE = 1e-12
+
+
+# =============================================================================
+# DISPLAY
+# =============================================================================
+
+def banner(title: str) -> None:
+    print("=" * 90)
+    print(title)
+    print("=" * 90)
+
+
+# =============================================================================
+# SAFE HELPERS
+# =============================================================================
+
+def safe_repr(value: Any, limit: int = 1000) -> str:
+    try:
+        text = repr(value)
+    except Exception as exc:
+        text = f"<repr failed: {type(exc).__name__}: {exc}>"
+
+    if len(text) > limit:
+        return text[:limit] + "...<truncated>"
+
+    return text
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+
+    with path.open("rb") as handle:
+        while True:
+            block = handle.read(1024 * 1024)
+
+            if not block:
+                break
+
+            digest.update(block)
+
+    return digest.hexdigest()
+
+
+# =============================================================================
+# CANDLE ACCESS
+# =============================================================================
+
+def field(candle: Any, name: str) -> Any:
+    """
+    Read a candle field from either:
+        - dictionary candles
+        - object/dataclass candles
+    """
+
+    if isinstance(candle, dict):
+        if name in candle:
+            return candle[name]
+
+        # Common alternate spellings.
+        aliases = {
+            "timestamp": ("time", "datetime"),
+            "open": ("Open",),
+            "high": ("High",),
+            "low": ("Low",),
+            "close": ("Close",),
+            "volume": ("Volume",),
+        }
+
+        for alias in aliases.get(name, ()):
+            if alias in candle:
+                return candle[alias]
+
+        raise KeyError(
+            f"Candle dictionary has no field '{name}'. "
+            f"Available keys: {list(candle.keys())}"
+        )
+
+    if hasattr(candle, name):
+        return getattr(candle, name)
+
+    aliases = {
+        "timestamp": ("time", "datetime"),
+        "open": ("Open",),
+        "high": ("High",),
+        "low": ("Low",),
+        "close": ("Close",),
+        "volume": ("Volume",),
+    }
+
+    for alias in aliases.get(name, ()):
+        if hasattr(candle, alias):
+            return getattr(candle, alias)
+
+    raise AttributeError(
+        f"Candle object has no field '{name}'"
+    )
+
+
+def numeric(candle: Any, name: str) -> float:
+    value = field(candle, name)
+    result = float(value)
+
+    if not math.isfinite(result):
+        raise ValueError(
+            f"Non-finite candle field {name}: {value!r}"
+        )
+
+    return result
+
+
+# =============================================================================
+# MARKET DATA
+# =============================================================================
+
+def load_candles() -> list[Any]:
+    banner("MARKET DATA LOAD")
+
+    if not MARKET_DATA_FILE.exists():
+        raise FileNotFoundError(
+            f"Missing {MARKET_DATA_FILE.resolve()}"
+        )
+
+    digest = sha256_file(MARKET_DATA_FILE)
+
+    print(f"File SHA256 : {digest}")
+
+    with MARKET_DATA_FILE.open("rb") as handle:
+        payload = pickle.load(handle)
+
+    print(f"Outer type  : {type(payload).__name__}")
+
+    if not isinstance(payload, dict):
+        raise TypeError(
+            "market_data.bin outer object must be a dictionary."
+        )
+
+    print(f"Keys        : {list(payload.keys())}")
+
+    if "candles" not in payload:
+        raise KeyError(
+            "market_data.bin does not contain 'candles'."
+        )
+
+    candles = payload["candles"]
+
+    if not isinstance(candles, list):
+        candles = list(candles)
+
+    print(f"Candle type : {type(candles).__name__}")
+    print(f"Candle count: {len(candles)}")
+
+    if not candles:
+        raise ValueError("Canonical candle list is empty.")
+
+    first = candles[0]
+
+    print(f"First candle type: {type(first).__name__}")
+    print(f"First candle     : {safe_repr(first)}")
+
+    return candles
+
+
+# =============================================================================
+# CAUSAL ATR
+# =============================================================================
+
+def build_causal_atr(
+    candles: Sequence[Any],
+    period: int = ATR_PERIOD,
+) -> list[Optional[float]]:
+    """
+    Build ATR using information available through the current candle only.
+
+    True Range for candle i:
+
+        max(
+            high_i - low_i,
+            abs(high_i - close_(i-1)),
+            abs(low_i - close_(i-1))
+        )
+
+    ATR is a rolling mean over the available TR history.
+
+    For insufficient history, None is returned.
+
+    No future candle is accessed.
+    """
+
+    if period <= 0:
+        raise ValueError("ATR period must be positive.")
+
+    true_ranges: list[float] = []
+    atr: list[Optional[float]] = []
+
+    previous_close: Optional[float] = None
+
+    for index, candle in enumerate(candles):
+
+        high = numeric(candle, "high")
+        low = numeric(candle, "low")
+        close = numeric(candle, "close")
+
+        if high < low:
+            raise ValueError(
+                f"Invalid candle at index {index}: high < low."
+            )
+
+        if previous_close is None:
+            tr = high - low
+        else:
+            tr = max(
+                high - low,
+                abs(high - previous_close),
+                abs(low - previous_close),
+            )
+
+        true_ranges.append(tr)
+
+        if len(true_ranges) < period:
+            atr.append(None)
+        else:
+            window = true_ranges[-period:]
+            atr.append(sum(window) / period)
+
+        previous_close = close
+
+    return atr
+
+
+# =============================================================================
+# ATR DIAGNOSTICS
+# =============================================================================
+
+def inspect_atr(
+    candles: Sequence[Any],
+    atr: Sequence[Optional[float]],
+) -> None:
+
+    banner("CAUSAL ATR DIAGNOSTIC")
+
+    print(f"ATR period       : {ATR_PERIOD}")
+    print(f"ATR length       : {len(atr)}")
+    print(
+        f"ATR[0]           : "
+        f"{safe_repr(atr[0] if atr else None)}"
+    )
+    print(
+        f"ATR[{ATR_PERIOD - 1}]       : "
+        f"{safe_repr(atr[ATR_PERIOD - 1] if len(atr) >= ATR_PERIOD else None)}"
+    )
+
+    valid = [
+        value
+        for value in atr
+        if value is not None
+        and math.isfinite(value)
+        and value > 0
+    ]
+
+    print(f"Valid ATR values : {len(valid)}")
+
+    if valid:
+        print(f"Minimum ATR      : {min(valid)}")
+        print(f"Maximum ATR      : {max(valid)}")
+
+
+# =============================================================================
+# V4.15 IMPORT / API
+# =============================================================================
+
+def load_v415() -> Any:
+    banner("V4.15 API")
+
+    module = importlib.import_module(V415_MODULE)
+
+    print(f"Module  : {module.__name__}")
+    print(f"VERSION : {getattr(module, 'VERSION', 'UNKNOWN')}")
+
+    required = (
+        "make_outcome",
+        "rolling_return",
+        "CausalStructureEngine",
+        "ExperienceRecord",
+        "Outcome",
+    )
+
+    for name in required:
+        print(
+            f"{name:<24}: "
+            f"{'PRESENT' if hasattr(module, name) else 'MISSING'}"
+        )
+
+    if not hasattr(module, "make_outcome"):
+        raise AttributeError(
+            "v4.15.make_outcome is missing."
+        )
+
+    return module
+
+
+# =============================================================================
+# OUTCOME EXTRACTION
+# =============================================================================
+
+def get_attr(
+    obj: Any,
+    names: Sequence[str],
+    default: Any = None,
+) -> Any:
+
+    for name in names:
+        if hasattr(obj, name):
+            return getattr(obj, name)
+
+        if isinstance(obj, dict) and name in obj:
+            return obj[name]
+
+    return default
+
+
+def normalize_direction(value: Any) -> Optional[str]:
+
+    if value is None:
+        return None
+
+    text = str(value).strip().lower()
+
+    mapping = {
+        "bullish": "higher",
+        "bull": "higher",
+        "up": "higher",
+        "long": "higher",
+        "higher": "higher",
+
+        "bearish": "lower",
+        "bear": "lower",
+        "down": "lower",
+        "short": "lower",
+        "lower": "lower",
+
+        "neutral": "neutral",
+        "flat": "neutral",
+    }
+
+    return mapping.get(text, text)
+
+
+def extract_v415_outcome(result: Any) -> dict[str, Any]:
+
+    if result is None:
+        return {
+            "direction": None,
+            "raw_return": None,
+            "atr_return": None,
+            "mfe_atr": None,
+            "mae_atr": None,
+        }
+
+    return {
+        "direction": normalize_direction(
+            get_attr(result, ("direction",))
+        ),
+        "raw_return": get_attr(
+            result,
+            ("raw_return", "return_pct", "future_return"),
+        ),
+        "atr_return": get_attr(
+            result,
+            ("atr_return", "atr_normalized_return"),
+        ),
+        "mfe_atr": get_attr(
+            result,
+            ("mfe_atr",),
+        ),
+        "mae_atr": get_attr(
+            result,
+            ("mae_atr",),
+        ),
+    }
+
+
+# =============================================================================
+# CANONICAL CONTRACT DISCOVERY
+# =============================================================================
+
+def inspect_contract(contract: Any) -> None:
+
+    banner("CANONICAL CONTRACT")
+
+    print(f"Module: {contract.__name__}")
+
+    for name in (
+        "HORIZONS",
+        "TARGET",
+        "CONTRACT_VERSION",
+        "VERSION",
+        "CONTRACT_SHA256",
+    ):
+        if hasattr(contract, name):
+            print(
+                f"{name:<20}: "
+                f"{safe_repr(getattr(contract, name))}"
+            )
+
+    print("\nRelevant public symbols:")
+
+    for name in dir(contract):
+
+        lower = name.lower()
+
+        if (
+            "target" in lower
+            or "outcome" in lower
+            or "horizon" in lower
+            or "label" in lower
+            or "contract" in lower
+        ):
+            if not name.startswith("_"):
+                print(f"  {name}")
+
+
+# =============================================================================
+# CANONICAL TARGET CALCULATION
+# =============================================================================
+
+def canonical_outcome(
+    candles: Sequence[Any],
+    index: int,
+    horizon: int,
+) -> dict[str, Any]:
+    """
+    Canonical target calculation used strictly for equivalence checking.
+
+    Target:
+        close[index + horizon]
+
+    Base:
+        close[index]
+
+    Direction:
+        higher / lower / neutral
+
+    This is an audit calculation, not a replacement for v4.15.
+    """
+
+    target = index + horizon
+
+    if index < 0:
+        raise IndexError("Negative index.")
+
+    if target >= len(candles):
+        raise IndexError(
+            f"Insufficient future candles: "
+            f"index={index}, horizon={horizon}, "
+            f"target={target}, count={len(candles)}"
+        )
+
+    base = numeric(candles[index], "close")
+    future = numeric(candles[target], "close")
+
+    raw_return = (future - base) / base
+
+    if future > base:
+        direction = "higher"
+    elif future < base:
+        direction = "lower"
+    else:
+        direction = "neutral"
+
+    return {
+        "direction": direction,
+        "raw_return": raw_return,
+        "future_close": future,
+        "base_close": base,
+    }
+
+
+# =============================================================================
+# NUMERICAL COMPARISON
+# =============================================================================
+
+def numeric_equal(
+    left: Any,
+    right: Any,
+    tolerance: float = RETURN_TOLERANCE,
+) -> bool:
+
+    if left is None or right is None:
+        return left is None and right is None
+
+    try:
+        a = float(left)
+        b = float(right)
+    except Exception:
+        return left == right
+
+    if not math.isfinite(a) or not math.isfinite(b):
+        return a == b
+
+    return abs(a - b) <= tolerance
+
+
+def compare_outcomes(
+    canonical: dict[str, Any],
+    v415: dict[str, Any],
+) -> list[str]:
+
+    mismatches: list[str] = []
+
+    if canonical["direction"] != v415["direction"]:
+        mismatches.append(
+            "direction: "
+            f"canonical={canonical['direction']!r}, "
+            f"v415={v415['direction']!r}"
+        )
+
+    if not numeric_equal(
+        canonical["raw_return"],
+        v415["raw_return"],
+    ):
+        mismatches.append(
+            "raw_return: "
+            f"canonical={canonical['raw_return']!r}, "
+            f"v415={v415['raw_return']!r}"
+        )
+
+    return mismatches
+
+
+# =============================================================================
+# EQUIVALENCE AUDIT
+# =============================================================================
+
+def run_audit(
+    candles: Sequence[Any],
+    atr: Sequence[Optional[float]],
+    v415: Any,
+) -> tuple[int, int, int]:
+
+    banner("PHASE 10B — EQUIVALENCE CHECKS")
+
+    make_outcome = v415.make_outcome
+
+    checks = 0
+    mismatches = 0
+    errors = 0
+
+    usable_indices = []
+
+    for index in TEST_INDICES:
+
+        if index < 0:
+            continue
+
+        if index >= len(candles):
+            continue
+
+        if atr[index] is None:
+            print(
+                f"INDEX={index:<4} "
+                f"SKIP — ATR unavailable"
+            )
+            continue
+
+        usable_indices.append(index)
+
+    print(f"Usable test indices: {usable_indices}")
+
+    for horizon in HORIZONS:
+
+        for index in usable_indices:
+
+            target = index + horizon
+
+            if target >= len(candles):
+                print(
+                    f"INDEX={index:<4} "
+                    f"H={horizon:<3} "
+                    f"SKIP — future boundary"
+                )
+                continue
+
+            checks += 1
+
+            print(
+                f"\nINDEX={index:<4} "
+                f"H={horizon:<3}"
+            )
+
+            # -----------------------------------------------------------------
+            # Canonical
+            # -----------------------------------------------------------------
+
+            try:
+                expected = canonical_outcome(
+                    candles,
+                    index,
+                    horizon,
+                )
+            except Exception as exc:
+
+                errors += 1
+
+                print(
+                    "  STATUS: CANONICAL_ERROR"
+                )
+
+                print(
+                    f"  {type(exc).__name__}: {exc}"
+                )
+
+                traceback.print_exc()
+
+                continue
+
+            # -----------------------------------------------------------------
+            # V4.15
+            # -----------------------------------------------------------------
+
+            try:
+                actual_obj = make_outcome(
+                    candles,
+                    atr,
+                    index,
+                    horizon,
+                )
+
+                actual = extract_v415_outcome(
+                    actual_obj
+                )
+
+            except Exception as exc:
+
+                errors += 1
+
+                print(
+                    "  STATUS: V415_ERROR"
+                )
+
+                print(
+                    f"  {type(exc).__name__}: {exc}"
+                )
+
+                traceback.print_exc()
+
+                continue
+
+            # -----------------------------------------------------------------
+            # Compare
+            # -----------------------------------------------------------------
+
+            differences = compare_outcomes(
+                expected,
+                actual,
+            )
+
+            if differences:
+
+                mismatches += 1
+
+                print(
+                    "  STATUS: MISMATCH"
+                )
+
+                print(
+                    f"  CANONICAL: "
+                    f"{safe_repr(expected)}"
+                )
+
+                print(
+                    f"  V4.15    : "
+                    f"{safe_repr(actual)}"
+                )
+
+                for difference in differences:
+                    print(
+                        f"  DIFF     : {difference}"
+                    )
+
+            else:
+
+                print(
+                    "  STATUS: PASS"
+                )
+
+                print(
+                    f"  direction : "
+                    f"{expected['direction']}"
+                )
+
+                print(
+                    f"  raw_return: "
+                    f"{expected['raw_return']:.12g}"
+                )
+
+                print(
+                    f"  v4.15 MFE : "
+                    f"{actual['mfe_atr']!r}"
+                )
+
+                print(
+                    f"  v4.15 MAE : "
+                    f"{actual['mae_atr']!r}"
+                )
+
+    return checks, mismatches, errors
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+def main() -> int:
+
+    banner(
+        "MLAI PHASE 10B — "
+        "V4.15 / CANONICAL OUTCOME EQUIVALENCE AUDIT"
+    )
+
+    print(
+        """
+READ-ONLY AUDIT
+
+No source files will be modified.
+No market data will be modified.
+No Git operations will be performed.
+"""
+    )
+
+    # -------------------------------------------------------------------------
+    # Imports
+    # -------------------------------------------------------------------------
+
+    try:
+        v415 = load_v415()
+    except Exception:
+        print("\nV4.15 LOAD FAILED")
+        traceback.print_exc()
+        return 2
+
+    try:
+        contract = importlib.import_module(
+            CONTRACT_MODULE
+        )
+    except Exception:
+        print("\nCANONICAL CONTRACT LOAD FAILED")
+        traceback.print_exc()
+        return 3
+
+    inspect_contract(contract)
+
+    # -------------------------------------------------------------------------
+    # Market data
+    # -------------------------------------------------------------------------
+
+    try:
+        candles = load_candles()
+    except Exception:
+        print("\nMARKET DATA LOAD FAILED")
+        traceback.print_exc()
+        return 4
+
+    # -------------------------------------------------------------------------
+    # ATR
+    # -------------------------------------------------------------------------
+
+    try:
+        atr = build_causal_atr(
+            candles,
+            ATR_PERIOD,
+        )
+    except Exception:
+        print("\nATR CONSTRUCTION FAILED")
+        traceback.print_exc()
+        return 5
+
+    inspect_atr(
+        candles,
+        atr,
+    )
+
+    # -------------------------------------------------------------------------
+    # Equivalence
+    # -------------------------------------------------------------------------
+
+    checks, mismatches, errors = run_audit(
+        candles,
+        atr,
+        v415,
+    )
+
+    # -------------------------------------------------------------------------
+    # Final result
+    # -------------------------------------------------------------------------
+
+    banner("PHASE 10B FINAL RESULT")
+
+    print(f"Checks       : {checks}")
+    print(f"Mismatches   : {mismatches}")
+    print(f"Errors       : {errors}")
+
+    if errors > 0:
+
+        print(
+            """
+OVERALL RESULT:
+INCONCLUSIVE — EXECUTION ERRORS
+
+An API/data execution error occurred.
+
+This does NOT establish a target/outcome mismatch.
+
+Production code remains unchanged.
+"""
+        )
+
+        return 10
+
+    if mismatches > 0:
+
+        print(
+            """
+OVERALL RESULT:
+FAIL — CANONICAL / V4.15 MISMATCH
+
+This is the first result that would justify
+investigating the actual target/outcome semantics.
+
+DO NOT modify v4.15 automatically.
+"""
+        )
+
+        return 11
+
+    print(
+        """
+OVERALL RESULT:
+PASS — V4.15 / CANONICAL TARGET-OUTCOME EQUIVALENCE
+
+The tested horizons and indices agree on:
+
+    - direction
+    - raw return
+
+No production files were modified.
+No market data was modified.
+No Git history was modified.
+"""
+    )
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

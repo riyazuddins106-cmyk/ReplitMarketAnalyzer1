@@ -1,0 +1,400 @@
+import pickle
+import math
+from collections import Counter
+
+
+# ============================================================
+# MLAI v3.3.2
+# REGIME + CONFIDENCE DIAGNOSTIC
+#
+# PURPOSE:
+# Determine WHEN the 60-candle structure contains useful
+# directional information and WHEN MLAI should stay neutral.
+#
+# PROTECTION:
+# - market_data.bin is READ ONLY
+# - mlai_v31.py is NOT modified
+# - learning memory is NOT modified
+# - production thresholds are NOT modified
+# ============================================================
+
+
+DATA_FILE = "market_data.bin"
+
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+
+CLASSIFICATION_THRESHOLD = 0.15
+
+CALIBRATION_RATIO = 0.70
+
+MIN_REGIME_SAMPLES = 15
+
+
+# ============================================================
+# BASIC FUNCTIONS
+# ============================================================
+
+def average(values):
+    if not values:
+        return 0.0
+    return sum(values) / len(values)
+
+
+def percentage_change(old, new):
+    if old == 0:
+        return 0.0
+
+    return ((new - old) / abs(old)) * 100.0
+
+
+def clamp(value, low, high):
+    return max(low, min(high, value))
+
+
+# ============================================================
+# LOAD MARKET DATA
+# ============================================================
+
+print("=" * 70)
+print("MLAI v3.3.2 REGIME + CONFIDENCE DIAGNOSTIC")
+print("=" * 70)
+
+print()
+print("Market file:", DATA_FILE)
+print("Current window:", WINDOW)
+print("Horizons:", HORIZONS)
+print("Classification threshold: +/-", CLASSIFICATION_THRESHOLD, "%")
+print("Calibration ratio:", CALIBRATION_RATIO)
+
+print()
+
+with open(DATA_FILE, "rb") as f:
+    data = pickle.load(f)
+
+candles = data["candles"]
+
+print("Total candles:", len(candles))
+
+
+# ============================================================
+# PROTECTION CHECK
+# ============================================================
+
+print()
+print("=" * 70)
+print("PROTECTION CHECK")
+print("=" * 70)
+
+print("market_data.bin: READ ONLY")
+print("mlai_v31.py: NOT MODIFIED")
+print("learning memory: NOT MODIFIED")
+print("production threshold: NOT MODIFIED")
+
+
+# ============================================================
+# FEATURE EXTRACTION
+# ============================================================
+
+def build_features(window):
+
+    closes = [x["close"] for x in window]
+
+    highs = [x["high"] for x in window]
+
+    lows = [x["low"] for x in window]
+
+    ranges = [x["range"] for x in window]
+
+    bodies = [x["body"] for x in window]
+
+    directions = [
+        x["direction"]
+        for x in window
+    ]
+
+    # --------------------------------------------------------
+    # RETURNS
+    # --------------------------------------------------------
+
+    def ret(n):
+
+        if len(closes) <= n:
+            return 0.0
+
+        return percentage_change(
+            closes[-n - 1],
+            closes[-1]
+        )
+
+    return_5 = ret(5)
+    return_10 = ret(10)
+    return_15 = ret(15)
+    return_30 = ret(30)
+    return_60 = ret(59)
+
+    # --------------------------------------------------------
+    # DIRECTIONAL BALANCE
+    # --------------------------------------------------------
+
+    bullish_count = sum(
+        1 for x in directions
+        if x == "bullish"
+    )
+
+    bearish_count = sum(
+        1 for x in directions
+        if x == "bearish"
+    )
+
+    neutral_count = sum(
+        1 for x in directions
+        if x == "neutral"
+    )
+
+    total = len(window)
+
+    bullish_ratio = bullish_count / total
+
+    bearish_ratio = bearish_count / total
+
+    neutral_ratio = neutral_count / total
+
+    directional_imbalance = (
+        bullish_ratio
+        - bearish_ratio
+    )
+
+    # --------------------------------------------------------
+    # BODY STRUCTURE
+    # --------------------------------------------------------
+
+    body_ratios = []
+
+    for candle in window:
+
+        candle_range = candle["range"]
+
+        if candle_range <= 0:
+            continue
+
+        body_ratios.append(
+            candle["body"] / candle_range
+        )
+
+    average_body_ratio = average(
+        body_ratios
+    )
+
+    strong_body_ratio = sum(
+        1
+        for candle in window
+        if candle["candle_type"] == "strong_body"
+    ) / total
+
+    # --------------------------------------------------------
+    # REJECTION
+    # --------------------------------------------------------
+
+    upper_rejections = 0
+    lower_rejections = 0
+
+    for candle in window:
+
+        if candle["candle_type"] == "upper_rejection":
+            upper_rejections += 1
+
+        elif candle["candle_type"] == "lower_rejection":
+            lower_rejections += 1
+
+    rejection_imbalance = (
+        lower_rejections
+        - upper_rejections
+    ) / total
+
+    # --------------------------------------------------------
+    # VOLATILITY
+    # --------------------------------------------------------
+
+    volatility = average(
+        ranges
+    ) / abs(closes[-1]) * 100.0
+
+    older_ranges = ranges[:-15]
+
+    recent_ranges = ranges[-15:]
+
+    older_volatility = average(
+        older_ranges
+    ) / abs(closes[-1]) * 100.0
+
+    recent_volatility = average(
+        recent_ranges
+    ) / abs(closes[-1]) * 100.0
+
+    if older_volatility == 0:
+
+        volatility_ratio = 1.0
+
+    else:
+
+        volatility_ratio = (
+            recent_volatility
+            / older_volatility
+        )
+
+    # --------------------------------------------------------
+    # RANGE POSITION
+    # --------------------------------------------------------
+
+    highest = max(highs)
+
+    lowest = min(lows)
+
+    total_range = highest - lowest
+
+    if total_range == 0:
+
+        location_in_range = 0.5
+        distance_from_high = 0.0
+        distance_from_low = 0.0
+
+    else:
+
+        location_in_range = (
+            closes[-1] - lowest
+        ) / total_range
+
+        distance_from_high = (
+            highest - closes[-1]
+        ) / total_range
+
+        distance_from_low = (
+            closes[-1] - lowest
+        ) / total_range
+
+    # --------------------------------------------------------
+    # SLOPE
+    # --------------------------------------------------------
+
+    first_close = closes[0]
+
+    last_close = closes[-1]
+
+    normalized_slope = percentage_change(
+        first_close,
+        last_close
+    )
+
+    # --------------------------------------------------------
+    # MOMENTUM ACCELERATION
+    # --------------------------------------------------------
+
+    if len(closes) >= 30:
+
+        previous = percentage_change(
+            closes[-30],
+            closes[-15]
+        )
+
+        recent = percentage_change(
+            closes[-15],
+            closes[-1]
+        )
+
+        momentum_acceleration = (
+            recent - previous
+        )
+
+    else:
+
+        momentum_acceleration = 0.0
+
+    return {
+
+        "return_5": return_5,
+        "return_10": return_10,
+        "return_15": return_15,
+        "return_30": return_30,
+        "return_60": return_60,
+
+        "bullish_ratio": bullish_ratio,
+        "bearish_ratio": bearish_ratio,
+        "neutral_ratio": neutral_ratio,
+
+        "directional_imbalance":
+            directional_imbalance,
+
+        "average_body_ratio":
+            average_body_ratio,
+
+        "strong_body_ratio":
+            strong_body_ratio,
+
+        "rejection_imbalance":
+            rejection_imbalance,
+
+        "volatility":
+            volatility,
+
+        "volatility_ratio":
+            volatility_ratio,
+
+        "location_in_range":
+            location_in_range,
+
+        "distance_from_high":
+            distance_from_high,
+
+        "distance_from_low":
+            distance_from_low,
+
+        "normalized_slope":
+            normalized_slope,
+
+        "momentum_acceleration":
+            momentum_acceleration,
+    }
+
+
+# ============================================================
+# FUTURE CLASSIFICATION
+# ============================================================
+
+def future_classification(
+    candles,
+    index,
+    horizon
+):
+
+    current_close = candles[index]["close"]
+
+    future_index = index + horizon
+
+    if future_index >= len(candles):
+
+        return None
+
+    future_close = candles[
+        future_index
+    ]["close"]
+
+    change = percentage_change(
+        current_close,
+        future_close
+    )
+
+    if change >= CLASSIFICATION_THRESHOLD:
+
+        return "bullish"
+
+    elif change <= -CLASSIFICATION_THRESHOLD:
+
+        return "bearish"
+
+    else:
+
+        return "neutral"
+
+
+# ============================================================

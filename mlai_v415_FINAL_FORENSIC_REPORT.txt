@@ -1,0 +1,75 @@
+MLAI v4.1.5 — FINAL FORENSIC CAUSAL AUDIT
+====================================================================================================
+Target: C:\Users\HomePC\mlai-test\mlai_market_structure_v415.py
+Data: C:\Users\HomePC\mlai-test\market_data.bin
+Python: 3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]
+
+[PASS] TARGET_FILE
+    Target source exists.
+[PASS] DATA_FILE
+    market_data.bin exists.
+[PASS] AST
+    Source parsed successfully.
+[PASS] STRUCTURE_ENGINE
+    Actual v4.1.5 architecture exposes CausalStructureEngine.
+[PASS] IMPORT
+    Target imported successfully.
+[PASS] FUNCTION:load_market_data
+    Present.
+[PASS] FUNCTION:calculate_atr
+    Present.
+[PASS] FUNCTION:build_path_vector
+    Present.
+[PASS] FUNCTION:build_market_states
+    Present.
+[PASS] FUNCTION:build_experience_records
+    Present.
+[PASS] FUNCTION:make_outcome
+    Present.
+[PASS] FUNCTION:retrieve_historical_experience
+    Present.
+[PASS] FUNCTION:create_walk_forward_windows
+    Present.
+[PASS] FUNCTION:audit_structure_causality
+    Present.
+[PASS] DATA_LOAD
+    Loaded 1309 candles using v4.1.5's own loader.
+[PASS] CANDLE_VALIDATION
+    All 1309 candles contain valid required fields.
+[PASS] TIMESTAMP_VALIDITY
+    All candle timestamps are non-None.
+[PASS] CHRONOLOGY
+    Candle timestamps strictly increase.
+[PASS] DUPLICATES
+    No duplicate timestamps.
+[REVIEW] FUTURE_INDEX_STATIC
+    14 references require runtime causal verification.
+[PASS] STRUCTURE_ENGINE_RUNTIME
+    CausalStructureEngine.build() executed.
+[PASS] PATH_PREFIX_INVARIANCE
+    3 future-mutation prefix tests passed.
+[PASS] MARKET_STATE_PREFIX_INVARIANCE
+    State prefix through 654 unchanged.
+[PASS] STRUCTURE_PREFIX_INVARIANCE
+    Structure through index 654 unchanged.
+[PASS] SWING_CONFIRMATION_TIMING
+    Explicit confirmation_index / SWING_RIGHT boundary exists.
+[PASS] OUTCOME_ISOLATION
+    Future information is confined to make_outcome().
+[PASS] EXPERIENCE_BOUNDARY
+    Training boundary and outcome construction are explicit.
+[PASS] RETRIEVAL_CAUSALITY
+    Historical eligibility logic detected.
+[REVIEW] WALK_FORWARD_WINDOWS
+    Missing explicit fields: ['train_start']
+[PASS] WALK_FORWARD_RUNTIME
+    5 walk-forward windows passed boundary checks.
+[PASS] SOURCE_MUTATION
+    Target source unchanged during audit.
+[PASS] DATA_MUTATION
+    market_data.bin unchanged during audit.
+
+====================================================================================================
+FINAL VERDICT
+====================================================================================================
+REVIEW — CAUSAL CERTIFICATION NOT YET PROVEN

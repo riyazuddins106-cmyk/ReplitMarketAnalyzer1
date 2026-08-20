@@ -1,0 +1,30 @@
+MLAI v4.1.8 DEFINITIVE RELATIONSHIP AUDIT
+================================================================================
+Source: mlai_market_structure_v417.py
+Source SHA256: 8fbe7510abf83ccf70ebd79ee582310050645f747c8c7b1e775e0079d4c14d0e
+
+[PASS] Source identity
+    Source contains expected v4.1.7 identity.
+[PASS] Retrieval query-index causality
+    query_index is explicitly part of retrieval.
+[FAIL] Minimum historical gap
+    Retrieval function does not contain a verifiable MIN_HISTORY_GAP eligibility condition.
+[PASS] Horizon-aware retrieval
+    horizon is explicitly part of retrieval.
+[PASS] Explicit similarity representation
+    Explicit similarity representation and composite score are used.
+[PASS] Candidate ranking
+    Candidate ranking is explicitly present.
+[FAIL] Top-K retrieval bound
+    No explicit Top-K bound was found inside retrieve_historical_experience().
+[FAIL] Retrieval outcome blindness
+    Retrieval function reads outcome attributes: record.outcome.atr_return, record.outcome.direction, record.outcome.mae_atr, record.outcome.mfe_atr
+
+IMPORTANT AUDIT SCOPE:
+Outcome blindness is evaluated ONLY inside retrieve_historical_experience().
+Outcome references in evaluation, null testing, baseline calculation and predictive evaluation are not considered retrieval leakage.
+
+Critical failures: 3
+
+BUILD REFUSED.
+No speculative source rewrite performed.

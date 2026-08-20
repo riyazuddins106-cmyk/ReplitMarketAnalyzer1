@@ -1,0 +1,1 @@
+- [MLAI integration boundary](mlai-integration-boundary.md) — keep the causal unified console path separate from preserved v4.x comparison engines.

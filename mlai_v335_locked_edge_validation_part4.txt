@@ -1,0 +1,189 @@
+        f"{features['volatility_regime']}"
+    )
+
+    print()
+    print("STRUCTURE FEATURES")
+
+    display_features = [
+        "return_15",
+        "return_30",
+        "return_60",
+        "bullish_ratio",
+        "bearish_ratio",
+        "directional_imbalance",
+        "volatility",
+        "volatility_ratio",
+        "location_in_range",
+        "normalized_slope",
+    ]
+
+    for name in display_features:
+        print(
+            f"{name:<24}: "
+            f"{features[name]:.6f}"
+        )
+
+    print()
+    print(
+        "IMPORTANT:"
+    )
+    print(
+        "Current-market structure is "
+        "diagnostic only."
+    )
+    print(
+        "It is NOT a trading signal."
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    print("=" * 70)
+    print(
+        "MLAI v3.3.5 "
+        "LOCKED REGIME EDGE VALIDATION"
+    )
+    print("=" * 70)
+
+    print()
+    print(
+        "Purpose:"
+    )
+    print(
+        "Determine whether structures discovered "
+        "in earlier calibration data survive "
+        "completely unseen chronological testing."
+    )
+
+    print()
+    print(
+        "Rules are discovered FIRST."
+    )
+    print(
+        "Rules are then LOCKED."
+    )
+    print(
+        "Validation data is NEVER used "
+        "to discover or modify rules."
+    )
+
+    print()
+    print(
+        f"Market file: {MARKET_FILE}"
+    )
+
+    print(
+        f"Current window: {CURRENT_WINDOW}"
+    )
+
+    print(
+        f"Horizons: {HORIZONS}"
+    )
+
+    print(
+        f"Classification threshold: "
+        f"+/- {CLASSIFICATION_THRESHOLD * 100:.2f}%"
+    )
+
+    print(
+        f"Walk-forward folds: {N_FOLDS}"
+    )
+
+    print(
+        f"Minimum calibration samples: "
+        f"{MIN_CALIBRATION_SAMPLES}"
+    )
+
+    print(
+        f"Minimum validation samples: "
+        f"{MIN_VALIDATION_SAMPLES}"
+    )
+
+    print()
+
+    protection_check()
+
+    candles = load_market()
+
+    closes = [
+        extract_close(candle)
+        for candle in candles
+    ]
+
+    print(
+        f"Total candles: {len(closes)}"
+    )
+
+    print(
+        "PASS: market_data.bin loaded."
+    )
+
+    print(
+        "PASS: Close prices extracted."
+    )
+
+    print(
+        "PASS: market_data.bin will NOT "
+        "be modified."
+    )
+
+    print(
+        "PASS: Production MLAI will NOT "
+        "be modified."
+    )
+
+    print()
+
+    for horizon in HORIZONS:
+        run_horizon(
+            closes,
+            horizon
+        )
+
+    print_current_structure(
+        closes
+    )
+
+    print()
+    print("=" * 70)
+    print(
+        "MLAI v3.3.5 FINAL VERDICT"
+    )
+    print("=" * 70)
+
+    print()
+    print(
+        "This experiment is diagnostic only."
+    )
+
+    print(
+        "No production model was changed."
+    )
+
+    print(
+        "No learning memory was changed."
+    )
+
+    print(
+        "market_data.bin was READ ONLY."
+    )
+
+    print(
+        "The 88.89% v3.3.4 candidate edge "
+        "must survive locked walk-forward "
+        "validation before it can be considered "
+        "a genuine structural edge."
+    )
+
+    print()
+    print(
+        "MLAI v3.3.5 COMPLETE"
+    )
+
+
+if __name__ == "__main__":
+    main()

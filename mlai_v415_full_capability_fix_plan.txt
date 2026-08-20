@@ -1,0 +1,73 @@
+MLAI v4.1.5 — FULL CAPABILITY FORENSIC FIX PLAN
+====================================================================================================
+IMPORTANT:
+This is an investigation artifact.
+NO ENGINE SOURCE WAS MODIFIED BY THIS AUDITOR.
+DO NOT CREATE v4.1.6 UNTIL THIS REPORT IS REVIEWED.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: MARKET_STATE_CAUSALITY
+STATUS: FAIL
+EVIDENCE: Historical market-state prefix changed after future mutation.
+ACTION: Investigate verified defect and design targeted fix.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: EXPERIENCE_MEMORY
+STATUS: FAIL
+EVIDENCE: AttributeError: 'NoneType' object has no attribute 'last_low'
+ACTION: Investigate verified defect and design targeted fix.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: NON_EXACT_SIMILARITY
+STATUS: INCONCLUSIVE
+EVIDENCE: No experience records available for runtime similarity test.
+ACTION: Add runtime evidence before classification.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: SCENARIO_REASONING
+STATUS: PARTIAL
+EVIDENCE: Scenario vocabulary exists but executable scenario framework is incomplete.
+DETAIL: {"bullish": true, "bearish": true, "neutral": true, "alternative": false, "base_case": false}
+ACTION: Determine missing executable behavior before implementation.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: INVALIDATION_CONDITIONS
+STATUS: MISSING
+EVIDENCE: No sufficient invalidation framework detected.
+ACTION: Capability is not sufficiently implemented.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: HUMAN_LANGUAGE_EXPLANATION
+STATUS: PARTIAL
+EVIDENCE: Some explanation vocabulary exists but executable layer is weak.
+DETAIL: {"explanation": true, "narrative": false, "interpretation": true, "summary": true, "reason": true}
+ACTION: Determine missing executable behavior before implementation.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: MULTI_TIMEFRAME
+STATUS: MISSING
+EVIDENCE: No sufficient multi-timeframe architecture detected.
+ACTION: Capability is not sufficiently implemented.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: CONTROLLED_CONTINUOUS_LEARNING
+STATUS: MISSING
+EVIDENCE: No sufficient controlled continuous-learning system detected.
+ACTION: Capability is not sufficiently implemented.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: FUTURE_INDEX_STATIC
+STATUS: REVIEW
+EVIDENCE: 14 positive index expressions require semantic review.
+DETAIL: line 591: index - PATH_LENGTH + 1 | line 593: index + 1 | line 1195: state * 1664525 + 1013904223 | line 1196: i + 1 | line 370: i + 1 | line 629: i + 1 | line 650: i + 1 | line 408: j + SWING_RIGHT + 1 | line 417: j + SWING_RIGHT + 1 | line 725: index + 1 | line 725: target + 1 | line 726: index + 1 | line 726: target + 1 | line 1233: permutation + 1
+ACTION: Perform semantic/runtime verification before changing engine code.
+
+----------------------------------------------------------------------------------------------------
+COMPONENT: GLOBAL_PREFIX_CAUSALITY
+STATUS: FAIL
+EVIDENCE: 1/2 prefix checks passed.
+ACTION: Investigate verified defect and design targeted fix.
+
+====================================================================================================
+NO AUTOMATIC ENGINE FIXES WERE APPLIED.
+NO v4.1.6 WAS CREATED.

@@ -1,0 +1,400 @@
+        key = (
+            record["regime"],
+            record["volatility_regime"]
+        )
+
+        groups[key].append(
+            record["outcome"]
+        )
+
+    print()
+    print(
+        f"{'REGIME':<20}"
+        f"{'VOLATILITY':<15}"
+        f"{'N':>6}"
+        f"{'BULL %':>10}"
+        f"{'NEUTRAL %':>12}"
+        f"{'BEAR %':>10}"
+    )
+
+    print("-" * 70)
+
+    for key, outcomes in sorted(
+        groups.items()
+    ):
+
+        regime, volatility = key
+
+        n = len(outcomes)
+
+        bull = (
+            outcomes.count("bullish")
+            / n
+            * 100
+        )
+
+        neutral = (
+            outcomes.count("neutral")
+            / n
+            * 100
+        )
+
+        bear = (
+            outcomes.count("bearish")
+            / n
+            * 100
+        )
+
+        print(
+            f"{regime:<20}"
+            f"{volatility:<15}"
+            f"{n:>6}"
+            f"{bull:>10.2f}"
+            f"{neutral:>12.2f}"
+            f"{bear:>10.2f}"
+        )
+
+
+# ============================================================
+# CONFIDENCE TEST
+# ============================================================
+
+def confidence_test(results):
+
+    print()
+    print("=" * 70)
+    print("CONFIDENCE / EDGE TEST")
+    print("=" * 70)
+
+    print()
+    print(
+        f"{'THRESHOLD':>10}"
+        f"{'DIR ACC':>12}"
+        f"{'COVERAGE':>12}"
+        f"{'BUY PREC':>12}"
+        f"{'SELL PREC':>12}"
+    )
+
+    print("-" * 70)
+
+    best = None
+
+    for threshold in CONFIDENCE_LEVELS:
+
+        selected = [
+            x
+            for x in results
+            if x["confidence"] >= threshold
+            and x["prediction"] != "NO TRADE"
+        ]
+
+        if not selected:
+            continue
+
+        correct = 0
+        buy_total = 0
+        buy_correct = 0
+        sell_total = 0
+        sell_correct = 0
+
+        for x in selected:
+
+            prediction = x["prediction"]
+            actual = x["actual"]
+
+            if (
+                prediction == "BUY"
+                and actual == "bullish"
+            ):
+                correct += 1
+
+            elif (
+                prediction == "SELL"
+                and actual == "bearish"
+            ):
+                correct += 1
+
+            if prediction == "BUY":
+
+                buy_total += 1
+
+                if actual == "bullish":
+                    buy_correct += 1
+
+            if prediction == "SELL":
+
+                sell_total += 1
+
+                if actual == "bearish":
+                    sell_correct += 1
+
+        directional_accuracy = (
+            correct /
+            len(selected)
+        )
+
+        coverage = (
+            len(selected) /
+            len(results)
+        )
+
+        buy_precision = (
+            buy_correct /
+            buy_total
+            if buy_total
+            else 0.0
+        )
+
+        sell_precision = (
+            sell_correct /
+            sell_total
+            if sell_total
+            else 0.0
+        )
+
+        print(
+            f"{threshold * 100:>9.0f}%"
+            f"{directional_accuracy * 100:>11.2f}%"
+            f"{coverage * 100:>11.2f}%"
+            f"{buy_precision * 100:>11.2f}%"
+            f"{sell_precision * 100:>11.2f}%"
+        )
+
+        # Prefer accuracy while maintaining useful coverage.
+        score = (
+            directional_accuracy
+            * math.sqrt(coverage)
+        )
+
+        if (
+            best is None
+            or score > best["score"]
+        ):
+            best = {
+                "threshold": threshold,
+                "directional_accuracy":
+                    directional_accuracy,
+                "coverage": coverage,
+                "buy_precision":
+                    buy_precision,
+                "sell_precision":
+                    sell_precision,
+                "score": score
+            }
+
+    return best
+
+
+# ============================================================
+# MAIN HORIZON TEST
+# ============================================================
+
+def run_horizon(
+    candles,
+    horizon
+):
+
+    print()
+    print("=" * 70)
+    print(f"HORIZON: {horizon} CANDLES")
+    print("=" * 70)
+
+    records = build_records(
+        candles,
+        horizon
+    )
+
+    total = len(records)
+
+    calibration_count = int(
+        total * CALIBRATION_RATIO
+    )
+
+    calibration = records[
+        :calibration_count
+    ]
+
+    validation = records[
+        calibration_count:
+    ]
+
+    print()
+    print(
+        f"Historical records: {total}"
+    )
+
+    print(
+        f"Calibration records: "
+        f"{len(calibration)}"
+    )
+
+    print(
+        f"Validation records:  "
+        f"{len(validation)}"
+    )
+
+    print()
+    print(
+        "Calibration contains ONLY "
+        "earlier chronological records."
+    )
+
+    print(
+        "Validation contains ONLY "
+        "later chronological records."
+    )
+
+    print(
+        "Validation outcomes are NEVER "
+        "used to select the model."
+    )
+
+    # --------------------------------------------------------
+    # SCALER
+    # --------------------------------------------------------
+
+    means, stds = fit_scaler(
+        calibration
+    )
+
+    all_results = []
+
+    # --------------------------------------------------------
+    # K TEST
+    # --------------------------------------------------------
+
+    for k in K_VALUES:
+
+        print()
+        print("-" * 70)
+        print(
+            f"SIMILAR STRUCTURE + REGIME | "
+            f"TOP {k} NEIGHBORS"
+        )
+        print("-" * 70)
+
+        predictions = []
+        actuals = []
+
+        detailed = []
+
+        for target in validation:
+
+            neighbors = find_neighbors(
+                target,
+                calibration,
+                means,
+                stds,
+                k
+            )
+
+            result = neighbor_prediction(
+                neighbors
+            )
+
+            prediction = result[
+                "prediction"
+            ]
+
+            actual = target[
+                "outcome"
+            ]
+
+            predictions.append(
+                prediction
+            )
+
+            actuals.append(
+                actual
+            )
+
+            detailed.append({
+                "prediction":
+                    prediction,
+                "confidence":
+                    result["confidence"],
+                "actual":
+                    actual,
+                "regime":
+                    target["regime"],
+                "volatility":
+                    target[
+                        "volatility_regime"
+                    ]
+            })
+
+        metrics = evaluate_predictions(
+            predictions,
+            actuals
+        )
+
+        print()
+        print(
+            f"Directional accuracy: "
+            f"{metrics['directional_accuracy'] * 100:.2f}%"
+        )
+
+        print(
+            f"Directional coverage: "
+            f"{metrics['coverage'] * 100:.2f}%"
+        )
+
+        print(
+            f"BUY precision: "
+            f"{metrics['buy_precision'] * 100:.2f}%"
+        )
+
+        print(
+            f"SELL precision: "
+            f"{metrics['sell_precision'] * 100:.2f}%"
+        )
+
+        print(
+            f"BUY predictions: "
+            f"{metrics['buy_predictions']}"
+        )
+
+        print(
+            f"SELL predictions: "
+            f"{metrics['sell_predictions']}"
+        )
+
+        # ----------------------------------------------------
+        # CONFIDENCE
+        # ----------------------------------------------------
+
+        best = confidence_test(
+            detailed
+        )
+
+        if best:
+
+            print()
+            print(
+                "BEST CONFIDENCE / COVERAGE BALANCE"
+            )
+
+            print("-" * 70)
+
+            print(
+                f"Confidence threshold: "
+                f"{best['threshold'] * 100:.0f}%"
+            )
+
+            print(
+                f"Directional accuracy: "
+                f"{best['directional_accuracy'] * 100:.2f}%"
+            )
+
+            print(
+                f"Directional coverage: "
+                f"{best['coverage'] * 100:.2f}%"
+            )
+
+            print(
+                f"BUY precision: "
+                f"{best['buy_precision'] * 100:.2f}%"
+            )
+
+            print(
+                f"SELL precision: "

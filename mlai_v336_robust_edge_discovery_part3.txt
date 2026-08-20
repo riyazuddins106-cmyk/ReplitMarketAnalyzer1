@@ -1,0 +1,400 @@
+            f["candle_pressure"],
+            f["range_event"],
+        )
+
+        groups[key].append(record["outcome"])
+
+    rules = {}
+
+    for key, outcomes in groups.items():
+
+        if len(outcomes) < MIN_RULE_SAMPLES:
+            continue
+
+        directional = [
+            x for x in outcomes
+            if x in ("BUY", "SELL")
+        ]
+
+        if not directional:
+            continue
+
+        counts = Counter(directional)
+
+        buy_count = counts["BUY"]
+        sell_count = counts["SELL"]
+
+        if buy_count >= sell_count:
+            direction = "BUY"
+            directional_count = buy_count
+        else:
+            direction = "SELL"
+            directional_count = sell_count
+
+        confidence = safe_div(
+            directional_count,
+            len(directional)
+        )
+
+        if confidence < MIN_RULE_CONFIDENCE:
+            continue
+
+        rules[key] = {
+            "direction": direction,
+            "confidence": confidence,
+            "samples": len(outcomes),
+            "directional_samples": len(directional),
+            "buy_count": buy_count,
+            "sell_count": sell_count,
+        }
+
+    return rules
+
+
+# ============================================================
+# RULE MATCHING
+# ============================================================
+
+def rule_key(features):
+    return (
+        features["directional_regime"],
+        features["volatility_regime"],
+        features["trend_consistency"],
+        features["location_state"],
+        features["momentum_state"],
+        features["candle_pressure"],
+        features["range_event"],
+    )
+
+
+# ============================================================
+# APPLY LOCKED RULES
+# ============================================================
+
+def apply_rules(validation, rules):
+    predictions = []
+
+    for record in validation:
+
+        key = rule_key(record["features"])
+
+        rule = rules.get(key)
+
+        if rule is None:
+            continue
+
+        predictions.append(
+            (
+                rule["direction"],
+                record["outcome"],
+                rule["confidence"],
+                key,
+            )
+        )
+
+    return predictions
+
+
+# ============================================================
+# NEAREST NEIGHBOR PREDICTION
+# ============================================================
+
+def nearest_neighbor_prediction(
+    target,
+    calibration,
+    k
+):
+    scored = []
+
+    for record in calibration:
+
+        distance = numeric_distance(
+            target["features"],
+            record["features"]
+        )
+
+        scored.append(
+            (
+                distance,
+                record["outcome"],
+                record,
+            )
+        )
+
+    scored.sort(
+        key=lambda x: x[0]
+    )
+
+    neighbors = scored[:k]
+
+    if not neighbors:
+        return None
+
+    directional = [
+        x[1]
+        for x in neighbors
+        if x[1] in ("BUY", "SELL")
+    ]
+
+    if not directional:
+        return None
+
+    counts = Counter(directional)
+
+    if counts["BUY"] >= counts["SELL"]:
+        direction = "BUY"
+        winning = counts["BUY"]
+    else:
+        direction = "SELL"
+        winning = counts["SELL"]
+
+    confidence = safe_div(
+        winning,
+        len(directional)
+    )
+
+    return {
+        "direction": direction,
+        "confidence": confidence,
+        "neighbors": len(neighbors),
+    }
+
+
+def evaluate_neighbors(calibration, validation, k):
+    predictions = []
+
+    for record in validation:
+
+        result = nearest_neighbor_prediction(
+            record,
+            calibration,
+            k
+        )
+
+        if result is None:
+            continue
+
+        predictions.append(
+            (
+                result["direction"],
+                record["outcome"],
+                result["confidence"],
+            )
+        )
+
+    return predictions
+
+
+# ============================================================
+# WALK-FORWARD SPLITS
+# ============================================================
+
+def build_walk_forward_folds(records):
+    """
+    Chronological expanding calibration.
+
+    Example with 4 folds:
+
+        Fold 4:
+            calibration = earliest block
+            validation  = next block
+
+        Fold 3:
+            calibration = earliest 2 blocks
+            validation  = next block
+
+        Fold 2:
+            calibration = earliest 3 blocks
+            validation  = next block
+
+        Fold 1:
+            calibration = earliest 4 blocks
+            validation  = final block
+
+    No validation data is used for discovery.
+    """
+
+    n = len(records)
+
+    validation_size = n // (N_FOLDS + 1)
+
+    folds = []
+
+    for fold in range(N_FOLDS, 0, -1):
+
+        validation_start = (
+            fold * validation_size
+        )
+
+        validation_end = (
+            validation_start + validation_size
+        )
+
+        calibration = records[:validation_start]
+
+        validation = records[
+            validation_start:validation_end
+        ]
+
+        if (
+            len(calibration) >= MIN_CALIBRATION_SAMPLES
+            and len(validation) >= MIN_VALIDATION_SAMPLES
+        ):
+            folds.append(
+                (
+                    fold,
+                    calibration,
+                    validation,
+                )
+            )
+
+    return folds
+
+
+# ============================================================
+# PRINT RULES
+# ============================================================
+
+def print_locked_rules(rules):
+
+    print()
+    print(
+        f"Locked rules discovered: {len(rules)}"
+    )
+
+    if not rules:
+        print("No rule met discovery criteria.")
+        return
+
+    ranked = sorted(
+        rules.items(),
+        key=lambda x: (
+            x[1]["confidence"],
+            x[1]["samples"]
+        ),
+        reverse=True
+    )
+
+    for key, rule in ranked[:20]:
+
+        print(
+            f"LOCKED {key} -> "
+            f"{rule['direction']} "
+            f"({rule['confidence']:.2%} confidence, "
+            f"{rule['samples']} samples)"
+        )
+
+
+# ============================================================
+# RULE VALIDATION METRICS
+# ============================================================
+
+def evaluate_rule_predictions(predictions):
+
+    if not predictions:
+        return {
+            "n": 0,
+            "accuracy": 0.0,
+            "coverage": 0.0,
+            "buy_precision": 0.0,
+            "sell_precision": 0.0,
+        }
+
+    correct = sum(
+        1 for p, y, *_ in predictions
+        if p == y
+    )
+
+    buy = [
+        x for x in predictions
+        if x[0] == "BUY"
+    ]
+
+    sell = [
+        x for x in predictions
+        if x[0] == "SELL"
+    ]
+
+    buy_correct = sum(
+        1 for x in buy
+        if x[0] == x[1]
+    )
+
+    sell_correct = sum(
+        1 for x in sell
+        if x[0] == x[1]
+    )
+
+    return {
+        "n": len(predictions),
+        "accuracy": safe_div(
+            correct,
+            len(predictions)
+        ),
+        "coverage": 0.0,
+        "buy_precision": safe_div(
+            buy_correct,
+            len(buy)
+        ),
+        "sell_precision": safe_div(
+            sell_correct,
+            len(sell)
+        ),
+    }
+
+
+# ============================================================
+# FOLD VALIDATION
+# ============================================================
+
+def run_rule_walk_forward(records):
+
+    folds = build_walk_forward_folds(records)
+
+    all_predictions = []
+
+    fold_results = []
+
+    for fold_number, calibration, validation in folds:
+
+        print()
+        print("-" * 70)
+        print(f"FOLD {fold_number}")
+        print("-" * 70)
+
+        print(
+            f"Calibration records: {len(calibration)}"
+        )
+
+        print(
+            f"Validation records:  {len(validation)}"
+        )
+
+        print(
+            "Rule discovery: CALIBRATION ONLY"
+        )
+
+        rules = discover_rules(
+            calibration
+        )
+
+        print_locked_rules(rules)
+
+        predictions = apply_rules(
+            validation,
+            rules
+        )
+
+        metrics = evaluate_rule_predictions(
+            predictions
+        )
+
+        metrics["coverage"] = safe_div(
+            len(predictions),
+            len(validation)
+        )
+
+        print()
+        print(
+            f"Validation matched records: "
+            f"{metrics['n']}"

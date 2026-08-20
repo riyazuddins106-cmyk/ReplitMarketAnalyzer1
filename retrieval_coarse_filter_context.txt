@@ -1,0 +1,76 @@
+﻿
+        if changed:
+            episode += 1
+            last_change = i
+        elif i - last_change >= EPISODE_GAP:
+            episode += 1
+            last_change = i
+
+        episode_ids[i] = episode
+
+    return episode_ids
+
+
+def build_experience_records(
+    candles: Sequence[Candle],
+    atr: Sequence[Optional[float]],
+    states: Sequence[MarketState],
+    episode_ids: Dict[int, int],
+    start: int,
+    train_end: int,
+    horizon: int,
+) -> List[ExperienceRecord]:
+    """Create records whose entire future outcome completes before train_end."""
+    records = []
+    safe_end = min(train_end - horizon, len(candles) - horizon)
+
+    if safe_end <= start:
+        return records
+
+    for i in range(start, safe_end):
+        outcome = make_outcome(candles, atr, i, horizon)
+        if outcome is None:
+            continue
+
+        state = states[i]
+        records.append(
+            ExperienceRecord(
+                index=i,
+                episode_id=episode_ids[i],
+                state_key=state.state_key,
+                sequence_state=state.sequence_state,
+                regime=state.regime,
+                structure_event=state.structure_event,
+                location=state.location,
+                momentum_state=state.momentum_state,
+                volatility_ratio=state.volatility_ratio,
+                body_ratio=state.body_ratio,
+                range_ratio=state.range_ratio,
+                r1=state.r1,
+                r3=state.r3,
+                r8=state.r8,
+                r16=state.r16,
+                path_vector=state.path_vector,
+                horizon=horizon,
+                outcome=outcome,
+            )
+        )
+
+    return records
+
+
+def coarse_filter(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+    query_index: int,
+) -> List[ExperienceRecord]:
+    """Causal coarse retrieval before numeric similarity."""
+    compatible = []
+    for record in records:
+        if record.index >= query_index:
+            continue
+        if query_index - record.index < MIN_HISTORY_GAP:
+            continue
+        if (
+            record.regime == current.regime
+            or record.structure_event == current.structure_event

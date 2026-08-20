@@ -1,0 +1,1793 @@
+from __future__ import annotations
+
+import ast
+import copy
+import hashlib
+import importlib
+import inspect
+import json
+import os
+import sys
+import traceback
+from dataclasses import is_dataclass, asdict
+from pathlib import Path
+from typing import Any
+
+
+# ================================================================
+# CONFIGURATION
+# ================================================================
+
+TARGET = Path("mlai_market_structure_v415.py").resolve()
+DATA_FILE = Path("market_data.bin").resolve()
+MODULE_NAME = "mlai_market_structure_v415"
+
+REPORT = Path("mlai_v415_single_forensic_report.txt").resolve()
+
+MIN_RUNTIME_TESTS = 3
+
+
+# ================================================================
+# REPORT ENGINE
+# ================================================================
+
+results = []
+
+
+def result(name, status, detail=""):
+    results.append({
+        "name": name,
+        "status": status,
+        "detail": detail,
+    })
+
+    print(f"[{status:<12}] {name}")
+    if detail:
+        print(f"              {detail}")
+
+
+def section(title):
+    print()
+    print("=" * 100)
+    print(title)
+    print("=" * 100)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            block = f.read(1024 * 1024)
+            if not block:
+                break
+            h.update(block)
+    return h.hexdigest()
+
+
+def safe_repr(value, limit=300):
+    try:
+        text = repr(value)
+    except Exception:
+        text = "<repr failed>"
+
+    if len(text) > limit:
+        return text[:limit] + "..."
+    return text
+
+
+# ================================================================
+# STATIC SOURCE HELPERS
+# ================================================================
+
+source = None
+tree = None
+module = None
+candles = None
+
+
+def function_nodes():
+    return [
+        n for n in ast.walk(tree)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+
+
+def class_nodes():
+    return [
+        n for n in ast.walk(tree)
+        if isinstance(n, ast.ClassDef)
+    ]
+
+
+def function_for_line(line):
+    matches = []
+
+    for fn in function_nodes():
+        end = getattr(fn, "end_lineno", fn.lineno)
+
+        if fn.lineno <= line <= end:
+            matches.append(fn)
+
+    if not matches:
+        return None
+
+    return max(matches, key=lambda x: x.lineno)
+
+
+def function_name_for_line(line):
+    fn = function_for_line(line)
+    return fn.name if fn else "<module>"
+
+
+# ================================================================
+# AST FUTURE REFERENCE ANALYSIS
+# ================================================================
+
+def is_future_arithmetic(node):
+    text = ast.get_source_segment(source, node)
+
+    if not text:
+        return False
+
+    lower = text.replace(" ", "").lower()
+
+    patterns = (
+        "index+",
+        "query_index+",
+        "target+",
+        "i+",
+        "j+",
+        "horizon",
+    )
+
+    return any(p in lower for p in patterns)
+
+
+def future_reference_scan():
+    hits = []
+
+    for node in ast.walk(tree):
+
+        if isinstance(node, ast.Subscript):
+            text = ast.get_source_segment(source, node)
+
+            if text and (
+                "index +" in text
+                or "index+" in text
+                or "target" in text
+                or "query_index +" in text
+            ):
+                hits.append(
+                    (
+                        node.lineno,
+                        "SUBSCRIPT",
+                        text.strip(),
+                        function_name_for_line(node.lineno),
+                    )
+                )
+
+        elif isinstance(node, ast.Slice):
+            text = ast.get_source_segment(source, node)
+
+            if text and (
+                "index +" in text
+                or "index+" in text
+                or "target" in text
+                or "query_index +" in text
+            ):
+                hits.append(
+                    (
+                        node.lineno,
+                        "SLICE",
+                        text.strip(),
+                        function_name_for_line(node.lineno),
+                    )
+                )
+
+        elif isinstance(node, ast.BinOp):
+            if is_future_arithmetic(node):
+                text = ast.get_source_segment(source, node)
+
+                hits.append(
+                    (
+                        node.lineno,
+                        "ARITHMETIC",
+                        text.strip() if text else "",
+                        function_name_for_line(node.lineno),
+                    )
+                )
+
+    unique = []
+    seen = set()
+
+    for hit in sorted(hits):
+        key = hit
+
+        if key not in seen:
+            seen.add(key)
+            unique.append(hit)
+
+    return unique
+
+
+# ================================================================
+# FUNCTION SOURCE / SIGNATURE
+# ================================================================
+
+def show_function_source(name):
+    fn = getattr(module, name, None)
+
+    if not fn:
+        return ""
+
+    try:
+        return inspect.getsource(fn)
+    except Exception:
+        return ""
+
+
+def signature(name):
+    fn = getattr(module, name, None)
+
+    if not fn:
+        return None
+
+    try:
+        return inspect.signature(fn)
+    except Exception:
+        return None
+
+
+# ================================================================
+# GENERIC ARGUMENT RESOLUTION
+#
+# This avoids assuming exact signatures.
+# ================================================================
+
+def resolve_argument(name, values):
+    lower = name.lower()
+
+    aliases = {
+        "candles": (
+            "candles",
+            "data",
+            "rows",
+            "ohlc",
+            "bars",
+            "history",
+        ),
+        "index": (
+            "index",
+            "idx",
+            "i",
+            "query_index",
+        ),
+        "query_index": (
+            "query_index",
+            "index",
+            "idx",
+            "i",
+        ),
+        "horizon": (
+            "horizon",
+            "h",
+        ),
+        "atr": (
+            "atr",
+            "atr_values",
+            "atr_series",
+        ),
+        "swings": (
+            "swings",
+            "swing_list",
+        ),
+        "states": (
+            "states",
+            "market_states",
+        ),
+        "experiences": (
+            "experiences",
+            "records",
+            "experience_records",
+        ),
+        "window": (
+            "window",
+            "wf_window",
+            "walk_forward_window",
+        ),
+    }
+
+    if name in values:
+        return values[name]
+
+    for key, names in aliases.items():
+        if lower in names and key in values:
+            return values[key]
+
+    return None
+
+
+def invoke_adaptive(fn, values, required_only=True):
+    """
+    Invoke a function using its real runtime signature.
+
+    Returns:
+        (success, value, description)
+    """
+
+    try:
+        sig = inspect.signature(fn)
+    except Exception as exc:
+        return False, None, f"signature unavailable: {exc}"
+
+    kwargs = {}
+    positional = []
+
+    for param in sig.parameters.values():
+
+        if param.kind in (
+            inspect.Parameter.VAR_POSITIONAL,
+            inspect.Parameter.VAR_KEYWORD,
+        ):
+            continue
+
+        value = resolve_argument(param.name, values)
+
+        if value is not None:
+            if param.kind == inspect.Parameter.POSITIONAL_ONLY:
+                positional.append(value)
+            else:
+                kwargs[param.name] = value
+
+        elif param.default is inspect.Parameter.empty:
+
+            return (
+                False,
+                None,
+                f"cannot resolve required parameter '{param.name}' "
+                f"for {fn.__name__}{sig}",
+            )
+
+    try:
+        value = fn(*positional, **kwargs)
+        return True, value, f"{fn.__name__}{sig}"
+
+    except Exception as exc:
+        return (
+            False,
+            None,
+            f"{fn.__name__}{sig} raised "
+            f"{type(exc).__name__}: {exc}",
+        )
+
+
+# ================================================================
+# DATA SNAPSHOT
+# ================================================================
+
+original_source_hash = None
+original_data_hash = None
+
+section("MLAI v4.1.5 — SINGLE REPLACEMENT FORENSIC CAUSAL AUDITOR")
+
+print(f"Python : {sys.version}")
+print(f"Target : {TARGET}")
+print(f"Data   : {DATA_FILE}")
+print()
+
+
+# ================================================================
+# 1. FILE INTEGRITY BEFORE TEST
+# ================================================================
+
+section("1. INPUT INTEGRITY")
+
+if not TARGET.exists():
+    result(
+        "TARGET_FILE",
+        "FAIL",
+        f"Missing {TARGET}",
+    )
+    raise SystemExit(1)
+
+result("TARGET_FILE", "PASS", "Target source exists.")
+
+original_source_hash = sha256(TARGET)
+
+if DATA_FILE.exists():
+    original_data_hash = sha256(DATA_FILE)
+    result("DATA_FILE", "PASS", "market_data.bin exists.")
+else:
+    result("DATA_FILE", "FAIL", "market_data.bin missing.")
+
+
+# ================================================================
+# 2. AST
+# ================================================================
+
+section("2. SOURCE / AST")
+
+try:
+    source = TARGET.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    result(
+        "AST",
+        "PASS",
+        "Source parsed successfully.",
+    )
+
+except Exception as exc:
+    result(
+        "AST",
+        "FAIL",
+        f"{type(exc).__name__}: {exc}",
+    )
+    raise SystemExit(1)
+
+
+# ================================================================
+# 3. ARCHITECTURE
+# ================================================================
+
+section("3. ARCHITECTURE")
+
+classes = class_nodes()
+class_names = {c.name for c in classes}
+
+print("Classes found:")
+
+for c in classes:
+    print(f"  {c.name:<35} line {c.lineno}")
+
+if "CausalStructureEngine" in class_names:
+
+    result(
+        "STRUCTURE_ENGINE",
+        "PASS",
+        "Actual v4.1.5 architecture exposes CausalStructureEngine.",
+    )
+
+elif "StructureEngine" in class_names:
+
+    result(
+        "STRUCTURE_ENGINE",
+        "PASS",
+        "StructureEngine exists.",
+    )
+
+else:
+
+    result(
+        "STRUCTURE_ENGINE",
+        "FAIL",
+        "No structure engine class found.",
+    )
+
+
+# ================================================================
+# 4. REQUIRED FUNCTION DISCOVERY
+# ================================================================
+
+section("4. REQUIRED CAUSAL COMPONENTS")
+
+required = [
+    "load_market_data",
+    "calculate_atr",
+    "build_path_vector",
+    "build_market_states",
+    "build_experience_records",
+    "make_outcome",
+    "retrieve_historical_experience",
+    "create_walk_forward_windows",
+    "audit_structure_causality",
+]
+
+available_functions = {
+    n.name for n in function_nodes()
+}
+
+for name in required:
+
+    if name in available_functions:
+        result(
+            f"FUNCTION:{name}",
+            "PASS",
+            "Present.",
+        )
+    else:
+        result(
+            f"FUNCTION:{name}",
+            "FAIL",
+            "Missing.",
+        )
+
+
+# ================================================================
+# 5. STATIC FUTURE REFERENCE CLASSIFICATION
+# ================================================================
+
+section("5. FUTURE-INDEX SEMANTIC CLASSIFICATION")
+
+hits = future_reference_scan()
+
+print(f"Future-reference expressions found: {len(hits)}")
+print()
+
+allowed_outcome_functions = {
+    "make_outcome",
+}
+
+allowed_validation_functions = {
+    "audit_structure_causality",
+}
+
+allowed_boundary_functions = {
+    "main",
+    "create_walk_forward_windows",
+}
+
+for line, kind, text, fn_name in hits:
+
+    if fn_name in allowed_outcome_functions:
+        classification = "ALLOWED_OUTCOME"
+
+    elif fn_name in allowed_validation_functions:
+        classification = "ALLOWED_VALIDATION"
+
+    elif fn_name in allowed_boundary_functions:
+        classification = "BOUNDARY_CHECK"
+
+    else:
+        classification = "REQUIRES_REVIEW"
+
+    print(
+        f"LINE {line:<5} "
+        f"{classification:<20} "
+        f"{fn_name:<35} "
+        f"{text}"
+    )
+
+
+review_hits = [
+    h for h in hits
+    if h[3] not in allowed_outcome_functions
+    and h[3] not in allowed_validation_functions
+    and h[3] not in allowed_boundary_functions
+]
+
+if review_hits:
+    result(
+        "FUTURE_INDEX_STATIC",
+        "REVIEW",
+        f"{len(review_hits)} future references occur outside "
+        f"known outcome/validation/boundary functions.",
+    )
+else:
+    result(
+        "FUTURE_INDEX_STATIC",
+        "PASS",
+        "All detected future references fall into known "
+        "outcome/validation/boundary categories.",
+    )
+
+
+# ================================================================
+# 6. IMPORT
+# ================================================================
+
+section("6. RUNTIME IMPORT")
+
+try:
+
+    if MODULE_NAME in sys.modules:
+        del sys.modules[MODULE_NAME]
+
+    module = importlib.import_module(MODULE_NAME)
+
+    result(
+        "IMPORT",
+        "PASS",
+        "Target imported successfully.",
+    )
+
+except Exception as exc:
+
+    result(
+        "IMPORT",
+        "FAIL",
+        f"{type(exc).__name__}: {exc}",
+    )
+
+    traceback.print_exc()
+    raise SystemExit(1)
+
+
+# ================================================================
+# 7. REAL API INVENTORY
+# ================================================================
+
+section("7. REAL RUNTIME API")
+
+for name in sorted(dir(module)):
+
+    if name.startswith("__"):
+        continue
+
+    obj = getattr(module, name)
+
+    if inspect.isclass(obj) or inspect.isfunction(obj):
+
+        try:
+            sig = inspect.signature(obj)
+        except Exception:
+            sig = ""
+
+        print(
+            f"{name:<40} "
+            f"{type(obj).__name__:<12} "
+            f"{sig}"
+        )
+
+
+# ================================================================
+# 8. DATA LOAD
+# ================================================================
+
+section("8. MARKET DATA")
+
+try:
+
+    loader = getattr(module, "load_market_data")
+
+    ok, loaded, detail = invoke_adaptive(
+        loader,
+        {
+            "path": str(DATA_FILE),
+            "file": str(DATA_FILE),
+            "market_data_file": str(DATA_FILE),
+        },
+    )
+
+    if not ok:
+        result(
+            "DATA_LOAD",
+            "FAIL",
+            detail,
+        )
+        raise RuntimeError(detail)
+
+    candles = loaded
+
+    if candles is None:
+        raise RuntimeError("load_market_data returned None")
+
+    print(f"Loaded objects: {len(candles)}")
+
+    result(
+        "DATA_LOAD",
+        "PASS",
+        f"Loaded {len(candles)} candles.",
+    )
+
+except Exception as exc:
+
+    result(
+        "DATA_LOAD",
+        "FAIL",
+        f"{type(exc).__name__}: {exc}",
+    )
+    raise SystemExit(1)
+
+
+# ================================================================
+# 9. CHRONOLOGY
+# ================================================================
+
+section("9. DATA CHRONOLOGY")
+
+timestamps = []
+
+for i, candle in enumerate(candles):
+
+    ts = getattr(candle, "timestamp", None)
+
+    if ts is None:
+        ts = getattr(candle, "time", None)
+
+    timestamps.append(ts)
+
+bad_order = []
+
+for i in range(1, len(timestamps)):
+
+    if timestamps[i] <= timestamps[i - 1]:
+        bad_order.append(i)
+
+if bad_order:
+
+    result(
+        "CHRONOLOGY",
+        "FAIL",
+        f"Non-increasing timestamp at index {bad_order[0]}",
+    )
+
+else:
+
+    result(
+        "CHRONOLOGY",
+        "PASS",
+        "Timestamps strictly increasing.",
+    )
+
+
+# ================================================================
+# 10. DUPLICATES
+# ================================================================
+
+if len(timestamps) != len(set(timestamps)):
+
+    result(
+        "DUPLICATES",
+        "FAIL",
+        "Duplicate timestamps detected.",
+    )
+
+else:
+
+    result(
+        "DUPLICATES",
+        "PASS",
+        "No duplicate timestamps.",
+    )
+
+
+# ================================================================
+# 11. STRUCTURE ENGINE RUNTIME
+# ================================================================
+
+section("11. STRUCTURE ENGINE RUNTIME")
+
+engine_cls = getattr(
+    module,
+    "CausalStructureEngine",
+    None,
+)
+
+if engine_cls is None:
+    engine_cls = getattr(
+        module,
+        "StructureEngine",
+        None,
+    )
+
+if engine_cls is None:
+
+    result(
+        "STRUCTURE_ENGINE_RUNTIME",
+        "FAIL",
+        "No structure engine class available.",
+    )
+
+else:
+
+    print(
+        "Constructor:",
+        signature(engine_cls.__name__)
+        if hasattr(engine_cls, "__name__")
+        else inspect.signature(engine_cls),
+    )
+
+    try:
+
+        sig = inspect.signature(engine_cls)
+
+        kwargs = {}
+
+        for p in sig.parameters.values():
+
+            if p.name == "candles":
+                kwargs[p.name] = candles
+
+            elif p.name == "data":
+                kwargs[p.name] = candles
+
+            elif p.default is inspect.Parameter.empty:
+
+                # Try no-argument construction only if the
+                # constructor has no unresolved required argument.
+                raise RuntimeError(
+                    f"Required constructor parameter '{p.name}' "
+                    f"cannot be safely inferred."
+                )
+
+        engine = engine_cls(**kwargs)
+
+        build_method = getattr(engine, "build", None)
+
+        if build_method is None:
+
+            result(
+                "STRUCTURE_ENGINE_RUNTIME",
+                "FAIL",
+                "Engine exists but has no build() method.",
+            )
+
+        else:
+
+            ok, structure_output, detail = invoke_adaptive(
+                build_method,
+                {
+                    "candles": candles,
+                    "data": candles,
+                },
+            )
+
+            if ok:
+
+                result(
+                    "STRUCTURE_ENGINE_RUNTIME",
+                    "PASS",
+                    "CausalStructureEngine.build() executed.",
+                )
+
+            else:
+
+                result(
+                    "STRUCTURE_ENGINE_RUNTIME",
+                    "INCONCLUSIVE",
+                    detail,
+                )
+
+    except Exception as exc:
+
+        result(
+            "STRUCTURE_ENGINE_RUNTIME",
+            "INCONCLUSIVE",
+            f"{type(exc).__name__}: {exc}",
+        )
+
+
+# ================================================================
+# 12. ATR / PATH PREFIX INVARIANCE
+# ================================================================
+
+section("12. PREFIX INVARIANCE — PATH / FEATURE CONSTRUCTION")
+
+
+def mutate_suffix(data, start):
+
+    altered = copy.deepcopy(data)
+
+    for i in range(start, len(altered)):
+
+        c = altered[i]
+
+        # Modify OHLC values substantially while preserving
+        # object type and timestamp.
+
+        for attr in ("open", "high", "low", "close"):
+
+            if hasattr(c, attr):
+
+                old = getattr(c, attr)
+
+                try:
+                    setattr(c, attr, float(old) * 1.137 + 17.0)
+                except Exception:
+                    pass
+
+        if hasattr(c, "volume"):
+
+            try:
+                setattr(
+                    c,
+                    "volume",
+                    float(getattr(c, "volume")) * 2.0,
+                )
+            except Exception:
+                pass
+
+    return altered
+
+
+def comparable_value(value):
+
+    if is_dataclass(value):
+        try:
+            return asdict(value)
+        except Exception:
+            pass
+
+    if isinstance(value, (list, tuple)):
+
+        return [
+            comparable_value(v)
+            for v in value
+        ]
+
+    if isinstance(value, dict):
+
+        return {
+            str(k): comparable_value(v)
+            for k, v in sorted(
+                value.items(),
+                key=lambda x: str(x[0]),
+            )
+        }
+
+    if hasattr(value, "__dict__"):
+
+        result_dict = {}
+
+        for k, v in vars(value).items():
+
+            if k.startswith("_"):
+                continue
+
+            result_dict[k] = comparable_value(v)
+
+        return result_dict
+
+    return value
+
+
+def prefix_slice(value, n):
+
+    if isinstance(value, (list, tuple)):
+        return value[:n]
+
+    return value
+
+
+path_fn = getattr(module, "build_path_vector", None)
+
+if path_fn is None:
+
+    result(
+        "PATH_PREFIX_INVARIANCE",
+        "FAIL",
+        "build_path_vector missing.",
+    )
+
+else:
+
+    test_indices = [
+        max(1, len(candles) // 4),
+        max(1, len(candles) // 2),
+        max(1, (3 * len(candles)) // 4),
+    ]
+
+    runtime_count = 0
+    failures = []
+
+    for index in test_indices:
+
+        mutated = mutate_suffix(
+            candles,
+            index + 1,
+        )
+
+        # Calculate ATR separately when the function exists.
+        atr_fn = getattr(module, "calculate_atr", None)
+
+        atr_original = None
+        atr_mutated = None
+
+        if atr_fn:
+
+            ok1, atr_original, _ = invoke_adaptive(
+                atr_fn,
+                {
+                    "candles": candles,
+                    "data": candles,
+                },
+            )
+
+            ok2, atr_mutated, _ = invoke_adaptive(
+                atr_fn,
+                {
+                    "candles": mutated,
+                    "data": mutated,
+                },
+            )
+
+            if not ok1 or not ok2:
+                atr_original = None
+                atr_mutated = None
+
+        values_original = {
+            "candles": candles,
+            "data": candles,
+            "index": index,
+            "query_index": index,
+            "atr": atr_original,
+            "atr_values": atr_original,
+        }
+
+        values_mutated = {
+            "candles": mutated,
+            "data": mutated,
+            "index": index,
+            "query_index": index,
+            "atr": atr_mutated,
+            "atr_values": atr_mutated,
+        }
+
+        ok1, result1, detail1 = invoke_adaptive(
+            path_fn,
+            values_original,
+        )
+
+        ok2, result2, detail2 = invoke_adaptive(
+            path_fn,
+            values_mutated,
+        )
+
+        if not ok1 or not ok2:
+
+            failures.append(
+                f"index {index}: "
+                f"{detail1 if not ok1 else detail2}"
+            )
+            continue
+
+        runtime_count += 1
+
+        a = comparable_value(result1)
+        b = comparable_value(result2)
+
+        if a != b:
+
+            failures.append(
+                f"index {index}: path vector changed "
+                f"after modifying only candles after query index"
+            )
+
+            print()
+            print("PREFIX INVARIANCE FAILURE")
+            print(f"Index: {index}")
+            print("Original:", safe_repr(a))
+            print("Mutated :", safe_repr(b))
+
+    if failures:
+
+        result(
+            "PATH_PREFIX_INVARIANCE",
+            "FAIL",
+            " | ".join(failures),
+        )
+
+    elif runtime_count >= MIN_RUNTIME_TESTS:
+
+        result(
+            "PATH_PREFIX_INVARIANCE",
+            "PASS",
+            f"{runtime_count} runtime prefix tests passed.",
+        )
+
+    else:
+
+        result(
+            "PATH_PREFIX_INVARIANCE",
+            "INCONCLUSIVE",
+            f"Only {runtime_count} tests executed successfully.",
+        )
+
+
+# ================================================================
+# 13. MARKET STATE PREFIX INVARIANCE
+# ================================================================
+
+section("13. PREFIX INVARIANCE — MARKET STATES")
+
+state_fn = getattr(
+    module,
+    "build_market_states",
+    None,
+)
+
+if state_fn is None:
+
+    result(
+        "MARKET_STATE_PREFIX_INVARIANCE",
+        "FAIL",
+        "build_market_states missing.",
+    )
+
+else:
+
+    index = len(candles) // 2
+
+    mutated = mutate_suffix(
+        candles,
+        index + 1,
+    )
+
+    values_original = {
+        "candles": candles,
+        "data": candles,
+        "index": index,
+        "query_index": index,
+    }
+
+    values_mutated = {
+        "candles": mutated,
+        "data": mutated,
+        "index": index,
+        "query_index": index,
+    }
+
+    ok1, state1, detail1 = invoke_adaptive(
+        state_fn,
+        values_original,
+    )
+
+    ok2, state2, detail2 = invoke_adaptive(
+        state_fn,
+        values_mutated,
+    )
+
+    if not ok1 or not ok2:
+
+        result(
+            "MARKET_STATE_PREFIX_INVARIANCE",
+            "INCONCLUSIVE",
+            detail1 if not ok1 else detail2,
+        )
+
+    else:
+
+        a = comparable_value(state1)
+        b = comparable_value(state2)
+
+        # If a sequence is returned, compare only the historical
+        # prefix. This is the critical causal boundary.
+        a_prefix = prefix_slice(a, index + 1)
+        b_prefix = prefix_slice(b, index + 1)
+
+        if a_prefix == b_prefix:
+
+            result(
+                "MARKET_STATE_PREFIX_INVARIANCE",
+                "PASS",
+                f"State prefix through index {index} unchanged.",
+            )
+
+        else:
+
+            result(
+                "MARKET_STATE_PREFIX_INVARIANCE",
+                "FAIL",
+                f"State before/at index {index} changed after "
+                f"future-only mutation.",
+            )
+
+
+# ================================================================
+# 14. STRUCTURE PREFIX INVARIANCE
+# ================================================================
+
+section("14. PREFIX INVARIANCE — CAUSAL STRUCTURE")
+
+if engine_cls is None:
+
+    result(
+        "STRUCTURE_PREFIX_INVARIANCE",
+        "INCONCLUSIVE",
+        "No structure engine.",
+    )
+
+else:
+
+    try:
+
+        mutated = mutate_suffix(
+            candles,
+            len(candles) // 2 + 1,
+        )
+
+        def make_engine(data):
+
+            sig = inspect.signature(engine_cls)
+
+            kwargs = {}
+
+            for p in sig.parameters.values():
+
+                if p.name in ("candles", "data"):
+                    kwargs[p.name] = data
+
+                elif p.default is inspect.Parameter.empty:
+                    raise RuntimeError(
+                        f"Cannot infer constructor parameter "
+                        f"{p.name}"
+                    )
+
+            return engine_cls(**kwargs)
+
+        e1 = make_engine(candles)
+        e2 = make_engine(mutated)
+
+        b1 = getattr(e1, "build", None)
+        b2 = getattr(e2, "build", None)
+
+        if not b1 or not b2:
+
+            raise RuntimeError(
+                "Structure engine build() unavailable."
+            )
+
+        ok1, s1, d1 = invoke_adaptive(
+            b1,
+            {
+                "candles": candles,
+                "data": candles,
+            },
+        )
+
+        ok2, s2, d2 = invoke_adaptive(
+            b2,
+            {
+                "candles": mutated,
+                "data": mutated,
+            },
+        )
+
+        if not ok1 or not ok2:
+
+            raise RuntimeError(
+                d1 if not ok1 else d2
+            )
+
+        n = len(candles) // 2
+
+        a = prefix_slice(
+            comparable_value(s1),
+            n + 1,
+        )
+
+        b = prefix_slice(
+            comparable_value(s2),
+            n + 1,
+        )
+
+        if a == b:
+
+            result(
+                "STRUCTURE_PREFIX_INVARIANCE",
+                "PASS",
+                f"Structure through index {n} unchanged.",
+            )
+
+        else:
+
+            result(
+                "STRUCTURE_PREFIX_INVARIANCE",
+                "FAIL",
+                f"Structure before/at index {n} changed "
+                f"after future-only mutation.",
+            )
+
+    except Exception as exc:
+
+        result(
+            "STRUCTURE_PREFIX_INVARIANCE",
+            "INCONCLUSIVE",
+            f"{type(exc).__name__}: {exc}",
+        )
+
+
+# ================================================================
+# 15. SWING CONFIRMATION TIMING — STATIC SEMANTIC CHECK
+# ================================================================
+
+section("15. SWING CONFIRMATION TIMING")
+
+structure_audit_source = show_function_source(
+    "audit_structure_causality"
+)
+
+if not structure_audit_source:
+
+    result(
+        "SWING_CONFIRMATION_TIMING",
+        "INCONCLUSIVE",
+        "audit_structure_causality source unavailable.",
+    )
+
+else:
+
+    has_confirmation_boundary = (
+        "confirmation_index" in structure_audit_source
+        and "SWING_RIGHT" in structure_audit_source
+    )
+
+    if has_confirmation_boundary:
+
+        result(
+            "SWING_CONFIRMATION_TIMING",
+            "PASS",
+            "Structure audit explicitly checks confirmation_index "
+            "against pivot_index + SWING_RIGHT.",
+        )
+
+    else:
+
+        result(
+            "SWING_CONFIRMATION_TIMING",
+            "REVIEW",
+            "Could not prove confirmation boundary from source.",
+        )
+
+
+# ================================================================
+# 16. OUTCOME ISOLATION
+# ================================================================
+
+section("16. OUTCOME / LABEL ISOLATION")
+
+outcome_source = show_function_source("make_outcome")
+
+if not outcome_source:
+
+    result(
+        "OUTCOME_ISOLATION",
+        "FAIL",
+        "make_outcome missing.",
+    )
+
+else:
+
+    required_tokens = [
+        "index + horizon",
+        "future_close",
+        "future_high",
+        "future_low",
+    ]
+
+    missing = [
+        token
+        for token in required_tokens
+        if token not in outcome_source.replace(" ", "")
+        and token.replace(" ", "") not in outcome_source.replace(" ", "")
+    ]
+
+    # More reliable direct checks:
+    has_target = "target = index + horizon" in outcome_source
+    has_future_close = "candles[target]" in outcome_source
+    has_future_range = (
+        "candles[index + 1 : target + 1]" in outcome_source
+        or "candles[index + 1:target + 1]" in outcome_source
+    )
+
+    if has_target and has_future_close and has_future_range:
+
+        result(
+            "OUTCOME_ISOLATION",
+            "PASS",
+            "Future candles are confined to make_outcome().",
+        )
+
+    else:
+
+        result(
+            "OUTCOME_ISOLATION",
+            "REVIEW",
+            "Could not fully establish outcome boundary.",
+        )
+
+
+# ================================================================
+# 17. EXPERIENCE CONSTRUCTION
+# ================================================================
+
+section("17. EXPERIENCE CONSTRUCTION")
+
+experience_source = show_function_source(
+    "build_experience_records"
+)
+
+if not experience_source:
+
+    result(
+        "EXPERIENCE_BOUNDARY",
+        "FAIL",
+        "build_experience_records missing.",
+    )
+
+else:
+
+    tokens = [
+        "horizon",
+        "make_outcome",
+    ]
+
+    present = [
+        t for t in tokens
+        if t in experience_source
+    ]
+
+    if len(present) == len(tokens):
+
+        result(
+            "EXPERIENCE_BOUNDARY",
+            "PASS",
+            "Experience construction explicitly references "
+            "horizon and outcome construction.",
+        )
+
+    else:
+
+        result(
+            "EXPERIENCE_BOUNDARY",
+            "REVIEW",
+            f"Only found: {present}",
+        )
+
+
+# ================================================================
+# 18. RETRIEVAL SOURCE AUDIT
+# ================================================================
+
+section("18. HISTORICAL RETRIEVAL")
+
+retrieval_source = show_function_source(
+    "retrieve_historical_experience"
+)
+
+if not retrieval_source:
+
+    result(
+        "RETRIEVAL_FUNCTION",
+        "FAIL",
+        "retrieve_historical_experience missing.",
+    )
+
+else:
+
+    forbidden = []
+
+    source_lower = retrieval_source.lower()
+
+    # Retrieval itself should not call outcome generation.
+    if "make_outcome(" in source_lower:
+        forbidden.append(
+            "retrieval directly constructs future outcomes"
+        )
+
+    if "future_close" in source_lower:
+        forbidden.append(
+            "retrieval references future_close"
+        )
+
+    if forbidden:
+
+        result(
+            "RETRIEVAL_CAUSALITY",
+            "FAIL",
+            "; ".join(forbidden),
+        )
+
+    else:
+
+        historical_tokens = [
+            "histor",
+            "eligible",
+            "query_index",
+            "experience",
+            "timestamp",
+        ]
+
+        found = [
+            t for t in historical_tokens
+            if t in source_lower
+        ]
+
+        if found:
+
+            result(
+                "RETRIEVAL_CAUSALITY",
+                "PASS",
+                "Retrieval source contains historical eligibility "
+                f"logic: {found}",
+            )
+
+        else:
+
+            result(
+                "RETRIEVAL_CAUSALITY",
+                "REVIEW",
+                "Could not establish historical eligibility "
+                "from source alone.",
+            )
+
+
+# ================================================================
+# 19. WALK-FORWARD WINDOW AUDIT
+# ================================================================
+
+section("19. WALK-FORWARD ISOLATION")
+
+wf_source = show_function_source(
+    "create_walk_forward_windows"
+)
+
+if not wf_source:
+
+    result(
+        "WALK_FORWARD_WINDOWS",
+        "FAIL",
+        "create_walk_forward_windows missing.",
+    )
+
+else:
+
+    suspicious = []
+
+    lower = wf_source.lower()
+
+    if "oos_start" in lower:
+        pass
+    else:
+        suspicious.append(
+            "oos_start missing"
+        )
+
+    if "oos_end" in lower:
+        pass
+    else:
+        suspicious.append(
+            "oos_end missing"
+        )
+
+    if suspicious:
+
+        result(
+            "WALK_FORWARD_WINDOWS",
+            "REVIEW",
+            "; ".join(suspicious),
+        )
+
+    else:
+
+        result(
+            "WALK_FORWARD_WINDOWS",
+            "PASS",
+            "Walk-forward implementation exposes explicit "
+            "OOS boundaries.",
+        )
+
+
+# ================================================================
+# 20. OOS QUERY BOUNDARY
+# ================================================================
+
+section("20. OOS QUERY BOUNDARY")
+
+main_source = show_function_source("main")
+
+if not main_source:
+
+    result(
+        "OOS_QUERY_BOUNDARY",
+        "INCONCLUSIVE",
+        "main source unavailable.",
+    )
+
+else:
+
+    required = [
+        "window.oos_start",
+        "window.oos_end",
+        "query_index",
+        "query_index + horizon",
+    ]
+
+    found = [
+        token
+        for token in required
+        if token in main_source
+    ]
+
+    if len(found) == len(required):
+
+        result(
+            "OOS_QUERY_BOUNDARY",
+            "PASS",
+            "OOS query loop and horizon boundary explicitly present.",
+        )
+
+    else:
+
+        result(
+            "OOS_QUERY_BOUNDARY",
+            "REVIEW",
+            f"Found {found}",
+        )
+
+
+# ================================================================
+# 21. MUTATION PROTECTION
+# ================================================================
+
+section("21. MUTATION PROTECTION")
+
+source_hash_after = sha256(TARGET)
+
+if source_hash_after == original_source_hash:
+
+    result(
+        "SOURCE_MUTATION",
+        "PASS",
+        "Target source unchanged.",
+    )
+
+else:
+
+    result(
+        "SOURCE_MUTATION",
+        "FAIL",
+        "Target source hash changed during audit.",
+    )
+
+
+if DATA_FILE.exists() and original_data_hash:
+
+    data_hash_after = sha256(DATA_FILE)
+
+    if data_hash_after == original_data_hash:
+
+        result(
+            "DATA_MUTATION",
+            "PASS",
+            "market_data.bin unchanged.",
+        )
+
+    else:
+
+        result(
+            "DATA_MUTATION",
+            "FAIL",
+            "market_data.bin hash changed during audit.",
+        )
+
+
+# ================================================================
+# 22. FINAL CERTIFICATION LOGIC
+# ================================================================
+
+section("FINAL FORENSIC VERDICT")
+
+fails = [
+    r for r in results
+    if r["status"] == "FAIL"
+]
+
+inconclusive = [
+    r for r in results
+    if r["status"] == "INCONCLUSIVE"
+]
+
+reviews = [
+    r for r in results
+    if r["status"] in ("REVIEW", "WARNING")
+]
+
+
+print()
+print(f"PASS         : {sum(r['status'] == 'PASS' for r in results)}")
+print(f"FAIL         : {len(fails)}")
+print(f"INCONCLUSIVE : {len(inconclusive)}")
+print(f"REVIEW       : {len(reviews)}")
+print()
+
+
+if fails:
+
+    verdict = "FAIL — CAUSAL CERTIFICATION REJECTED"
+
+elif inconclusive:
+
+    verdict = (
+        "INCONCLUSIVE — CAUSAL CERTIFICATION NOT PROVEN"
+    )
+
+elif reviews:
+
+    verdict = (
+        "REVIEW — CAUSAL CERTIFICATION NOT YET PROVEN"
+    )
+
+else:
+
+    verdict = "PASS — CAUSAL CERTIFICATION PASSED"
+
+
+print(verdict)
+
+
+# ================================================================
+# EXACT FAILURE SUMMARY
+# ================================================================
+
+if fails:
+
+    print()
+    print("FAILURES:")
+
+    for r in fails:
+
+        print()
+        print(f"  {r['name']}")
+        print(f"  {r['detail']}")
+
+
+if inconclusive:
+
+    print()
+    print("INCONCLUSIVE TESTS:")
+
+    for r in inconclusive:
+
+        print()
+        print(f"  {r['name']}")
+        print(f"  {r['detail']}")
+
+
+# ================================================================
+# WRITE REPORT
+# ================================================================
+
+report_lines = []
+
+report_lines.append(
+    "MLAI v4.1.5 — SINGLE FORENSIC CAUSAL AUDIT"
+)
+report_lines.append("=" * 100)
+report_lines.append(f"Target: {TARGET}")
+report_lines.append(f"Python: {sys.version}")
+report_lines.append("")
+
+for r in results:
+
+    report_lines.append(
+        f"[{r['status']}] {r['name']}"
+    )
+
+    if r["detail"]:
+        report_lines.append(
+            f"    {r['detail']}"
+        )
+
+report_lines.append("")
+report_lines.append("=" * 100)
+report_lines.append("FINAL VERDICT")
+report_lines.append("=" * 100)
+report_lines.append(verdict)
+
+try:
+
+    REPORT.write_text(
+        "\n".join(report_lines),
+        encoding="utf-8",
+    )
+
+    print()
+    print(f"Report written to: {REPORT}")
+
+except Exception as exc:
+
+    print()
+    print(
+        "WARNING: Could not write report:",
+        exc,
+    )
+
+
+print()
+print("=" * 100)
+print("AUDIT COMPLETE")
+print("=" * 100)
+
+

@@ -1,0 +1,400 @@
+
+    print(
+        f"BUY predictions:      "
+        f"{metrics['buy_count']}"
+    )
+
+    print(
+        f"SELL predictions:     "
+        f"{metrics['sell_count']}"
+    )
+
+    print(
+        f"NO TRADE predictions: "
+        f"{metrics['no_trade_count']}"
+    )
+
+
+# ============================================================
+# CONFUSION / ACTION TABLE
+# ============================================================
+
+def print_action_distribution(
+    predictions,
+    actuals
+):
+
+    table = defaultdict(
+        lambda: Counter()
+    )
+
+    for prediction, actual in zip(
+        predictions,
+        actuals
+    ):
+
+        table[prediction][actual] += 1
+
+    print()
+
+    print(
+        "Prediction        Bullish   Neutral   Bearish"
+    )
+
+    print(
+        "-------------------------------------------------------"
+    )
+
+    for prediction in [
+        "BUY",
+        "NO TRADE",
+        "SELL"
+    ]:
+
+        print(
+            f"{prediction:<17}"
+            f"{table[prediction]['bullish']:>8}"
+            f"{table[prediction]['neutral']:>10}"
+            f"{table[prediction]['bearish']:>10}"
+        )
+
+
+# ============================================================
+# REGIME PERFORMANCE
+# ============================================================
+
+def analyze_regime_performance(
+    predictions,
+    records
+):
+
+    groups = defaultdict(list)
+
+    for prediction, record in zip(
+        predictions,
+        records
+    ):
+
+        key = (
+            record["regime_direction"],
+            record["regime_volatility"]
+        )
+
+        groups[key].append(
+            (
+                prediction,
+                record["outcome"]
+            )
+        )
+
+    print()
+
+    print(
+        "REGIME PERFORMANCE"
+    )
+
+    print(
+        "-----------------------------------------------------------------------"
+    )
+
+    print(
+        f"{'REGIME':<18}"
+        f"{'VOLATILITY':<15}"
+        f"{'N':>6}"
+        f"{'DIR ACC':>12}"
+        f"{'BUY PREC':>12}"
+        f"{'SELL PREC':>12}"
+    )
+
+    print(
+        "-----------------------------------------------------------------------"
+    )
+
+    for key, values in sorted(
+        groups.items()
+    ):
+
+        direction, volatility = key
+
+        preds = [
+            x[0]
+            for x in values
+        ]
+
+        actuals = [
+            x[1]
+            for x in values
+        ]
+
+        metrics = calculate_metrics(
+            preds,
+            actuals
+        )
+
+        print(
+            f"{direction:<18}"
+            f"{volatility:<15}"
+            f"{len(values):>6}"
+            f"{metrics['directional_accuracy']:>11.2f}%"
+            f"{metrics['buy_precision']:>11.2f}%"
+            f"{metrics['sell_precision']:>11.2f}%"
+        )
+
+
+# ============================================================
+# RUN ONE HORIZON
+# ============================================================
+
+def run_horizon(
+    all_records,
+    horizon
+):
+
+    total = len(all_records)
+
+    split = int(
+        total * CALIBRATION_RATIO
+    )
+
+    calibration_records = (
+        all_records[:split]
+    )
+
+    validation_records = (
+        all_records[split:]
+    )
+
+    print()
+
+    print("=" * 70)
+
+    print(
+        f"HORIZON: {horizon} CANDLES"
+    )
+
+    print("=" * 70)
+
+    print()
+
+    print(
+        f"Historical records: "
+        f"{total}"
+    )
+
+    print(
+        f"Calibration records: "
+        f"{len(calibration_records)}"
+    )
+
+    print(
+        f"Validation records:  "
+        f"{len(validation_records)}"
+    )
+
+    print()
+
+    print(
+        "Calibration contains ONLY earlier "
+        "chronological records."
+    )
+
+    print(
+        "Validation contains ONLY later "
+        "chronological records."
+    )
+
+    # --------------------------------------------------------
+    # Scaler is calculated ONLY from calibration data.
+    # --------------------------------------------------------
+
+    scaler = calculate_scaler(
+        calibration_records
+    )
+
+    print()
+
+    print(
+        "Feature scaler calculated "
+        "from calibration data only."
+    )
+
+    print()
+
+    # --------------------------------------------------------
+    # Test different neighbor counts.
+    # --------------------------------------------------------
+
+    for neighbor_count in NEIGHBOR_COUNTS:
+
+        print()
+
+        print("-" * 70)
+
+        print(
+            f"SIMILAR STRUCTURE MODEL "
+            f"| TOP {neighbor_count} NEIGHBORS"
+        )
+
+        print("-" * 70)
+
+        predictions = []
+
+        actuals = []
+
+        validation_for_regime = []
+
+        distances = []
+
+        for target in validation_records:
+
+            neighbors = find_neighbors(
+                target,
+                calibration_records,
+                scaler,
+                neighbor_count
+            )
+
+            prediction = predict_from_neighbors(
+                neighbors
+            )
+
+            predictions.append(
+                prediction["prediction"]
+            )
+
+            actuals.append(
+                target["outcome"]
+            )
+
+            validation_for_regime.append(
+                target
+            )
+
+            if prediction[
+                "average_distance"
+            ] is not None:
+
+                distances.append(
+                    prediction[
+                        "average_distance"
+                    ]
+                )
+
+        metrics = calculate_metrics(
+            predictions,
+            actuals
+        )
+
+        print()
+
+        print(
+            "SIMILAR-STRUCTURE PERFORMANCE"
+        )
+
+        print(
+            "----------------------------------------------------------------------"
+        )
+
+        print_metrics(
+            metrics
+        )
+
+        print()
+
+        print(
+            f"Average neighbor distance: "
+            f"{average(distances):.4f}"
+            if distances
+            else
+            "Average neighbor distance: N/A"
+        )
+
+        print_action_distribution(
+            predictions,
+            actuals
+        )
+
+        analyze_regime_performance(
+            predictions,
+            validation_for_regime
+        )
+
+
+# ============================================================
+# CURRENT MARKET ANALYSIS
+# ============================================================
+
+def current_market_analysis(
+    candles
+):
+
+    print()
+
+    print("=" * 70)
+
+    print(
+        "CURRENT 60-CANDLE STRUCTURE"
+    )
+
+    print("=" * 70)
+
+    context = candles[-WINDOW:]
+
+    features = extract_features(
+        context
+    )
+
+    direction, volatility = (
+        determine_regime(features)
+    )
+
+    latest = context[-1]
+
+    print()
+
+    print(
+        f"Latest candle: "
+        f"{latest.get('datetime')}"
+    )
+
+    print(
+        f"Latest price:  "
+        f"{latest.get('close')}"
+    )
+
+    print()
+
+    print(
+        f"Directional regime: "
+        f"{direction}"
+    )
+
+    print(
+        f"Volatility regime:  "
+        f"{volatility}"
+    )
+
+    print()
+
+    print(
+        "Key structure features:"
+    )
+
+    print(
+        f"  return_15:             "
+        f"{features['return_15']:.4f}%"
+    )
+
+    print(
+        f"  return_30:             "
+        f"{features['return_30']:.4f}%"
+    )
+
+    print(
+        f"  return_60:             "
+        f"{features['return_60']:.4f}%"
+    )
+
+    print(
+        f"  bullish_ratio:         "
+        f"{features['bullish_ratio']:.4f}"

@@ -1,0 +1,500 @@
+﻿) -> Dict[str, Any]:
+    reasons = []
+    lookup = {(s.pivot_index, s.kind): s for s in swings}
+
+    for swing in swings:
+        if swing.confirmation_index < swing.pivot_index + SWING_RIGHT:
+            reasons.append(f"Swing {swing.pivot_index} confirmed too early.")
+
+    for state in states:
+        if state.last_high_index is not None:
+            swing = lookup.get((state.last_high_index, "HIGH"))
+            if swing and swing.confirmation_index > state.index:
+                reasons.append(f"Future high visible at state {state.index}.")
+
+        if state.last_low_index is not None:
+            swing = lookup.get((state.last_low_index, "LOW"))
+            if swing and swing.confirmation_index > state.index:
+                reasons.append(f"Future low visible at state {state.index}.")
+
+        if events.get(state.index, "NONE") != "NONE":
+            if state.event_index is None or state.event_index > state.index:
+                reasons.append(f"Future event visible at state {state.index}.")
+
+    return {"passed": not reasons, "reasons": reasons}
+
+
+def rolling_return(candles: Sequence[Candle], index: int, lookback: int) -> float:
+    if index < lookback:
+        return 0.0
+    return safe_div(
+        candles[index].close - candles[index - lookback].close,
+        candles[index - lookback].close,
+    )
+
+
+def classify_regime(state: StructureState, volatility_ratio: float, r8: float) -> str:
+    if volatility_ratio >= 1.35:
+        return "VOL_EXPANSION"
+    if volatility_ratio <= 0.75:
+        return "VOL_CONTRACTION"
+    if state.trend == "BULLISH" and r8 > 0:
+        return "TRENDING_UP"
+    if state.trend == "BEARISH" and r8 < 0:
+        return "TRENDING_DOWN"
+    if state.trend == "NEUTRAL":
+        return "RANGING"
+    return "TRANSITION"
+
+
+def classify_momentum(r1: float, r3: float, r8: float) -> str:
+    if r1 > 0 and r3 > 0 and r8 > 0:
+        return "BULLISH_ACCELERATION"
+    if r1 < 0 and r3 < 0 and r8 < 0:
+        return "BEARISH_ACCELERATION"
+    if r8 > 0 and r1 < 0:
+        return "BULLISH_MOMENTUM_LOSS"
+    if r8 < 0 and r1 > 0:
+        return "BEARISH_MOMENTUM_LOSS"
+    return "MIXED"
+
+
+def update_sequence(history: Sequence[Candle], state: StructureState) -> str:
+    if len(history) < 3:
+        return "INITIAL"
+    if state.event in ("BOS_BULLISH", "CHoCH_BULLISH"):
+        return "BULLISH_BREAK"
+    if state.event in ("BOS_BEARISH", "CHoCH_BEARISH"):
+        return "BEARISH_BREAK"
+    if history[-1].close > history[-2].close and history[-2].close <= history[-3].close:
+        return "BULLISH_RESPONSE"
+    if history[-1].close < history[-2].close and history[-2].close >= history[-3].close:
+        return "BEARISH_RESPONSE"
+
+    current_range = max(history[-1].high - history[-1].low, EPS)
+    current_body = abs(history[-1].close - history[-1].open)
+    if current_body < 0.25 * current_range:
+        return "COMPRESSION"
+    if state.trend == "BULLISH":
+        return "RECOVERY_OR_CONTINUATION"
+    if state.trend == "BEARISH":
+        return "SELLING_OR_CONTINUATION"
+    return "MIXED_SEQUENCE"
+
+
+def build_path_vector(
+    candles: Sequence[Candle],
+    atr: Sequence[Optional[float]],
+    index: int,
+) -> Tuple[Tuple[float, float, float, float], ...]:
+    rows = []
+    start = max(0, index - PATH_LENGTH + 1)
+
+    for current in range(start, index + 1):
+        current_atr = atr[current] if atr[current] is not None else max(candles[current].high - candles[current].low, EPS)
+        candle = candles[current]
+        previous_close = candles[current - 1].close if current > 0 else candle.close
+
+        normalized_return = safe_div(candle.close - previous_close, current_atr)
+        normalized_range = safe_div(candle.high - candle.low, current_atr)
+        direction = 1.0 if candle.close > candle.open else -1.0 if candle.close < candle.open else 0.0
+        body_ratio = safe_div(abs(candle.close - candle.open), current_atr)
+
+        rows.append((normalized_return, normalized_range, direction, body_ratio))
+
+    while len(rows) < PATH_LENGTH:
+        rows.insert(0, (0.0, 0.0, 0.0, 0.0))
+
+    return tuple(rows)
+
+
+def build_market_states(
+    candles: Sequence[Candle],
+    states: Sequence[StructureState],
+    atr: Sequence[Optional[float]],
+) -> List[MarketState]:
+    output = []
+
+    for i, candle in enumerate(candles):
+        state = states[i]
+        current_atr = atr[i] if atr[i] is not None else max(candle.high - candle.low, EPS)
+
+        r1 = rolling_return(candles, i, 1)
+        r3 = rolling_return(candles, i, 3)
+        r8 = rolling_return(candles, i, 8)
+        r16 = rolling_return(candles, i, 16)
+
+        recent_ranges = [
+            safe_div(candles[j].high - candles[j].low, max(candles[j].close, EPS))
+            for j in range(max(0, i - 7), i + 1)
+        ]
+        older_ranges = [
+            safe_div(candles[j].high - candles[j].low, max(candles[j].close, EPS))
+            for j in range(max(0, i - 31), max(0, i - 7))
+        ]
+
+        recent_vol = mean_or_zero(recent_ranges)
+        older_vol = mean_or_zero(older_ranges)
+        volatility_ratio = safe_div(
+            recent_vol,
+            older_vol if older_vol > EPS else recent_vol + EPS,
+        )
+
+        if state.last_low is not None and abs(candle.close - state.last_low) <= current_atr:
+            location = "NEAR_SUPPORT"
+        elif state.last_high is not None and abs(candle.close - state.last_high) <= current_atr:
+            location = "NEAR_RESISTANCE"
+        else:
+            location = "MID_STRUCTURE"
+
+        sequence = update_sequence(candles[: i + 1], state)
+        regime = classify_regime(state, volatility_ratio, r8)
+        momentum = classify_momentum(r1, r3, r8)
+        candle_direction = "UP" if candle.close > candle.open else "DOWN" if candle.close < candle.open else "FLAT"
+        path_vector = build_path_vector(candles, atr, i)
+
+        state_key = (
+            state.trend,
+            state.event,
+            state.high_label,
+            state.low_label,
+            location,
+            regime,
+            momentum,
+            sequence,
+        )
+
+        output.append(
+            MarketState(
+                index=i,
+                timestamp=candle.timestamp,
+                instrument="XAUUSD",
+                timeframe="UNKNOWN",
+                candle_direction=candle_direction,
+                body_ratio=safe_div(abs(candle.close - candle.open), current_atr),
+                range_ratio=safe_div(candle.high - candle.low, current_atr),
+                sequence_state=sequence,
+                trend=state.trend,
+                structure_event=state.event,
+                high_label=state.high_label,
+                low_label=state.low_label,
+                location=location,
+                volatility_regime=regime,
+                volatility_ratio=volatility_ratio,
+                momentum_state=momentum,
+                regime=regime,
+                r1=r1,
+                r3=r3,
+                r8=r8,
+                r16=r16,
+                path_vector=path_vector,
+                state_key=state_key,
+                availability_index=i,
+            )
+        )
+
+    return output
+
+
+def make_outcome(
+    candles: Sequence[Candle],
+    atr: Sequence[Optional[float]],
+    index: int,
+    horizon: int,
+) -> Optional[Outcome]:
+    target = index + horizon
+    if target >= len(candles):
+        return None
+
+    current_atr = atr[index]
+    if current_atr is None or current_atr <= EPS:
+        return None
+
+    base = candles[index].close
+    future_close = candles[target].close
+    raw_return = safe_div(future_close - base, base)
+    atr_return = safe_div(future_close - base, current_atr)
+
+    if atr_return > NEUTRAL_ATR_BAND:
+        direction = "UP"
+    elif atr_return < -NEUTRAL_ATR_BAND:
+        direction = "DOWN"
+    else:
+        direction = "NEUTRAL"
+
+    future_high = max(c.high for c in candles[index + 1 : target + 1])
+    future_low = min(c.low for c in candles[index + 1 : target + 1])
+
+    return Outcome(
+        direction=direction,
+        raw_return=raw_return,
+        atr_return=atr_return,
+        mfe_atr=safe_div(future_high - base, current_atr),
+        mae_atr=safe_div(future_low - base, current_atr),
+    )
+
+
+def assign_episode_ids(states: Sequence[MarketState]) -> Dict[int, int]:
+    """
+    Deterministic temporal episode segmentation.
+
+    An episode changes when a material causal state transition occurs.
+    EPISODE_GAP is used as an additional temporal grouping constraint during
+    de-duplication; it is not used to inspect future information.
+    """
+    episode_ids: Dict[int, int] = {}
+    episode = 0
+    last_change = 0
+
+    for i, state in enumerate(states):
+        if i == 0:
+            episode_ids[i] = episode
+            continue
+
+        previous = states[i - 1]
+        changed = (
+            state.trend != previous.trend
+            or state.regime != previous.regime
+            or state.sequence_state != previous.sequence_state
+            or state.structure_event != "NONE"
+        )
+
+        if changed:
+            episode += 1
+            last_change = i
+        elif i - last_change >= EPISODE_GAP:
+            episode += 1
+            last_change = i
+
+        episode_ids[i] = episode
+
+    return episode_ids
+
+
+def build_experience_records(
+    candles: Sequence[Candle],
+    atr: Sequence[Optional[float]],
+    states: Sequence[MarketState],
+    episode_ids: Dict[int, int],
+    start: int,
+    train_end: int,
+    horizon: int,
+) -> List[ExperienceRecord]:
+    """Create records whose entire future outcome completes before train_end."""
+    records = []
+    safe_end = min(train_end - horizon, len(candles) - horizon)
+
+    if safe_end <= start:
+        return records
+
+    for i in range(start, safe_end):
+        outcome = make_outcome(candles, atr, i, horizon)
+        if outcome is None:
+            continue
+
+        state = states[i]
+        records.append(
+            ExperienceRecord(
+                index=i,
+                episode_id=episode_ids[i],
+                state_key=state.state_key,
+                sequence_state=state.sequence_state,
+                regime=state.regime,
+                structure_event=state.structure_event,
+                location=state.location,
+                momentum_state=state.momentum_state,
+                volatility_ratio=state.volatility_ratio,
+                body_ratio=state.body_ratio,
+                range_ratio=state.range_ratio,
+                r1=state.r1,
+                r3=state.r3,
+                r8=state.r8,
+                r16=state.r16,
+                path_vector=state.path_vector,
+                horizon=horizon,
+                outcome=outcome,
+            )
+        )
+
+    return records
+
+
+def coarse_filter(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+    query_index: int,
+) -> List[ExperienceRecord]:
+    """Causal coarse retrieval before numeric similarity."""
+    compatible = []
+    for record in records:
+        if record.index >= query_index:
+            continue
+        if query_index - record.index < MIN_HISTORY_GAP:
+            continue
+        if (
+            record.regime == current.regime
+            or record.structure_event == current.structure_event
+            or record.sequence_state == current.sequence_state
+        ):
+            compatible.append(record)
+
+    if len(compatible) >= MIN_RETRIEVAL_MATCHES:
+        return compatible
+
+    return [
+        record
+        for record in records
+        if record.index < query_index
+        and query_index - record.index >= MIN_HISTORY_GAP
+    ]
+
+
+def numeric_similarity(a: float, b: float, scale: float) -> float:
+    return math.exp(-abs(a - b) / max(abs(scale), EPS))
+
+
+def path_row_similarity(
+    current_row: Tuple[float, float, float, float],
+    historical_row: Tuple[float, float, float, float],
+) -> float:
+    current_return, current_range, current_direction, current_body = current_row
+    historical_return, historical_range, historical_direction, historical_body = historical_row
+
+    return_similarity = numeric_similarity(current_return, historical_return, 1.0)
+    range_similarity = numeric_similarity(current_range, historical_range, 1.0)
+    body_similarity = numeric_similarity(current_body, historical_body, 1.0)
+    direction_similarity = 1.0 if current_direction == historical_direction else 0.0
+
+    return (
+        0.45 * return_similarity
+        + 0.25 * range_similarity
+        + 0.20 * body_similarity
+        + 0.10 * direction_similarity
+    )
+
+
+def path_similarity(current: MarketState, record: ExperienceRecord) -> float:
+    values = [
+        path_row_similarity(a, b)
+        for a, b in zip(current.path_vector, record.path_vector)
+    ]
+    return mean_or_zero(values)
+
+
+def similarity_score(current: MarketState, record: ExperienceRecord) -> Dict[str, float]:
+    structure = mean_or_zero(
+        [
+            1.0 if current.trend == record.state_key[0] else 0.0,
+            1.0 if current.structure_event == record.structure_event else 0.0,
+            1.0 if current.high_label == record.state_key[2] else 0.0,
+            1.0 if current.low_label == record.state_key[3] else 0.0,
+        ]
+    )
+
+    sequence = 1.0 if current.sequence_state == record.sequence_state else 0.0
+    regime = 1.0 if current.regime == record.regime else 0.0
+    location = 1.0 if current.location == record.location else 0.0
+    momentum = 1.0 if current.momentum_state == record.momentum_state else 0.0
+    volatility = numeric_similarity(current.volatility_ratio, record.volatility_ratio, 0.50)
+
+    candle = mean_or_zero(
+        [
+            numeric_similarity(current.body_ratio, record.body_ratio, 1.0),
+            numeric_similarity(current.range_ratio, record.range_ratio, 1.0),
+        ]
+    )
+
+    path = path_similarity(current, record)
+
+    total = (
+        WEIGHT_STRUCTURE * structure
+        + WEIGHT_SEQUENCE * sequence
+        + WEIGHT_REGIME * regime
+        + WEIGHT_LOCATION * location
+        + WEIGHT_MOMENTUM * momentum
+        + WEIGHT_VOLATILITY * volatility
+        + WEIGHT_CANDLE * candle
+        + WEIGHT_PATH * path
+    )
+
+    return {
+        "total": clamp(total),
+        "structure": clamp(structure),
+        "sequence": clamp(sequence),
+        "regime": clamp(regime),
+        "location": clamp(location),
+        "momentum": clamp(momentum),
+        "volatility": clamp(volatility),
+        "candle": clamp(candle),
+        "path": clamp(path),
+    }
+
+
+def select_episode_representatives(matches: Sequence[SimilarityMatch]) -> List[SimilarityMatch]:
+    """Retain the strongest representative from each historical episode."""
+    by_episode: Dict[int, SimilarityMatch] = {}
+    for match in matches:
+        current = by_episode.get(match.episode_id)
+        if current is None or match.similarity > current.similarity:
+            by_episode[match.episode_id] = match
+
+    selected = list(by_episode.values())
+    selected.sort(key=lambda item: (item.similarity, item.index), reverse=True)
+    return selected[:RETRIEVAL_TOP_K]
+
+
+def retrieve_historical_experience(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+    horizon: int,
+    query_index: int,
+) -> RetrievalResult:
+    candidates: List[SimilarityMatch] = []
+
+    for record in coarse_filter(current, records, query_index):
+        components = similarity_score(current, record)
+        candidates.append(
+            SimilarityMatch(
+                index=record.index,
+                episode_id=record.episode_id,
+                similarity=components["total"],
+                structure_similarity=components["structure"],
+                sequence_similarity=components["sequence"],
+                regime_similarity=components["regime"],
+                location_similarity=components["location"],
+                momentum_similarity=components["momentum"],
+                volatility_similarity=components["volatility"],
+                candle_similarity=components["candle"],
+                path_similarity=components["path"],
+            )
+        )
+
+    candidates.sort(key=lambda item: (item.similarity, item.index), reverse=True)
+    raw_candidate_count = len(candidates)
+    selected = select_episode_representatives(candidates)
+
+    record_by_index = {record.index: record for record in records}
+    selected_rows = [
+        (match, record_by_index[match.index])
+        for match in selected
+        if match.index in record_by_index
+    ]
+
+    if not selected_rows:
+        return RetrievalResult(
+            horizon=horizon,
+            query_index=query_index,
+            raw_candidates=raw_candidate_count,
+            deduplicated_matches=0,
+            top_similarity=0.0,
+            mean_similarity=0.0,
+            level="NONE",
+            evidence="NONE",
+            sparse_warning=True,
+            regime_agreement=0.0,
+            structure_agreement=0.0,
+            context_agreement=0.0,
+            up_share=0.0,
+            down_share=0.0,
+            neutral_share=0.0,
+            mean_atr_return=None,

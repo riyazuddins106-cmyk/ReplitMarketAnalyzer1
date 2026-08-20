@@ -1,0 +1,500 @@
+﻿"""
+MLAI v4.1.5 â€” ROBUST CAUSAL HISTORICAL EXPERIENCE RETRIEVAL
+Research / validation only.
+
+This phase validates the Historical Experience layer before probability,
+scenario reasoning, explanation, multi-timeframe reasoning, or live learning.
+
+Included:
+- causal MarketState
+- causal structure / sequence / regime
+- ATR-normalized outcomes
+- historical experience records
+- temporal eligibility barrier
+- coarse-to-fine retrieval
+- multi-layer similarity
+- recent causal path similarity
+- temporal episode de-duplication
+- supporting/conflicting evidence
+- sparse evidence handling
+- retrieval vs baseline comparison
+- similarity-bucket diagnostics
+- fixed training-only null retrieval sanity test
+- strict walk-forward OOS validation
+- immutable market-data protection
+"""
+
+from __future__ import annotations
+
+import hashlib
+import math
+import os
+import pickle
+from collections import Counter
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+VERSION = "4.1.5"
+MARKET_DATA_FILE = "market_data.bin"
+VALIDATION_BIN = "MLAI_V415_ROBUST_HISTORICAL_EXPERIENCE_RETRIEVAL.bin"
+VALIDATION_REPORT = "MLAI_V415_ROBUST_HISTORICAL_EXPERIENCE_RETRIEVAL_REPORT.md"
+
+HORIZONS = (4, 8, 16)
+SWING_LEFT = 3
+SWING_RIGHT = 3
+DEFAULT_TRAIN_WINDOWS = 5
+DEFAULT_OOS_SIZE = 81
+
+NEUTRAL_ATR_BAND = 0.25
+RETRIEVAL_TOP_K = 40
+MIN_RETRIEVAL_MATCHES = 8
+MIN_HISTORY_GAP = max(HORIZONS)
+EPISODE_GAP = 8
+PATH_LENGTH = 8
+NULL_PERMUTATIONS = 25
+EPS = 1e-12
+
+# Fixed, predeclared retrieval weights. Never OOS-tuned.
+WEIGHT_STRUCTURE = 0.20
+WEIGHT_SEQUENCE = 0.15
+WEIGHT_REGIME = 0.15
+WEIGHT_LOCATION = 0.10
+WEIGHT_MOMENTUM = 0.10
+WEIGHT_VOLATILITY = 0.10
+WEIGHT_CANDLE = 0.05
+WEIGHT_PATH = 0.15
+
+SIMILARITY_BUCKETS = (
+    (0.00, 0.50, "LOW"),
+    (0.50, 0.60, "LOW_MODERATE"),
+    (0.60, 0.70, "MODERATE"),
+    (0.70, 0.80, "MODERATE_STRONG"),
+    (0.80, 1.01, "STRONG"),
+)
+
+
+@dataclass
+class Candle:
+    index: int
+    timestamp: Any
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float = 0.0
+
+
+@dataclass
+class Swing:
+    pivot_index: int
+    confirmation_index: int
+    kind: str
+    price: float
+    label: str = ""
+
+
+@dataclass
+class StructureState:
+    index: int
+    trend: str
+    last_high: Optional[float]
+    last_low: Optional[float]
+    last_high_index: Optional[int]
+    last_low_index: Optional[int]
+    high_label: str
+    low_label: str
+    event: str
+    event_index: Optional[int]
+    event_age: Optional[int]
+    structure_age: int
+
+
+@dataclass
+class WalkForwardWindow:
+    number: int
+    train_start: int
+    train_end: int
+    oos_start: int
+    oos_end: int
+
+
+@dataclass
+class MarketState:
+    index: int
+    timestamp: Any
+    instrument: str
+    timeframe: str
+    candle_direction: str
+    body_ratio: float
+    range_ratio: float
+    sequence_state: str
+    trend: str
+    structure_event: str
+    high_label: str
+    low_label: str
+    location: str
+    volatility_regime: str
+    volatility_ratio: float
+    momentum_state: str
+    regime: str
+    r1: float
+    r3: float
+    r8: float
+    r16: float
+    path_vector: Tuple[Tuple[float, float, float, float], ...]
+    state_key: Tuple[Any, ...]
+    availability_index: int
+
+
+@dataclass
+class Outcome:
+    direction: str
+    raw_return: float
+    atr_return: Optional[float]
+    mfe_atr: Optional[float]
+    mae_atr: Optional[float]
+
+
+@dataclass
+class ExperienceRecord:
+    index: int
+    episode_id: int
+    state_key: Tuple[Any, ...]
+    sequence_state: str
+    regime: str
+    structure_event: str
+    location: str
+    momentum_state: str
+    volatility_ratio: float
+    body_ratio: float
+    range_ratio: float
+    r1: float
+    r3: float
+    r8: float
+    r16: float
+    path_vector: Tuple[Tuple[float, float, float, float], ...]
+    horizon: int
+    outcome: Outcome
+
+
+@dataclass
+class SimilarityMatch:
+    index: int
+    episode_id: int
+    similarity: float
+    structure_similarity: float
+    sequence_similarity: float
+    regime_similarity: float
+    location_similarity: float
+    momentum_similarity: float
+    volatility_similarity: float
+    candle_similarity: float
+    path_similarity: float
+
+
+@dataclass
+class RetrievalResult:
+    horizon: int
+    query_index: int
+    raw_candidates: int
+    deduplicated_matches: int
+    top_similarity: float
+    mean_similarity: float
+    level: str
+    evidence: str
+    sparse_warning: bool
+    regime_agreement: float
+    structure_agreement: float
+    context_agreement: float
+    up_share: float
+    down_share: float
+    neutral_share: float
+    mean_atr_return: Optional[float]
+    mean_mfe_atr: Optional[float]
+    mean_mae_atr: Optional[float]
+    supporting_matches: int
+    conflicting_matches: int
+    historical_min_index: Optional[int]
+    historical_max_index: Optional[int]
+    selected_match_indices: List[int]
+
+
+class ProtectionGuard:
+    def __init__(self, path: str):
+        if not os.path.exists(path):
+            raise FileNotFoundError(path)
+        self.path = path
+        self.before_hash = sha256_file(path)
+
+    def verify_unchanged(self) -> bool:
+        return self.before_hash == sha256_file(self.path)
+
+
+def sha256_file(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def safe_div(a: float, b: float) -> float:
+    return 0.0 if abs(b) < EPS else a / b
+
+
+def mean_or_zero(values: Sequence[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
+
+
+def clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
+    return min(high, max(low, value))
+
+
+def fmt_pct(value: Optional[float]) -> str:
+    return "N/A" if value is None else f"{100.0 * value:.2f}%"
+
+
+def fmt_num(value: Optional[float]) -> str:
+    return "N/A" if value is None else f"{value:.4f}"
+
+
+def _get_value(obj: Any, names: Sequence[str], default: Any = None) -> Any:
+    if isinstance(obj, dict):
+        lower = {str(k).lower(): v for k, v in obj.items()}
+        for name in names:
+            if name.lower() in lower:
+                return lower[name.lower()]
+        return default
+    for name in names:
+        if hasattr(obj, name):
+            return getattr(obj, name)
+    return default
+
+
+def _to_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _normalize_candle(raw: Any, index: int) -> Optional[Candle]:
+    if isinstance(raw, (list, tuple)) and len(raw) >= 5:
+        if len(raw) >= 6:
+            timestamp = raw[0]
+            o, h, l, c, v = raw[1:6]
+        else:
+            timestamp = index
+            o, h, l, c = raw[:4]
+            v = 0.0
+        try:
+            o, h, l, c, v = map(float, (o, h, l, c, v))
+            if not all(math.isfinite(x) for x in (o, h, l, c, v)):
+                return None
+            if h < max(o, c) or l > min(o, c) or h < l:
+                return None
+            return Candle(index, timestamp, o, h, l, c, v)
+        except Exception:
+            return None
+
+    timestamp = _get_value(raw, ("timestamp", "time", "datetime", "date", "ts"), index)
+    o = _get_value(raw, ("open", "o"))
+    h = _get_value(raw, ("high", "h"))
+    l = _get_value(raw, ("low", "l"))
+    c = _get_value(raw, ("close", "c"))
+    v = _get_value(raw, ("volume", "vol", "v"), 0.0)
+
+    if None in (o, h, l, c):
+        return None
+
+    o, h, l, c, v = map(lambda x: _to_float(x, float("nan")), (o, h, l, c, v))
+    if not all(math.isfinite(x) for x in (o, h, l, c, v)):
+        return None
+    if h < max(o, c) or l > min(o, c) or h < l:
+        return None
+    return Candle(index, timestamp, o, h, l, c, v)
+
+
+def load_market_data(path: str) -> Tuple[List[Candle], int]:
+    with open(path, "rb") as f:
+        obj = pickle.load(f)
+
+    if isinstance(obj, dict):
+        for key in ("candles", "data", "rows", "ohlcv", "market_data"):
+            if key in obj and isinstance(obj[key], (list, tuple)):
+                obj = obj[key]
+                break
+
+    if not isinstance(obj, (list, tuple)):
+        raise ValueError("Unsupported market_data.bin format.")
+
+    candles: List[Candle] = []
+    invalid = 0
+    for raw in obj:
+        candle = _normalize_candle(raw, len(candles))
+        if candle is None:
+            invalid += 1
+        else:
+            candles.append(candle)
+
+    for i, candle in enumerate(candles):
+        candle.index = i
+    return candles, invalid
+
+
+def audit_chronology(candles: Sequence[Candle]) -> Dict[str, bool]:
+    ordered = True
+    duplicates = False
+    previous = None
+    for candle in candles:
+        if previous is not None:
+            try:
+                ordered &= not (candle.timestamp < previous)
+                duplicates |= candle.timestamp == previous
+            except Exception:
+                pass
+        previous = candle.timestamp
+    return {"ordered": ordered, "duplicates": duplicates}
+
+
+def create_walk_forward_windows(n: int, count: int, oos_size: int) -> List[WalkForwardWindow]:
+    if n <= count * oos_size:
+        raise ValueError("Insufficient candles for requested walk-forward setup.")
+    initial_train = n - count * oos_size
+    windows = []
+    for i in range(count):
+        train_end = initial_train + i * oos_size
+        oos_start = train_end
+        oos_end = min(n, oos_start + oos_size)
+        if oos_end > oos_start:
+            windows.append(WalkForwardWindow(i + 1, 0, train_end, oos_start, oos_end))
+    return windows
+
+
+def calculate_atr(candles: Sequence[Candle], period: int = 14) -> List[Optional[float]]:
+    output: List[Optional[float]] = [None] * len(candles)
+    true_ranges: List[float] = []
+    for i, candle in enumerate(candles):
+        if i == 0:
+            tr = candle.high - candle.low
+        else:
+            previous_close = candles[i - 1].close
+            tr = max(
+                candle.high - candle.low,
+                abs(candle.high - previous_close),
+                abs(candle.low - previous_close),
+            )
+        true_ranges.append(max(tr, EPS))
+        if len(true_ranges) >= period:
+            output[i] = sum(true_ranges[-period:]) / period
+    return output
+
+
+class CausalStructureEngine:
+    def __init__(self, candles: Sequence[Candle]):
+        self.candles = candles
+        self.swings: List[Swing] = []
+        self.events: Dict[int, str] = {}
+        self.states: List[StructureState] = []
+        self.high_used = set()
+        self.low_used = set()
+
+    def _is_confirmed_high(self, j: int) -> bool:
+        if j < SWING_LEFT or j + SWING_RIGHT >= len(self.candles):
+            return False
+        price = self.candles[j].high
+        return all(
+            k == j or self.candles[k].high < price
+            for k in range(j - SWING_LEFT, j + SWING_RIGHT + 1)
+        )
+
+    def _is_confirmed_low(self, j: int) -> bool:
+        if j < SWING_LEFT or j + SWING_RIGHT >= len(self.candles):
+            return False
+        price = self.candles[j].low
+        return all(
+            k == j or self.candles[k].low > price
+            for k in range(j - SWING_LEFT, j + SWING_RIGHT + 1)
+        )
+
+    def build(self) -> List[StructureState]:
+        last_high: Optional[Swing] = None
+        last_low: Optional[Swing] = None
+        high_label = "UNKNOWN"
+        low_label = "UNKNOWN"
+        trend = "NEUTRAL"
+        event_index: Optional[int] = None
+        structure_start = 0
+
+        for i, candle in enumerate(self.candles):
+            j = i - SWING_RIGHT
+
+            if j >= SWING_LEFT:
+                if self._is_confirmed_high(j):
+                    label = "HH" if last_high is None or self.candles[j].high > last_high.price else "LH"
+                    last_high = Swing(j, i, "HIGH", self.candles[j].high, label)
+                    self.swings.append(last_high)
+                    high_label = label
+
+                if self._is_confirmed_low(j):
+                    label = "HL" if last_low is None or self.candles[j].low > last_low.price else "LL"
+                    last_low = Swing(j, i, "LOW", self.candles[j].low, label)
+                    self.swings.append(last_low)
+                    low_label = label
+
+            event = "NONE"
+
+            if (
+                last_high is not None
+                and i > last_high.confirmation_index
+                and candle.close > last_high.price
+                and (last_high.pivot_index, "HIGH") not in self.high_used
+            ):
+                event = "BOS_BULLISH" if trend in ("BULLISH", "NEUTRAL") else "CHoCH_BULLISH"
+                self.high_used.add((last_high.pivot_index, "HIGH"))
+                trend = "BULLISH"
+                event_index = i
+                structure_start = i
+
+            if (
+                last_low is not None
+                and i > last_low.confirmation_index
+                and candle.close < last_low.price
+                and (last_low.pivot_index, "LOW") not in self.low_used
+            ):
+                candidate = "BOS_BEARISH" if trend in ("BEARISH", "NEUTRAL") else "CHoCH_BEARISH"
+                if event == "NONE":
+                    event = candidate
+                self.low_used.add((last_low.pivot_index, "LOW"))
+                trend = "BEARISH"
+                event_index = i
+                structure_start = i
+
+            event_age = None if event_index is None else i - event_index
+            self.events[i] = event
+
+            self.states.append(
+                StructureState(
+                    index=i,
+                    trend=trend,
+                    last_high=last_high.price if last_high else None,
+                    last_low=last_low.price if last_low else None,
+                    last_high_index=last_high.pivot_index if last_high else None,
+                    last_low_index=last_low.pivot_index if last_low else None,
+                    high_label=high_label,
+                    low_label=low_label,
+                    event=event,
+                    event_index=event_index,
+                    event_age=event_age,
+                    structure_age=i - structure_start,
+                )
+            )
+
+        return self.states
+
+
+def audit_structure_causality(
+    candles: Sequence[Candle],
+    swings: Sequence[Swing],
+    states: Sequence[StructureState],
+    events: Dict[int, str],

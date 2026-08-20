@@ -1,0 +1,500 @@
+﻿            mean_mfe_atr=None,
+            mean_mae_atr=None,
+            supporting_matches=0,
+            conflicting_matches=0,
+            historical_min_index=None,
+            historical_max_index=None,
+            selected_match_indices=[],
+        )
+
+    weights = [match.similarity ** 2 for match, _ in selected_rows]
+    total_weight = sum(weights)
+
+    up_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "UP"),
+        total_weight,
+    )
+    down_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "DOWN"),
+        total_weight,
+    )
+    neutral_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "NEUTRAL"),
+        total_weight,
+    )
+
+    dominant = max(
+        ("UP", up_share),
+        ("DOWN", down_share),
+        ("NEUTRAL", neutral_share),
+        key=lambda x: x[1],
+    )[0]
+
+    supporting_matches = sum(
+        1
+        for _, record in selected_rows
+        if record.outcome.direction == dominant
+    )
+
+    conflicting_matches = len(selected_rows) - supporting_matches
+
+    top_similarity = selected[0].similarity
+    mean_similarity = mean_or_zero([match.similarity for match, _ in selected_rows])
+
+    regime_agreement = mean_or_zero([match.regime_similarity for match, _ in selected_rows])
+    structure_agreement = mean_or_zero([match.structure_similarity for match, _ in selected_rows])
+    context_agreement = mean_or_zero(
+        [
+            mean_or_zero(
+                [
+                    match.sequence_similarity,
+                    match.regime_similarity,
+                    match.location_similarity,
+                    match.momentum_similarity,
+                    match.path_similarity,
+                ]
+            )
+            for match, _ in selected_rows
+        ]
+    )
+
+    mean_atr_return = safe_div(
+        sum(
+            weight * (record.outcome.atr_return or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    mean_mfe_atr = safe_div(
+        sum(
+            weight * (record.outcome.mfe_atr or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    mean_mae_atr = safe_div(
+        sum(
+            weight * (record.outcome.mae_atr or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    if len(selected_rows) < MIN_RETRIEVAL_MATCHES:
+        level = "SPARSE"
+    elif top_similarity >= 0.80:
+        level = "STRONG_SIMILARITY"
+    elif top_similarity >= 0.70:
+        level = "MODERATE_STRONG"
+    elif top_similarity >= 0.60:
+        level = "MODERATE"
+    else:
+        level = "LOW_MODERATE"
+
+    if len(selected_rows) < MIN_RETRIEVAL_MATCHES:
+        evidence = "LOW"
+    elif top_similarity >= 0.70:
+        evidence = "MODERATE"
+    else:
+        evidence = "LOW_TO_MODERATE"
+
+    indices = [record.index for _, record in selected_rows]
+
+    return RetrievalResult(
+        horizon=horizon,
+        query_index=query_index,
+        raw_candidates=raw_candidate_count,
+        deduplicated_matches=len(selected_rows),
+        top_similarity=top_similarity,
+        mean_similarity=mean_similarity,
+        level=level,
+        evidence=evidence,
+        sparse_warning=len(selected_rows) < MIN_RETRIEVAL_MATCHES,
+        regime_agreement=regime_agreement,
+        structure_agreement=structure_agreement,
+        context_agreement=context_agreement,
+        up_share=up_share,
+        down_share=down_share,
+        neutral_share=neutral_share,
+        mean_atr_return=mean_atr_return,
+        mean_mfe_atr=mean_mfe_atr,
+        mean_mae_atr=mean_mae_atr,
+        supporting_matches=supporting_matches,
+        conflicting_matches=conflicting_matches,
+        historical_min_index=min(indices) if indices else None,
+        historical_max_index=max(indices) if indices else None,
+        selected_match_indices=indices,
+    )
+
+
+def distribution_from_records(records: Sequence[ExperienceRecord]) -> Dict[str, float]:
+    counts = Counter(record.outcome.direction for record in records)
+    total = len(records)
+    return {
+        "UP": safe_div(counts["UP"], total),
+        "DOWN": safe_div(counts["DOWN"], total),
+        "NEUTRAL": safe_div(counts["NEUTRAL"], total),
+    }
+
+
+def conditional_baseline(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+) -> Tuple[str, Dict[str, float], int]:
+    exact = [
+        record for record in records
+        if (
+            record.regime == current.regime
+            and record.structure_event == current.structure_event
+            and record.sequence_state == current.sequence_state
+        )
+    ]
+    if len(exact) >= MIN_RETRIEVAL_MATCHES:
+        return "REGIME+EVENT+SEQUENCE", distribution_from_records(exact), len(exact)
+
+    regime = [record for record in records if record.regime == current.regime]
+    if len(regime) >= MIN_RETRIEVAL_MATCHES:
+        return "REGIME", distribution_from_records(regime), len(regime)
+
+    return "GLOBAL", distribution_from_records(records), len(records)
+
+
+def brier(distribution: Dict[str, float], actual: str) -> float:
+    return sum(
+        (
+            distribution[key]
+            - (1.0 if key == actual else 0.0)
+        ) ** 2
+        for key in ("UP", "DOWN", "NEUTRAL")
+    ) / 3.0
+
+
+def log_loss(distribution: Dict[str, float], actual: str) -> float:
+    probability = distribution.get(actual, 0.0)
+    return -math.log(max(min(probability, 1.0 - 1e-6), 1e-6))
+
+
+def evaluate_distribution(distribution: Dict[str, float], actual: str) -> Dict[str, Any]:
+    ranked = sorted(distribution.items(), key=lambda x: (x[1], x[0]), reverse=True)
+    predicted = ranked[0][0]
+    return {
+        "predicted": predicted,
+        "actual": actual,
+        "correct": predicted == actual,
+        "brier": brier(distribution, actual),
+        "log_loss": log_loss(distribution, actual),
+    }
+
+
+def deterministic_permutation(values: Sequence[str], seed: int) -> List[str]:
+    items = list(values)
+    state = seed & 0xFFFFFFFF
+    for i in range(len(items) - 1, 0, -1):
+        state = (state * 1664525 + 1013904223) & 0xFFFFFFFF
+        j = state % (i + 1)
+        items[i], items[j] = items[j], items[i]
+    return items
+
+
+def null_retrieval_sanity_test(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+    query_index: int,
+    horizon: int,
+) -> Dict[str, Any]:
+    """Fixed training-only null sanity test; never used to tune retrieval."""
+    eligible = [
+        record
+        for record in records
+        if record.index < query_index
+        and query_index - record.index >= MIN_HISTORY_GAP
+    ]
+    if len(eligible) < MIN_RETRIEVAL_MATCHES:
+        return {
+            "available": False,
+            "permutations": 0,
+            "real_max_share": None,
+            "null_max_share_mean": None,
+            "null_max_share_p95": None,
+            "real_minus_null_mean": None,
+        }
+
+    real = retrieve_historical_experience(current, eligible, horizon, query_index)
+    real_max_share = max(real.up_share, real.down_share, real.neutral_share)
+
+    outcomes = [record.outcome.direction for record in eligible]
+    null_max = []
+
+    for permutation in range(NULL_PERMUTATIONS):
+        shuffled = deterministic_permutation(
+            outcomes,
+            seed=1009 * (permutation + 1) + query_index,
+        )
+        permuted_records = []
+        for record, direction in zip(eligible, shuffled):
+            permuted_records.append(
+                ExperienceRecord(
+                    index=record.index,
+                    episode_id=record.episode_id,
+                    state_key=record.state_key,
+                    sequence_state=record.sequence_state,
+                    regime=record.regime,
+                    structure_event=record.structure_event,
+                    location=record.location,
+                    momentum_state=record.momentum_state,
+                    volatility_ratio=record.volatility_ratio,
+                    body_ratio=record.body_ratio,
+                    range_ratio=record.range_ratio,
+                    r1=record.r1,
+                    r3=record.r3,
+                    r8=record.r8,
+                    r16=record.r16,
+                    path_vector=record.path_vector,
+                    horizon=record.horizon,
+                    outcome=Outcome(
+                        direction=direction,
+                        raw_return=record.outcome.raw_return,
+                        atr_return=record.outcome.atr_return,
+                        mfe_atr=record.outcome.mfe_atr,
+                        mae_atr=record.outcome.mae_atr,
+                    ),
+                )
+            )
+        null_result = retrieve_historical_experience(
+            current,
+            permuted_records,
+            horizon,
+            query_index,
+        )
+        null_max.append(
+            max(
+                null_result.up_share,
+                null_result.down_share,
+                null_result.neutral_share,
+            )
+        )
+
+    ordered = sorted(null_max)
+    p95 = ordered[min(len(ordered) - 1, int(0.95 * (len(ordered) - 1)))]
+    null_mean = mean_or_zero(null_max)
+
+    return {
+        "available": True,
+        "permutations": len(null_max),
+        "real_max_share": real_max_share,
+        "null_max_share_mean": null_mean,
+        "null_max_share_p95": p95,
+        "real_minus_null_mean": real_max_share - null_mean,
+    }
+
+
+def bucket_name(similarity: float) -> str:
+    for low, high, name in SIMILARITY_BUCKETS:
+        if low <= similarity < high:
+            return name
+    return "UNKNOWN"
+
+
+
+# =====================================================================
+# REPAIRED PREDICTIVE LAYER
+# Must be defined before main() because main() executes this path.
+# =====================================================================
+
+def _mlai_fix_safe_float(value, default=0.0):
+    try:
+        x = float(value)
+        if math.isfinite(x):
+            return x
+    except Exception:
+        pass
+    return float(default)
+
+
+def _mlai_fix_similarity_total(similarity):
+    """
+    Existing similarity_score() returns component scores.
+
+    We deliberately avoid trusting an existing 'total' blindly.
+    The repaired layer uses the component evidence when available.
+    """
+    if not isinstance(similarity, dict):
+        return 0.0
+
+    components = (
+        "candle",
+        "location",
+        "momentum",
+        "path",
+        "regime",
+        "sequence",
+        "structure",
+        "volatility",
+    )
+
+    values = []
+
+    for key in components:
+        if key in similarity:
+            value = _mlai_fix_safe_float(similarity[key], 0.0)
+            value = max(0.0, min(1.0, value))
+            values.append(value)
+
+    if values:
+        return sum(values) / len(values)
+
+    return max(
+        0.0,
+        min(1.0, _mlai_fix_safe_float(similarity.get("total"), 0.0))
+    )
+
+
+def _mlai_fix_outcome_direction(record):
+    """
+    Extract the direction from an ExperienceRecord/Outcome object
+    without assuming one exact internal representation.
+    """
+    outcome = getattr(record, "outcome", record)
+
+    value = getattr(outcome, "direction", None)
+
+    if value is None:
+        value = getattr(outcome, "label", None)
+
+    if value is None:
+        value = getattr(outcome, "class_name", None)
+
+    if value is None:
+        value = getattr(outcome, "target", None)
+
+    if value is None:
+        value = getattr(outcome, "prediction", None)
+
+    if value is None:
+        return None
+
+    value = str(value).upper().strip()
+
+    if value in ("UP", "DOWN", "NEUTRAL"):
+        return value
+
+    return None
+
+def _mlai_fix_class_evidence(
+    current,
+    records,
+    horizon,
+    query_index,
+    *,
+    temperature=0.12,
+    min_similarity=0.0,
+):
+    """
+    Causal class-evidence estimator.
+
+    Every record must already belong to the historical training/calibration
+    set supplied by the caller.
+
+    No record with an index >= query_index is allowed.
+
+    Evidence is similarity-weighted but class-balanced so that a large
+    historical class does not automatically dominate the result.
+
+    The class prior is therefore not allowed to become the prediction.
+    """
+
+    buckets = {
+        "UP": [],
+        "DOWN": [],
+        "NEUTRAL": [],
+    }
+
+    for record in records:
+        record_index = getattr(record, "index", None)
+
+        if record_index is None:
+            record_index = getattr(record, "query_index", None)
+
+        if record_index is not None:
+            try:
+                if int(record_index) >= int(query_index):
+                    continue
+            except Exception:
+                continue
+
+        direction = _mlai_fix_outcome_direction(record)
+
+        if direction not in buckets:
+            continue
+
+        try:
+            similarity = similarity_score(current, record)
+        except Exception:
+            continue
+
+        score = _mlai_fix_similarity_total(similarity)
+
+        if score < min_similarity:
+            continue
+
+        # Soft kernel.
+        #
+        # High similarity receives more weight, but we do not allow one
+        # single historical record to dominate the entire prediction.
+        distance = max(0.0, 1.0 - score)
+
+        weight = math.exp(-distance / max(temperature, 1e-6))
+
+        buckets[direction].append(weight)
+
+    # No evidence.
+    if not any(buckets.values()):
+        return {
+            "UP": 1.0 / 3.0,
+            "DOWN": 1.0 / 3.0,
+            "NEUTRAL": 1.0 / 3.0,
+        }
+
+    # -----------------------------------------------------------------
+    # Class-balanced evidence
+    # -----------------------------------------------------------------
+    #
+    # Raw vote totals are dangerous:
+    #
+    #   if UP has 200 records and DOWN has 100,
+    #   raw similarity sums naturally favor UP.
+    #
+    # We normalize each class by its own historical support.
+    #
+    # This makes the model ask:
+    #
+    #   "How strongly does the retrieved evidence support this class?"
+    #
+    # rather than:
+    #
+    #   "Which class has the most records?"
+    # -----------------------------------------------------------------
+
+    evidence = {}
+
+    for cls, values in buckets.items():
+        if not values:
+            evidence[cls] = 0.0
+            continue
+
+        support = len(values)
+
+        # Mean evidence is intentionally used instead of raw sum.
+        mean_weight = sum(values) / support
+
+        # Mild support confidence.
+        #
+        # This prevents one matching record from receiving the same
+        # credibility as a well-supported historical pattern.
+        support_factor = 1.0 - math.exp(-support / 8.0)
+
+        evidence[cls] = mean_weight * support_factor
+
+    total = sum(evidence.values())

@@ -1,0 +1,400 @@
+# REGIME DETECTION
+# ============================================================
+
+def detect_regime(features):
+
+    directional = features[
+        "directional_imbalance"
+    ]
+
+    volatility_ratio = features[
+        "volatility_ratio"
+    ]
+
+    slope = features[
+        "normalized_slope"
+    ]
+
+    location = features[
+        "location_in_range"
+    ]
+
+    rejection = features[
+        "rejection_imbalance"
+    ]
+
+    # --------------------------------------------------------
+    # STRONG BULL REGIME
+    # --------------------------------------------------------
+
+    bull_score = 0
+
+    if directional > 0.08:
+        bull_score += 1
+
+    if slope > 0.20:
+        bull_score += 1
+
+    if location > 0.60:
+        bull_score += 1
+
+    if rejection > 0.03:
+        bull_score += 1
+
+    # --------------------------------------------------------
+    # STRONG BEAR REGIME
+    # --------------------------------------------------------
+
+    bear_score = 0
+
+    if directional < -0.08:
+        bear_score += 1
+
+    if slope < -0.20:
+        bear_score += 1
+
+    if location < 0.40:
+        bear_score += 1
+
+    if rejection < -0.03:
+        bear_score += 1
+
+    # --------------------------------------------------------
+    # VOLATILITY REGIME
+    # --------------------------------------------------------
+
+    if volatility_ratio >= 1.20:
+
+        volatility_regime = "expanding"
+
+    elif volatility_ratio <= 0.80:
+
+        volatility_regime = "contracting"
+
+    else:
+
+        volatility_regime = "stable"
+
+    # --------------------------------------------------------
+    # DIRECTIONAL REGIME
+    # --------------------------------------------------------
+
+    if bull_score >= 3:
+
+        directional_regime = "bullish"
+
+    elif bear_score >= 3:
+
+        directional_regime = "bearish"
+
+    elif bull_score > bear_score:
+
+        directional_regime = "bullish_bias"
+
+    elif bear_score > bull_score:
+
+        directional_regime = "bearish_bias"
+
+    else:
+
+        directional_regime = "balanced"
+
+    return (
+        directional_regime,
+        volatility_regime,
+        bull_score,
+        bear_score,
+    )
+
+
+# ============================================================
+# CONFIDENCE MODEL
+# ============================================================
+
+def calculate_confidence(
+    features,
+    regime
+):
+
+    directional_regime = regime[0]
+
+    volatility_regime = regime[1]
+
+    bull_score = regime[2]
+
+    bear_score = regime[3]
+
+    bull_evidence = 0.0
+    bear_evidence = 0.0
+
+    # --------------------------------------------------------
+    # Directional imbalance
+    # --------------------------------------------------------
+
+    imbalance = features[
+        "directional_imbalance"
+    ]
+
+    bull_evidence += max(
+        0.0,
+        imbalance * 100.0
+    )
+
+    bear_evidence += max(
+        0.0,
+        -imbalance * 100.0
+    )
+
+    # --------------------------------------------------------
+    # Momentum
+    # --------------------------------------------------------
+
+    momentum = features[
+        "return_15"
+    ]
+
+    bull_evidence += max(
+        0.0,
+        momentum * 1.5
+    )
+
+    bear_evidence += max(
+        0.0,
+        -momentum * 1.5
+    )
+
+    # --------------------------------------------------------
+    # Location
+    # --------------------------------------------------------
+
+    location = features[
+        "location_in_range"
+    ]
+
+    if location > 0.65:
+
+        bull_evidence += 10.0
+
+    elif location < 0.35:
+
+        bear_evidence += 10.0
+
+    # --------------------------------------------------------
+    # Rejection
+    # --------------------------------------------------------
+
+    rejection = features[
+        "rejection_imbalance"
+    ]
+
+    bull_evidence += max(
+        0.0,
+        rejection * 100.0
+    )
+
+    bear_evidence += max(
+        0.0,
+        -rejection * 100.0
+    )
+
+    # --------------------------------------------------------
+    # Regime bonus
+    # --------------------------------------------------------
+
+    if directional_regime == "bullish":
+
+        bull_evidence += 20.0
+
+    elif directional_regime == "bearish":
+
+        bear_evidence += 20.0
+
+    elif directional_regime == "bullish_bias":
+
+        bull_evidence += 8.0
+
+    elif directional_regime == "bearish_bias":
+
+        bear_evidence += 8.0
+
+    # --------------------------------------------------------
+    # Volatility adjustment
+    # --------------------------------------------------------
+
+    if volatility_regime == "expanding":
+
+        bull_evidence *= 1.05
+        bear_evidence *= 1.05
+
+    elif volatility_regime == "contracting":
+
+        bull_evidence *= 0.90
+        bear_evidence *= 0.90
+
+    total = (
+        bull_evidence
+        + bear_evidence
+    )
+
+    if total <= 0:
+
+        return {
+            "prediction": "neutral",
+            "confidence": 0.0,
+            "bull_evidence": 0.0,
+            "bear_evidence": 0.0,
+        }
+
+    if bull_evidence > bear_evidence:
+
+        prediction = "bullish"
+
+        confidence = (
+            bull_evidence / total
+        ) * 100.0
+
+    elif bear_evidence > bull_evidence:
+
+        prediction = "bearish"
+
+        confidence = (
+            bear_evidence / total
+        ) * 100.0
+
+    else:
+
+        prediction = "neutral"
+
+        confidence = 0.0
+
+    return {
+        "prediction": prediction,
+        "confidence": confidence,
+        "bull_evidence": bull_evidence,
+        "bear_evidence": bear_evidence,
+    }
+
+
+# ============================================================
+# BUILD WALK-FORWARD DATASET
+# ============================================================
+
+def build_records(horizon):
+
+    records = []
+
+    start = WINDOW - 1
+
+    end = len(candles) - horizon
+
+    for index in range(
+        start,
+        end
+    ):
+
+        window = candles[
+            index - WINDOW + 1:
+            index + 1
+        ]
+
+        features = build_features(
+            window
+        )
+
+        actual = future_classification(
+            candles,
+            index,
+            horizon
+        )
+
+        if actual is None:
+            continue
+
+        regime = detect_regime(
+            features
+        )
+
+        confidence = calculate_confidence(
+            features,
+            regime
+        )
+
+        records.append({
+            "index": index,
+            "features": features,
+            "regime": regime,
+            "confidence": confidence,
+            "actual": actual,
+        })
+
+    return records
+
+
+# ============================================================
+# METRICS
+# ============================================================
+
+def evaluate(
+    records,
+    confidence_threshold
+):
+
+    matrix = {
+        "bullish": {
+            "bullish": 0,
+            "neutral": 0,
+            "bearish": 0,
+        },
+
+        "neutral": {
+            "bullish": 0,
+            "neutral": 0,
+            "bearish": 0,
+        },
+
+        "bearish": {
+            "bullish": 0,
+            "neutral": 0,
+            "bearish": 0,
+        },
+    }
+
+    predictions = []
+
+    for record in records:
+
+        result = record["confidence"]
+
+        prediction = result[
+            "prediction"
+        ]
+
+        confidence = result[
+            "confidence"
+        ]
+
+        if (
+            prediction != "neutral"
+            and confidence < confidence_threshold
+        ):
+
+            prediction = "neutral"
+
+        matrix[
+            prediction
+        ][
+            record["actual"]
+        ] += 1
+
+        predictions.append(
+            (
+                prediction,
+                record["actual"]
+            )
+        )
+
+    total = len(predictions)
+
+    correct = sum(
+        1
+        for prediction, actual

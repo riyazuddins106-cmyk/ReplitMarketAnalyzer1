@@ -1,0 +1,306 @@
+﻿    return mean_or_zero(values)
+
+
+def similarity_score(current: MarketState, record: ExperienceRecord) -> Dict[str, float]:
+    structure = mean_or_zero(
+        [
+            1.0 if current.trend == record.state_key[0] else 0.0,
+            1.0 if current.structure_event == record.structure_event else 0.0,
+            1.0 if current.high_label == record.state_key[2] else 0.0,
+            1.0 if current.low_label == record.state_key[3] else 0.0,
+        ]
+    )
+
+    sequence = 1.0 if current.sequence_state == record.sequence_state else 0.0
+    regime = 1.0 if current.regime == record.regime else 0.0
+    location = 1.0 if current.location == record.location else 0.0
+    momentum = 1.0 if current.momentum_state == record.momentum_state else 0.0
+    volatility = numeric_similarity(current.volatility_ratio, record.volatility_ratio, 0.50)
+
+    candle = mean_or_zero(
+        [
+            numeric_similarity(current.body_ratio, record.body_ratio, 1.0),
+            numeric_similarity(current.range_ratio, record.range_ratio, 1.0),
+        ]
+    )
+
+    path = path_similarity(current, record)
+
+    total = (
+        WEIGHT_STRUCTURE * structure
+        + WEIGHT_SEQUENCE * sequence
+        + WEIGHT_REGIME * regime
+        + WEIGHT_LOCATION * location
+        + WEIGHT_MOMENTUM * momentum
+        + WEIGHT_VOLATILITY * volatility
+        + WEIGHT_CANDLE * candle
+        + WEIGHT_PATH * path
+    )
+
+    return {
+        "total": clamp(total),
+        "structure": clamp(structure),
+        "sequence": clamp(sequence),
+        "regime": clamp(regime),
+        "location": clamp(location),
+        "momentum": clamp(momentum),
+        "volatility": clamp(volatility),
+        "candle": clamp(candle),
+        "path": clamp(path),
+    }
+
+
+def select_episode_representatives(matches: Sequence[SimilarityMatch]) -> List[SimilarityMatch]:
+    """Retain the strongest representative from each historical episode."""
+    by_episode: Dict[int, SimilarityMatch] = {}
+    for match in matches:
+        current = by_episode.get(match.episode_id)
+        if current is None or match.similarity > current.similarity:
+            by_episode[match.episode_id] = match
+
+    selected = list(by_episode.values())
+    selected.sort(key=lambda item: (item.similarity, item.index), reverse=True)
+    return selected[:RETRIEVAL_TOP_K]
+
+
+def retrieve_historical_experience(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+    horizon: int,
+    query_index: int,
+) -> RetrievalResult:
+    candidates: List[SimilarityMatch] = []
+
+    for record in coarse_filter(current, records, query_index):
+        components = similarity_score(current, record)
+        candidates.append(
+            SimilarityMatch(
+                index=record.index,
+                episode_id=record.episode_id,
+                similarity=components["total"],
+                structure_similarity=components["structure"],
+                sequence_similarity=components["sequence"],
+                regime_similarity=components["regime"],
+                location_similarity=components["location"],
+                momentum_similarity=components["momentum"],
+                volatility_similarity=components["volatility"],
+                candle_similarity=components["candle"],
+                path_similarity=components["path"],
+            )
+        )
+
+    candidates.sort(key=lambda item: (item.similarity, item.index), reverse=True)
+    raw_candidate_count = len(candidates)
+    selected = select_episode_representatives(candidates)
+
+    record_by_index = {record.index: record for record in records}
+    selected_rows = [
+        (match, record_by_index[match.index])
+        for match in selected
+        if match.index in record_by_index
+    ]
+
+    if not selected_rows:
+        return RetrievalResult(
+            horizon=horizon,
+            query_index=query_index,
+            raw_candidates=raw_candidate_count,
+            deduplicated_matches=0,
+            top_similarity=0.0,
+            mean_similarity=0.0,
+            level="NONE",
+            evidence="NONE",
+            sparse_warning=True,
+            regime_agreement=0.0,
+            structure_agreement=0.0,
+            context_agreement=0.0,
+            up_share=0.0,
+            down_share=0.0,
+            neutral_share=0.0,
+            mean_atr_return=None,
+            mean_mfe_atr=None,
+            mean_mae_atr=None,
+            supporting_matches=0,
+            conflicting_matches=0,
+            historical_min_index=None,
+            historical_max_index=None,
+            selected_match_indices=[],
+        )
+
+    weights = [match.similarity ** 2 for match, _ in selected_rows]
+    total_weight = sum(weights)
+
+    up_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "UP"),
+        total_weight,
+    )
+    down_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "DOWN"),
+        total_weight,
+    )
+    neutral_share = safe_div(
+        sum(weight for weight, (_, record) in zip(weights, selected_rows) if record.outcome.direction == "NEUTRAL"),
+        total_weight,
+    )
+
+    dominant = max(
+        ("UP", up_share),
+        ("DOWN", down_share),
+        ("NEUTRAL", neutral_share),
+        key=lambda x: x[1],
+    )[0]
+
+    supporting_matches = sum(
+        1
+        for _, record in selected_rows
+        if record.outcome.direction == dominant
+    )
+
+    conflicting_matches = len(selected_rows) - supporting_matches
+
+    top_similarity = selected[0].similarity
+    mean_similarity = mean_or_zero([match.similarity for match, _ in selected_rows])
+
+    regime_agreement = mean_or_zero([match.regime_similarity for match, _ in selected_rows])
+    structure_agreement = mean_or_zero([match.structure_similarity for match, _ in selected_rows])
+    context_agreement = mean_or_zero(
+        [
+            mean_or_zero(
+                [
+                    match.sequence_similarity,
+                    match.regime_similarity,
+                    match.location_similarity,
+                    match.momentum_similarity,
+                    match.path_similarity,
+                ]
+            )
+            for match, _ in selected_rows
+        ]
+    )
+
+    mean_atr_return = safe_div(
+        sum(
+            weight * (record.outcome.atr_return or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    mean_mfe_atr = safe_div(
+        sum(
+            weight * (record.outcome.mfe_atr or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    mean_mae_atr = safe_div(
+        sum(
+            weight * (record.outcome.mae_atr or 0.0)
+            for weight, (_, record) in zip(weights, selected_rows)
+        ),
+        total_weight,
+    )
+
+    if len(selected_rows) < MIN_RETRIEVAL_MATCHES:
+        level = "SPARSE"
+    elif top_similarity >= 0.80:
+        level = "STRONG_SIMILARITY"
+    elif top_similarity >= 0.70:
+        level = "MODERATE_STRONG"
+    elif top_similarity >= 0.60:
+        level = "MODERATE"
+    else:
+        level = "LOW_MODERATE"
+
+    if len(selected_rows) < MIN_RETRIEVAL_MATCHES:
+        evidence = "LOW"
+    elif top_similarity >= 0.70:
+        evidence = "MODERATE"
+    else:
+        evidence = "LOW_TO_MODERATE"
+
+    indices = [record.index for _, record in selected_rows]
+
+    return RetrievalResult(
+        horizon=horizon,
+        query_index=query_index,
+        raw_candidates=raw_candidate_count,
+        deduplicated_matches=len(selected_rows),
+        top_similarity=top_similarity,
+        mean_similarity=mean_similarity,
+        level=level,
+        evidence=evidence,
+        sparse_warning=len(selected_rows) < MIN_RETRIEVAL_MATCHES,
+        regime_agreement=regime_agreement,
+        structure_agreement=structure_agreement,
+        context_agreement=context_agreement,
+        up_share=up_share,
+        down_share=down_share,
+        neutral_share=neutral_share,
+        mean_atr_return=mean_atr_return,
+        mean_mfe_atr=mean_mfe_atr,
+        mean_mae_atr=mean_mae_atr,
+        supporting_matches=supporting_matches,
+        conflicting_matches=conflicting_matches,
+        historical_min_index=min(indices) if indices else None,
+        historical_max_index=max(indices) if indices else None,
+        selected_match_indices=indices,
+    )
+
+
+def distribution_from_records(records: Sequence[ExperienceRecord]) -> Dict[str, float]:
+    counts = Counter(record.outcome.direction for record in records)
+    total = len(records)
+    return {
+        "UP": safe_div(counts["UP"], total),
+        "DOWN": safe_div(counts["DOWN"], total),
+        "NEUTRAL": safe_div(counts["NEUTRAL"], total),
+    }
+
+
+def conditional_baseline(
+    current: MarketState,
+    records: Sequence[ExperienceRecord],
+) -> Tuple[str, Dict[str, float], int]:
+    exact = [
+        record for record in records
+        if (
+            record.regime == current.regime
+            and record.structure_event == current.structure_event
+            and record.sequence_state == current.sequence_state
+        )
+    ]
+    if len(exact) >= MIN_RETRIEVAL_MATCHES:
+        return "REGIME+EVENT+SEQUENCE", distribution_from_records(exact), len(exact)
+
+    regime = [record for record in records if record.regime == current.regime]
+    if len(regime) >= MIN_RETRIEVAL_MATCHES:
+        return "REGIME", distribution_from_records(regime), len(regime)
+
+    return "GLOBAL", distribution_from_records(records), len(records)
+
+
+def brier(distribution: Dict[str, float], actual: str) -> float:
+    return sum(
+        (
+            distribution[key]
+            - (1.0 if key == actual else 0.0)
+        ) ** 2
+        for key in ("UP", "DOWN", "NEUTRAL")
+    ) / 3.0
+
+
+def log_loss(distribution: Dict[str, float], actual: str) -> float:
+    probability = distribution.get(actual, 0.0)
+    return -math.log(max(min(probability, 1.0 - 1e-6), 1e-6))
+
+
+def evaluate_distribution(distribution: Dict[str, float], actual: str) -> Dict[str, Any]:
+    ranked = sorted(distribution.items(), key=lambda x: (x[1], x[0]), reverse=True)
+    predicted = ranked[0][0]
+    return {
+        "predicted": predicted,
+        "actual": actual,
+        "correct": predicted == actual,
+        "brier": brier(distribution, actual),

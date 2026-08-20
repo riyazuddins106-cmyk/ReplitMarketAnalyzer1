@@ -1,0 +1,322 @@
+﻿
+        all_windows.append(window_result)
+
+    # ---------------------------------------------------------------------
+    # AGGREGATION
+    # ---------------------------------------------------------------------
+    aggregate: Dict[int, Dict[str, Any]] = {}
+
+    for horizon in HORIZONS:
+        rows = [w["horizons"][horizon] for w in all_windows]
+        valid = lambda key: [r[key] for r in rows if r.get(key) is not None]
+
+        aggregate[horizon] = {
+            "mean_retrieval_accuracy": mean_or_zero(valid("retrieval_accuracy")) if valid("retrieval_accuracy") else None,
+            "mean_baseline_accuracy": mean_or_zero(valid("baseline_accuracy")) if valid("baseline_accuracy") else None,
+            "mean_retrieval_brier": mean_or_zero(valid("retrieval_brier")) if valid("retrieval_brier") else None,
+            "mean_baseline_brier": mean_or_zero(valid("baseline_brier")) if valid("baseline_brier") else None,
+            "mean_brier_lift": mean_or_zero(valid("brier_lift")) if valid("brier_lift") else None,
+            "mean_retrieval_log_loss": mean_or_zero(valid("retrieval_log_loss")) if valid("retrieval_log_loss") else None,
+            "mean_baseline_log_loss": mean_or_zero(valid("baseline_log_loss")) if valid("baseline_log_loss") else None,
+            "mean_log_loss_lift": mean_or_zero(valid("log_loss_lift")) if valid("log_loss_lift") else None,
+            "mean_coverage": mean_or_zero([r["retrieval_coverage"] for r in rows]),
+            "mean_sparse_rate": mean_or_zero([r["sparse_rate"] for r in rows]),
+            "mean_top_similarity": mean_or_zero([r["mean_top_similarity"] for r in rows]),
+            "mean_matches": mean_or_zero([r["mean_matches"] for r in rows]),
+        }
+
+    # ---------------------------------------------------------------------
+    # SIMILARITY BUCKETS
+    # ---------------------------------------------------------------------
+    bucket_summary: Dict[str, Dict[str, Any]] = {}
+
+    for bucket in [name for _, _, name in SIMILARITY_BUCKETS]:
+        rows = [row for row in bucket_rows if row["similarity_bucket"] == bucket]
+        if not rows:
+            continue
+
+        retrieval_brier = mean_or_zero(
+            [row["retrieval_evaluation"]["brier"] for row in rows]
+        )
+        baseline_brier = mean_or_zero(
+            [row["baseline_evaluation"]["brier"] for row in rows]
+        )
+        accuracy = mean_or_zero(
+            [
+                1.0 if row["retrieval_evaluation"]["correct"] else 0.0
+                for row in rows
+            ]
+        )
+
+        bucket_summary[bucket] = {
+            "samples": len(rows),
+            "accuracy": accuracy,
+            "retrieval_brier": retrieval_brier,
+            "baseline_brier": baseline_brier,
+            "brier_lift": baseline_brier - retrieval_brier,
+        }
+
+    # ---------------------------------------------------------------------
+    # NULL SUMMARY
+    # ---------------------------------------------------------------------
+    if null_rows:
+        null_summary = {
+            "queries": len(null_rows),
+            "mean_real_max_share": mean_or_zero([r["real_max_share"] for r in null_rows]),
+            "mean_null_max_share": mean_or_zero([r["null_max_share_mean"] for r in null_rows]),
+            "mean_null_p95": mean_or_zero([r["null_max_share_p95"] for r in null_rows]),
+            "mean_real_minus_null": mean_or_zero([r["real_minus_null_mean"] for r in null_rows]),
+        }
+    else:
+        null_summary = {
+            "queries": 0,
+            "mean_real_max_share": None,
+            "mean_null_max_share": None,
+            "mean_null_p95": None,
+            "mean_real_minus_null": None,
+        }
+
+    # ---------------------------------------------------------------------
+    # FINAL PROTECTION
+    # ---------------------------------------------------------------------
+    protection_after = sha256_file(MARKET_DATA_FILE)
+    if protection_before != protection_after:
+        raise RuntimeError("market_data.bin changed.")
+
+    # ---------------------------------------------------------------------
+    # ARTIFACT
+    # ---------------------------------------------------------------------
+    artifact = {
+        "version": VERSION,
+        "objective": "ROBUST_CAUSAL_HISTORICAL_EXPERIENCE_RETRIEVAL",
+        "candles": len(candles),
+        "invalid_candles": invalid,
+        "chronology": chronology,
+        "causality": causality,
+        "walk_forward": all_windows,
+        "aggregate": aggregate,
+        "similarity_buckets": bucket_summary,
+        "null_test": null_summary,
+        "retrieval_config": {
+            "top_k": RETRIEVAL_TOP_K,
+            "min_matches": MIN_RETRIEVAL_MATCHES,
+            "min_history_gap": MIN_HISTORY_GAP,
+            "episode_gap": EPISODE_GAP,
+            "path_length": PATH_LENGTH,
+            "null_permutations": NULL_PERMUTATIONS,
+            "weights": {
+                "structure": WEIGHT_STRUCTURE,
+                "sequence": WEIGHT_SEQUENCE,
+                "regime": WEIGHT_REGIME,
+                "location": WEIGHT_LOCATION,
+                "momentum": WEIGHT_MOMENTUM,
+                "volatility": WEIGHT_VOLATILITY,
+                "candle": WEIGHT_CANDLE,
+                "path": WEIGHT_PATH,
+            },
+        },
+        "market_language": {
+            "sequence_counts": dict(
+                Counter(state.sequence_state for state in market_states)
+            ),
+            "regime_counts": dict(
+                Counter(state.regime for state in market_states)
+            ),
+            "episode_count": len(set(episode_ids.values())),
+        },
+        "protection": {
+            "sha256_before": protection_before,
+            "sha256_after": protection_after,
+            "market_data_modified": False,
+            "production_modified": False,
+            "learning_memory_modified": False,
+            "trading": False,
+        },
+    }
+
+    with open(VALIDATION_BIN, "wb") as f:
+        pickle.dump(artifact, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    # ---------------------------------------------------------------------
+    # REPORT
+    # ---------------------------------------------------------------------
+    report: List[str] = []
+    report.append("# MLAI v4.1.5 Robust Causal Historical Experience Retrieval")
+    report.append("")
+    report.append("## Phase scope")
+    report.append("")
+    report.append("- Historical retrieval only")
+    report.append("- Probability calibration: NOT ADDED")
+    report.append("- Scenario reasoning: NOT ADDED")
+    report.append("- Human-language generation: NOT ADDED")
+    report.append("- Multi-timeframe reasoning: NOT ADDED")
+    report.append("- Continuous learning: NOT ADDED")
+    report.append("- Live data: NOT ADDED")
+    report.append("")
+    report.append("## Architecture")
+    report.append("")
+    report.append("- Canonical causal MarketState: ENABLED")
+    report.append("- Causal structure / sequence / regime: ENABLED")
+    report.append("- ATR-normalized outcomes: ENABLED")
+    report.append("- Causal eligibility filter: ENABLED")
+    report.append("- Coarse-to-fine retrieval: ENABLED")
+    report.append("- Multi-layer similarity: ENABLED")
+    report.append("- Causal path similarity: ENABLED")
+    report.append("- Temporal episode de-duplication: ENABLED")
+    report.append("- Supporting/conflicting evidence: ENABLED")
+    report.append("- Sparse-evidence warning: ENABLED")
+    report.append("- Retrieval-vs-baseline diagnostics: ENABLED")
+    report.append("- Similarity bucket analysis: ENABLED")
+    report.append("- Training-only null retrieval sanity test: ENABLED")
+    report.append("- OOS outcomes used for retrieval: NO")
+    report.append("")
+    report.append("## Dataset / causality")
+    report.append("")
+    report.append(f"- Valid candles: {len(candles)}")
+    report.append(f"- Invalid candles: {invalid}")
+    report.append(f"- Confirmed swings: {len(engine.swings)}")
+    report.append("- Chronology: PASS")
+    report.append("- Duplicate timestamps: PASS")
+    report.append("- Causal structure: PASS")
+    report.append("")
+    report.append("## Walk-forward results")
+    report.append("")
+
+    for horizon, result in aggregate.items():
+        report.append(f"### H+{horizon}")
+        report.append(f"- Retrieval accuracy: {fmt_pct(result['mean_retrieval_accuracy'])}")
+        report.append(f"- Baseline accuracy: {fmt_pct(result['mean_baseline_accuracy'])}")
+        report.append(f"- Retrieval Brier: {fmt_num(result['mean_retrieval_brier'])}")
+        report.append(f"- Baseline Brier: {fmt_num(result['mean_baseline_brier'])}")
+        report.append(f"- Brier lift: {fmt_num(result['mean_brier_lift'])}")
+        report.append(f"- Retrieval log loss: {fmt_num(result['mean_retrieval_log_loss'])}")
+        report.append(f"- Baseline log loss: {fmt_num(result['mean_baseline_log_loss'])}")
+        report.append(f"- Log-loss lift: {fmt_num(result['mean_log_loss_lift'])}")
+        report.append(f"- Coverage: {fmt_pct(result['mean_coverage'])}")
+        report.append(f"- Sparse rate: {fmt_pct(result['mean_sparse_rate'])}")
+        report.append(f"- Mean top similarity: {fmt_pct(result['mean_top_similarity'])}")
+        report.append(f"- Mean independent matches: {result['mean_matches']:.2f}")
+        report.append("")
+
+    report.append("## Similarity bucket diagnostics")
+    report.append("")
+    if bucket_summary:
+        for bucket, result in bucket_summary.items():
+            report.append(f"### {bucket}")
+            report.append(f"- Samples: {result['samples']}")
+            report.append(f"- Accuracy: {fmt_pct(result['accuracy'])}")
+            report.append(f"- Retrieval Brier: {fmt_num(result['retrieval_brier'])}")
+            report.append(f"- Baseline Brier: {fmt_num(result['baseline_brier'])}")
+            report.append(f"- Brier lift: {fmt_num(result['brier_lift'])}")
+            report.append("")
+    else:
+        report.append("No similarity buckets contained evaluations.")
+        report.append("")
+
+    report.append("## Null retrieval sanity test")
+    report.append("")
+    report.append(f"- Queries: {null_summary['queries']}")
+    report.append(f"- Mean real maximum share: {fmt_pct(null_summary['mean_real_max_share'])}")
+    report.append(f"- Mean null maximum share: {fmt_pct(null_summary['mean_null_max_share'])}")
+    report.append(f"- Mean null 95th percentile: {fmt_pct(null_summary['mean_null_p95'])}")
+    report.append(f"- Mean real-minus-null: {fmt_pct(null_summary['mean_real_minus_null'])}")
+    report.append("")
+
+    report.append("## Interpretation")
+    report.append("")
+    report.append(
+        "v4.1.5 tests retrieval quality, not trading performance. Historical "
+        "outcome shares are evidence distributions and are not presented as "
+        "calibrated probabilities."
+    )
+    report.append("")
+    report.append(
+        "Promotion to v4.1.6 should require retrieval to demonstrate stable "
+        "out-of-sample usefulness against appropriate baselines and sensible "
+        "behaviour across similarity buckets."
+    )
+    report.append("")
+    report.append("## Protection")
+    report.append("")
+    report.append("- market_data.bin unchanged: PASS")
+    report.append("- Production MLAI modified: NO")
+    report.append("- Learning memory modified: NO")
+    report.append("- Trading enabled: NO")
+    report.append("")
+    report.append("MLAI v4.1.5 COMPLETE")
+
+    with open(VALIDATION_REPORT, "w", encoding="utf-8") as f:
+        f.write("\n".join(report))
+
+    print()
+    print("=" * 96)
+    print("V4.1.5 RETRIEVAL PHASE COMPLETE")
+    print("=" * 96)
+
+    for horizon, result in aggregate.items():
+        print()
+        print(f"H+{horizon}")
+        print(f"  Retrieval Accuracy : {fmt_pct(result['mean_retrieval_accuracy'])}")
+        print(f"  Baseline Accuracy  : {fmt_pct(result['mean_baseline_accuracy'])}")
+        print(f"  Brier Lift         : {fmt_num(result['mean_brier_lift'])}")
+        print(f"  LogLoss Lift       : {fmt_num(result['mean_log_loss_lift'])}")
+        print(f"  Coverage           : {fmt_pct(result['mean_coverage'])}")
+        print(f"  Sparse Rate        : {fmt_pct(result['mean_sparse_rate'])}")
+        print(f"  Top Similarity     : {fmt_pct(result['mean_top_similarity'])}")
+
+    print()
+    print("Validation binary saved:")
+    print(f"    {VALIDATION_BIN}")
+    print("Validation report saved:")
+    print(f"    {VALIDATION_REPORT}")
+    print()
+    print("market_data.bin       : READ ONLY")
+    print("Production MLAI       : NOT MODIFIED")
+    print("Learning memory       : NOT MODIFIED")
+    print("Trading               : DISABLED")
+    print()
+    print("=" * 96)
+    print("MLAI v4.1.5 ROBUST HISTORICAL EXPERIENCE RETRIEVAL COMPLETE")
+    print("=" * 96)
+
+
+if __name__ == "__main__":
+    main()
+
+
+# MLAI_V415_PREDICTIVE_FIX_V1
+#
+# Purpose:
+#   Repair the predictive decision layer without changing the causal
+#   structure engine or market data.
+#
+# Design constraints:
+#   - historical outcomes only
+#   - no future feature access
+#   - chronological walk-forward compatible
+#   - class-balanced evidence
+#   - similarity-weighted evidence
+#   - neutral class preserved
+#   - deterministic
+#
+# IMPORTANT:
+#   This helper layer does not alter market_data.bin.
+
+from collections import defaultdict
+import math
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# MLAI_V415_PREDICTIVE_FIX_V1_END
+

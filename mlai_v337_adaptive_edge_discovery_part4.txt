@@ -1,0 +1,400 @@
+        )
+
+    return (
+        all_results,
+        rule_fold_counts,
+        stable_rule_candidates
+    )
+
+
+# ============================================================
+# AGGREGATE RESULTS
+# ============================================================
+
+def aggregate_results(results):
+
+    if not results:
+        return None
+
+    predictions = sum(
+        r["predictions"]
+        for r in results
+    )
+
+    correct = sum(
+        r["correct"]
+        for r in results
+    )
+
+    buy_predictions = sum(
+        r["buy_predictions"]
+        for r in results
+    )
+
+    sell_predictions = sum(
+        r["sell_predictions"]
+        for r in results
+    )
+
+    buy_correct = sum(
+        r["buy_correct"]
+        for r in results
+    )
+
+    sell_correct = sum(
+        r["sell_correct"]
+        for r in results
+    )
+
+    return {
+        "predictions": predictions,
+
+        "correct": correct,
+
+        "accuracy": (
+            correct / predictions * 100
+        ) if predictions else 0.0,
+
+        "buy_predictions": buy_predictions,
+
+        "sell_predictions": sell_predictions,
+
+        "buy_precision": (
+            buy_correct
+            / buy_predictions
+            * 100
+        ) if buy_predictions else 0.0,
+
+        "sell_precision": (
+            sell_correct
+            / sell_predictions
+            * 100
+        ) if sell_predictions else 0.0,
+    }
+
+
+# ============================================================
+# HISTORICAL SIMILARITY
+# ============================================================
+
+def feature_distance(a, b):
+
+    numeric = [
+        "return_5",
+        "return_10",
+        "return_20",
+        "return_30",
+        "return_60",
+        "bullish_ratio",
+        "bearish_ratio",
+        "directional_imbalance",
+        "volatility_ratio",
+        "location_in_range",
+        "normalized_slope",
+        "momentum_acceleration",
+        "recent_body_ratio",
+        "recent_upper_wick",
+        "recent_lower_wick",
+    ]
+
+    distance = 0.0
+
+    for key in numeric:
+
+        av = a[key]
+        bv = b[key]
+
+        scale = max(
+            abs(av),
+            abs(bv),
+            0.0001
+        )
+
+        distance += (
+            (av - bv) / scale
+        ) ** 2
+
+    categorical = [
+        "directional_regime",
+        "trend_consistency",
+        "volatility_regime",
+        "location_state",
+        "momentum_state",
+        "pressure",
+        "range_event",
+    ]
+
+    for key in categorical:
+
+        if a[key] != b[key]:
+            distance += 1.0
+
+    return math.sqrt(distance)
+
+
+def similarity_test(records):
+
+    if len(records) < 2:
+        return
+
+    current = records[-1]
+
+    historical = records[:-1]
+
+    distances = []
+
+    for record in historical:
+
+        distance = feature_distance(
+            current["features"],
+            record["features"]
+        )
+
+        distances.append(
+            (
+                distance,
+                record["outcome"]
+            )
+        )
+
+    distances.sort(
+        key=lambda x: x[0]
+    )
+
+    print()
+    print("-" * 70)
+    print("HISTORICAL SIMILARITY TEST")
+    print("-" * 70)
+
+    for k in [10, 20, 40]:
+
+        neighbors = distances[
+            :min(k, len(distances))
+        ]
+
+        if not neighbors:
+            continue
+
+        counts = Counter(
+            outcome
+            for _, outcome in neighbors
+        )
+
+        directional = (
+            counts["BUY"]
+            + counts["SELL"]
+        )
+
+        if directional == 0:
+            prediction = "NO TRADE"
+            confidence = 0.0
+        else:
+
+            if counts["BUY"] > counts["SELL"]:
+                prediction = "BUY"
+                confidence = (
+                    counts["BUY"]
+                    / directional
+                )
+            else:
+                prediction = "SELL"
+                confidence = (
+                    counts["SELL"]
+                    / directional
+                )
+
+        print()
+        print(f"TOP {k} NEIGHBORS")
+        print(
+            "Bullish:",
+            counts["BUY"]
+        )
+        print(
+            "Neutral:",
+            counts["NEUTRAL"]
+        )
+        print(
+            "Bearish:",
+            counts["SELL"]
+        )
+        print(
+            "Diagnostic prediction:",
+            prediction
+        )
+        print(
+            f"Directional confidence: "
+            f"{confidence * 100:.2f}%"
+        )
+
+
+# ============================================================
+# CURRENT MARKET STRUCTURE
+# ============================================================
+
+def print_current_structure():
+
+    index = len(closes) - 1
+
+    features = structure_features(index)
+
+    if features is None:
+        return
+
+    print()
+    print("=" * 70)
+    print("CURRENT 60-CANDLE MARKET STRUCTURE")
+    print("=" * 70)
+
+    print(
+        "Latest index:",
+        index
+    )
+
+    print(
+        "Latest price:",
+        closes[index]
+    )
+
+    print()
+    print(
+        "Directional regime:",
+        features["directional_regime"]
+    )
+
+    print(
+        "Volatility regime:",
+        features["volatility_regime"]
+    )
+
+    print(
+        "Trend consistency:",
+        features["trend_consistency"]
+    )
+
+    print(
+        "Location state:",
+        features["location_state"]
+    )
+
+    print(
+        "Momentum state:",
+        features["momentum_state"]
+    )
+
+    print(
+        "Candle pressure:",
+        features["pressure"]
+    )
+
+    print(
+        "Range event:",
+        features["range_event"]
+    )
+
+    print()
+    print("NUMERIC STRUCTURE FEATURES")
+
+    numeric_to_show = [
+        "return_5",
+        "return_10",
+        "return_20",
+        "return_30",
+        "return_60",
+        "bullish_ratio",
+        "bearish_ratio",
+        "directional_imbalance",
+        "volatility",
+        "volatility_ratio",
+        "location_in_range",
+        "normalized_slope",
+        "momentum_acceleration",
+        "recent_body_ratio",
+        "recent_upper_wick",
+        "recent_lower_wick",
+    ]
+
+    for key in numeric_to_show:
+
+        print(
+            f"{key:<24}: "
+            f"{features[key]:.6f}"
+        )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+all_horizon_results = {}
+
+for horizon in HORIZONS:
+
+    print()
+    print("=" * 70)
+    print(f"HORIZON: {horizon} CANDLES")
+    print("=" * 70)
+
+    records = build_records(
+        horizon
+    )
+
+    print(
+        "Historical records:",
+        len(records)
+    )
+
+    if len(records) < 100:
+        print(
+            "Not enough historical records."
+        )
+        continue
+
+    # --------------------------------------------------------
+    # BASELINE
+    # --------------------------------------------------------
+
+    validation_size = len(records) // (
+        WALK_FORWARD_FOLDS + 1
+    )
+
+    baseline_validation = records[
+        -validation_size:
+    ]
+
+    print_baseline(
+        baseline_validation
+    )
+
+    # --------------------------------------------------------
+    # WALK FORWARD
+    # --------------------------------------------------------
+
+    (
+        fold_results,
+        rule_fold_counts,
+        stable_rule_candidates
+    ) = walk_forward(
+        records
+    )
+
+    # --------------------------------------------------------
+    # AGGREGATE
+    # --------------------------------------------------------
+
+    aggregate = aggregate_results(
+        fold_results
+    )
+
+    print()
+    print("=" * 70)
+    print(
+        "AGGREGATED LOCKED OUT-OF-SAMPLE RESULT"
+    )
+    print("=" * 70)
+
+    if aggregate is None:
+
+        print(
+            "No validation results."
+        )
+

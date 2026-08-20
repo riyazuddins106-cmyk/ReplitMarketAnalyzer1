@@ -1,0 +1,400 @@
+        in predictions
+        if prediction == actual
+    )
+
+    accuracy = (
+        correct / total * 100.0
+        if total
+        else 0.0
+    )
+
+    directional_predictions = [
+        x
+        for x in predictions
+        if x[0] in ("bullish", "bearish")
+    ]
+
+    directional_correct = sum(
+        1
+        for prediction, actual
+        in directional_predictions
+        if prediction == actual
+    )
+
+    directional_accuracy = (
+        directional_correct
+        / len(directional_predictions)
+        * 100.0
+        if directional_predictions
+        else 0.0
+    )
+
+    coverage = (
+        len(directional_predictions)
+        / total
+        * 100.0
+        if total
+        else 0.0
+    )
+
+    # --------------------------------------------------------
+    # BUY PRECISION
+    # --------------------------------------------------------
+
+    buy_predictions = [
+        x
+        for x in predictions
+        if x[0] == "bullish"
+    ]
+
+    buy_correct = sum(
+        1
+        for prediction, actual
+        in buy_predictions
+        if actual == "bullish"
+    )
+
+    buy_precision = (
+        buy_correct
+        / len(buy_predictions)
+        * 100.0
+        if buy_predictions
+        else 0.0
+    )
+
+    # --------------------------------------------------------
+    # SELL PRECISION
+    # --------------------------------------------------------
+
+    sell_predictions = [
+        x
+        for x in predictions
+        if x[0] == "bearish"
+    ]
+
+    sell_correct = sum(
+        1
+        for prediction, actual
+        in sell_predictions
+        if actual == "bearish"
+    )
+
+    sell_precision = (
+        sell_correct
+        / len(sell_predictions)
+        * 100.0
+        if sell_predictions
+        else 0.0
+    )
+
+    return {
+        "accuracy": accuracy,
+        "directional_accuracy":
+            directional_accuracy,
+        "coverage": coverage,
+        "buy_precision":
+            buy_precision,
+        "sell_precision":
+            sell_precision,
+        "matrix": matrix,
+    }
+
+
+# ============================================================
+# REGIME ANALYSIS
+# ============================================================
+
+def analyze_regimes(records):
+
+    groups = {}
+
+    for record in records:
+
+        directional_regime = record[
+            "regime"
+        ][0]
+
+        volatility_regime = record[
+            "regime"
+        ][1]
+
+        key = (
+            directional_regime,
+            volatility_regime
+        )
+
+        if key not in groups:
+
+            groups[key] = []
+
+        groups[key].append(
+            record
+        )
+
+    print()
+    print("=" * 70)
+    print("REGIME OUTCOME ANALYSIS")
+    print("=" * 70)
+
+    print()
+
+    print(
+        f"{'REGIME':<22}"
+        f"{'VOLATILITY':<15}"
+        f"{'N':>6}"
+        f"{'BULL %':>10}"
+        f"{'NEUTRAL %':>12}"
+        f"{'BEAR %':>10}"
+    )
+
+    print("-" * 70)
+
+    for key, group in sorted(
+        groups.items(),
+        key=lambda x: len(x[1]),
+        reverse=True
+    ):
+
+        if len(group) < MIN_REGIME_SAMPLES:
+            continue
+
+        counts = Counter(
+            x["actual"]
+            for x in group
+        )
+
+        n = len(group)
+
+        bull = (
+            counts["bullish"]
+            / n
+            * 100
+        )
+
+        neutral = (
+            counts["neutral"]
+            / n
+            * 100
+        )
+
+        bear = (
+            counts["bearish"]
+            / n
+            * 100
+        )
+
+        print(
+            f"{key[0]:<22}"
+            f"{key[1]:<15}"
+            f"{n:>6}"
+            f"{bull:>10.2f}"
+            f"{neutral:>12.2f}"
+            f"{bear:>10.2f}"
+        )
+
+
+# ============================================================
+# MAIN EXPERIMENT
+# ============================================================
+
+for horizon in HORIZONS:
+
+    print()
+    print("=" * 70)
+    print(
+        f"HORIZON: {horizon} CANDLES"
+    )
+    print("=" * 70)
+
+    records = build_records(
+        horizon
+    )
+
+    print()
+    print(
+        "Historical records:",
+        len(records)
+    )
+
+    calibration_count = int(
+        len(records)
+        * CALIBRATION_RATIO
+    )
+
+    calibration = records[
+        :calibration_count
+    ]
+
+    validation = records[
+        calibration_count:
+    ]
+
+    print(
+        "Calibration records:",
+        len(calibration)
+    )
+
+    print(
+        "Validation records:",
+        len(validation)
+    )
+
+    print()
+    print(
+        "The validation section is"
+    )
+
+    print(
+        "chronologically AFTER calibration."
+    )
+
+    print(
+        "No validation outcomes are used"
+    )
+
+    print(
+        "to calculate the diagnostic rules."
+    )
+
+    # --------------------------------------------------------
+    # REGIME ANALYSIS ON VALIDATION
+    # --------------------------------------------------------
+
+    analyze_regimes(
+        validation
+    )
+
+    # --------------------------------------------------------
+    # CONFIDENCE TEST
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print("CONFIDENCE THRESHOLD TEST")
+    print("=" * 70)
+
+    thresholds = [
+        50,
+        55,
+        60,
+        65,
+        70,
+        75,
+        80,
+        85,
+    ]
+
+    print()
+
+    print(
+        f"{'Threshold':<12}"
+        f"{'Accuracy':>12}"
+        f"{'Dir Acc':>12}"
+        f"{'Coverage':>12}"
+        f"{'BUY Prec':>12}"
+        f"{'SELL Prec':>12}"
+    )
+
+    print("-" * 70)
+
+    for threshold in thresholds:
+
+        metrics = evaluate(
+            validation,
+            threshold
+        )
+
+        print(
+            f"{threshold:>8.0f}%"
+            f"{metrics['accuracy']:>12.2f}"
+            f"{metrics['directional_accuracy']:>12.2f}"
+            f"{metrics['coverage']:>12.2f}"
+            f"{metrics['buy_precision']:>12.2f}"
+            f"{metrics['sell_precision']:>12.2f}"
+        )
+
+    # --------------------------------------------------------
+    # BEST CONFIDENCE THRESHOLD
+    # --------------------------------------------------------
+
+    best = None
+
+    for threshold in thresholds:
+
+        metrics = evaluate(
+            validation,
+            threshold
+        )
+
+        if metrics["coverage"] < 10:
+
+            continue
+
+        score = (
+            metrics["directional_accuracy"]
+            * math.sqrt(
+                metrics["coverage"]
+                / 100.0
+            )
+        )
+
+        if (
+            best is None
+            or score > best["score"]
+        ):
+
+            best = {
+                "threshold": threshold,
+                "score": score,
+                "metrics": metrics,
+            }
+
+    print()
+    print("=" * 70)
+    print("BEST CONFIDENCE / COVERAGE BALANCE")
+    print("=" * 70)
+
+    if best:
+
+        metrics = best["metrics"]
+
+        print()
+        print(
+            "Confidence threshold:",
+            f"{best['threshold']}%"
+        )
+
+        print(
+            "Directional accuracy:",
+            f"{metrics['directional_accuracy']:.2f}%"
+        )
+
+        print(
+            "Directional coverage:",
+            f"{metrics['coverage']:.2f}%"
+        )
+
+        print(
+            "BUY precision:",
+            f"{metrics['buy_precision']:.2f}%"
+        )
+
+        print(
+            "SELL precision:",
+            f"{metrics['sell_precision']:.2f}%"
+        )
+
+    else:
+
+        print()
+        print(
+            "No threshold met minimum coverage."
+        )
+
+
+# ============================================================
+# CURRENT MARKET STATE
+# ============================================================
+
+print()
+print("=" * 70)

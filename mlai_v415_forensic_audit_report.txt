@@ -1,0 +1,82 @@
+====================================================================================================
+MLAI v4.1.5 FORENSIC CAUSAL AUDIT REPORT
+====================================================================================================
+
+Target: C:\Users\HomePC\mlai-test\mlai_market_structure_v415.py
+Target SHA256: e42eacc11885cd408f7301d6f35c3c047f8d8212d02469b60a6ba3e944ad7b89
+
+FINAL VERDICT
+----------------------------------------------------------------------------------------------------
+FAIL — CAUSAL CERTIFICATION REJECTED
+
+IMPORTANT: PASS means the tested property passed. It does not mathematically prove every possible execution path.
+
+STATUS SUMMARY
+----------------------------------------------------------------------------------------------------
+[PASS        ] TARGET_FILE: Found mlai_market_structure_v415.py
+[PASS        ] SYNTAX: AST parsing succeeded.
+[PASS        ] REQUIRED_FUNCTIONS: Core causal/retrieval functions present.
+[WARNING     ] FUTURE_INDEX_STATIC: Potential future-index expressions found: 7
+[PASS        ] IMPORT: Target module imported successfully.
+[FAIL        ] API_SYMBOLS: Missing required symbols: ['StructureEngine']
+[PASS        ] MARKET_DATA_PRESENT: Found market_data.bin
+[PASS        ] DATA_LOAD: Loaded 1309 candles.
+[PASS        ] CHRONOLOGY: Candle timestamps strictly increasing.
+[PASS        ] DUPLICATES: No duplicate timestamps.
+[FAIL        ] STRUCTURE_ENGINE: StructureEngine not available.
+[PASS        ] RETRIEVAL_CAUSAL_FILTER: Retrieval function contains historical-only eligibility checks.
+[PASS        ] EXPERIENCE_BOUNDARY: Experience construction explicitly respects horizon/train boundary.
+[PASS        ] OUTCOME_ISOLATION: Outcome function explicitly uses future horizon.
+[PASS        ] OOS_RETRIEVAL_CONTAMINATION: Retrieval function does not construct future outcomes.
+[PASS        ] DATA_MUTATION: market_data.bin unchanged during audit.
+[PASS        ] SOURCE_MUTATION: Target source file unchanged during audit.
+[WARNING     ] WRITE_OPERATIONS: Detected 4 source write operations.
+
+FORENSIC DETAILS
+----------------------------------------------------------------------------------------------------
+TARGET SHA256: e42eacc11885cd408f7301d6f35c3c047f8d8212d02469b60a6ba3e944ad7b89
+Classes: ['Candle', 'Swing', 'StructureState', 'WalkForwardWindow', 'MarketState', 'Outcome', 'ExperienceRecord', 'SimilarityMatch', 'RetrievalResult', 'ProtectionGuard', 'CausalStructureEngine']
+Functions: ['sha256_file', 'safe_div', 'mean_or_zero', 'clamp', 'fmt_pct', 'fmt_num', '_get_value', '_to_float', '_normalize_candle', 'load_market_data', 'audit_chronology', 'create_walk_forward_windows', 'calculate_atr', 'audit_structure_causality', 'rolling_return', 'classify_regime', 'classify_momentum', 'update_sequence', 'build_path_vector', 'build_market_states', 'make_outcome', 'assign_episode_ids', 'build_experience_records', 'coarse_filter', 'numeric_similarity', 'path_row_similarity', 'path_similarity', 'similarity_score', 'select_episode_representatives', 'retrieve_historical_experience', 'distribution_from_records', 'conditional_baseline', 'brier', 'log_loss', 'evaluate_distribution', 'deterministic_permutation', 'null_retrieval_sanity_test', 'bucket_name', 'main', '__init__', 'verify_unchanged', '__init__', '_is_confirmed_high', '_is_confirmed_low', 'build']
+SUSPICIOUS: line 725: max(c.high for c in candles[index + 1 : target + 1])
+SUSPICIOUS: line 726: min(c.low for c in candles[index + 1 : target + 1])
+SUSPICIOUS: line 406: all(
+            k == j or self.candles[k].high < price
+            for k in range(j - SWING_LEFT, j + SWING_RIGHT + 1)
+        )
+SUSPICIOUS: line 415: all(
+            k == j or self.candles[k].low > price
+            for k in range(j - SWING_LEFT, j + SWING_RIGHT + 1)
+        )
+SUSPICIOUS: line 650: update_sequence(candles[: i + 1], state)
+SUSPICIOUS: line 725: candles[index + 1 : target + 1]
+SUSPICIOUS: line 726: candles[index + 1 : target + 1]
+MARKET DATA SHA256 BEFORE: dd57bccc3526ebaeb900181096adcbf48a84b5a3a334da1f1990a443cde091b5
+Detected data loader: load_market_data
+SOURCE CHECK OUTCOME_SEPARATION: detected
+SOURCE CHECK HISTORY_DIRECTION: detected
+SOURCE CHECK MIN_HISTORY_GAP: detected
+SOURCE CHECK TRAIN_END_HORIZON: detected
+SOURCE CHECK OOS_OUTCOME: detected
+SOURCE CHECK EPISODE_DEDUP: detected
+SOURCE CHECK PERMUTATION: detected
+SOURCE CHECK MARKET_DATA_WRITE: detected
+WRITE: line 1854: open(VALIDATION_REPORT, "w"
+WRITE: line 1743: open(VALIDATION_BIN, "wb"
+WRITE: line 1744: pickle.dump
+WRITE: line 1855: .write(
+
+COUNTS
+----------------------------------------------------------------------------------------------------
+PASS:           14
+WARNING:        2
+FAIL:           2
+NOT PROVABLE:   0
+
+PROTECTION
+----------------------------------------------------------------------------------------------------
+Target source modified: NO (unless SOURCE_MUTATION reports FAIL)
+market_data.bin modified: NO (unless DATA_MUTATION reports FAIL)
+MLAI production logic modified: NO
+Learning memory intentionally modified: NO
+
+END OF FORENSIC AUDIT

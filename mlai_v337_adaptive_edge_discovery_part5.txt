@@ -1,0 +1,158 @@
+    elif aggregate["predictions"] == 0:
+
+        print(
+            "No locked adaptive rules "
+            "generated predictions."
+        )
+
+    else:
+
+        print(
+            "Validation predictions:",
+            aggregate["predictions"]
+        )
+
+        print(
+            f"Directional accuracy: "
+            f"{aggregate['accuracy']:.2f}%"
+        )
+
+        print(
+            "BUY predictions:",
+            aggregate["buy_predictions"]
+        )
+
+        print(
+            "SELL predictions:",
+            aggregate["sell_predictions"]
+        )
+
+        print(
+            f"BUY precision: "
+            f"{aggregate['buy_precision']:.2f}%"
+        )
+
+        print(
+            f"SELL precision: "
+            f"{aggregate['sell_precision']:.2f}%"
+        )
+
+    # --------------------------------------------------------
+    # STABILITY
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 70)
+    print("CROSS-FOLD STABILITY ANALYSIS")
+    print("=" * 70)
+
+    stable_rules = []
+
+    for key, fold_count in rule_fold_counts.items():
+
+        if fold_count >= MIN_STABILITY_FOLDS:
+
+            stable_rules.append(
+                (
+                    fold_count,
+                    key
+                )
+            )
+
+    stable_rules.sort(
+        reverse=True
+    )
+
+    print(
+        "Stable rules:",
+        len(stable_rules)
+    )
+
+    if stable_rules:
+
+        for fold_count, key in stable_rules[
+            :TOP_RULES_TO_PRINT
+        ]:
+
+            features, direction = key
+
+            print()
+            print(
+                "STABLE:",
+                " + ".join(
+                    f"{a}={b}"
+                    for a, b in features
+                ),
+                "->",
+                direction,
+                f"| folds={fold_count}"
+            )
+
+    all_horizon_results[
+        horizon
+    ] = {
+        "records": records,
+        "aggregate": aggregate,
+        "stable_rules": stable_rules,
+    }
+
+    # --------------------------------------------------------
+    # HISTORICAL SIMILARITY
+    # --------------------------------------------------------
+
+    similarity_test(
+        records
+    )
+
+
+# ============================================================
+# CURRENT STRUCTURE
+# ============================================================
+
+print_current_structure()
+
+
+# ============================================================
+# FINAL VERDICT
+# ============================================================
+
+print()
+print("=" * 70)
+print("MLAI v3.3.7 FINAL VERDICT")
+print("=" * 70)
+
+print("""
+This experiment is diagnostic only.
+
+No production model was changed.
+No learning memory was changed.
+market_data.bin was READ ONLY.
+mlai_v31.py was NOT modified.
+
+v3.3.7 searches adaptive one-feature and two-feature
+market structures instead of requiring one exact predefined
+multidimensional structure.
+
+A candidate rule is considered interesting only when:
+
+  1. It has sufficient calibration samples.
+  2. Calibration confidence exceeds the minimum.
+  3. Calibration directional lift is positive.
+  4. The rule is locked before validation.
+  5. Validation is chronological and unseen.
+  6. The rule survives across multiple folds.
+  7. Validation performance is evaluated independently.
+  8. No validation information is used to discover the rule.
+
+IMPORTANT:
+
+A high historical similarity percentage is NOT proof of an edge.
+
+A high calibration percentage is NOT proof of an edge.
+
+A rule must survive unseen chronological validation.
+
+No rule from this experiment is promoted to production.
+
+MLAI v3.3.7 COMPLETE
+""")
