@@ -1,0 +1,400 @@
+    if return_60 > 0.005:
+        directional_regime = "bullish"
+    elif return_60 < -0.005:
+        directional_regime = "bearish"
+    elif return_30 > 0.002:
+        directional_regime = "bullish_bias"
+    elif return_30 < -0.002:
+        directional_regime = "bearish_bias"
+    else:
+        directional_regime = "neutral"
+
+    # --------------------------------------------------------
+    # MARKET LOCATION
+    # --------------------------------------------------------
+
+    if location_in_range >= 0.80:
+        location_state = "upper_range"
+    elif location_in_range <= 0.20:
+        location_state = "lower_range"
+    else:
+        location_state = "middle_range"
+
+    # --------------------------------------------------------
+    # MOMENTUM STATE
+    # --------------------------------------------------------
+
+    if momentum_5 > 0 and momentum_10 > 0:
+        momentum_state = "positive"
+    elif momentum_5 < 0 and momentum_10 < 0:
+        momentum_state = "negative"
+    else:
+        momentum_state = "mixed"
+
+    # --------------------------------------------------------
+    # CANDLE STRUCTURE
+    # --------------------------------------------------------
+
+    recent_body_ratio = avg(body_ratios[-10:])
+    recent_upper_wick = avg(upper_wicks[-10:])
+    recent_lower_wick = avg(lower_wicks[-10:])
+
+    recent_directions = directions[-10:]
+
+    recent_bullish = sum(
+        1 for x in recent_directions if x > 0
+    )
+
+    recent_bearish = sum(
+        1 for x in recent_directions if x < 0
+    )
+
+    if recent_bullish >= 7:
+        candle_pressure = "bullish_pressure"
+    elif recent_bearish >= 7:
+        candle_pressure = "bearish_pressure"
+    else:
+        candle_pressure = "balanced"
+
+    # --------------------------------------------------------
+    # BREAKOUT / REJECTION STATE
+    # --------------------------------------------------------
+
+    previous_high = max(highs[:-5])
+    previous_low = min(lows[:-5])
+
+    recent_high = max(highs[-5:])
+    recent_low = min(lows[-5:])
+
+    breakout_up = recent_high > previous_high
+    breakout_down = recent_low < previous_low
+
+    if breakout_up and not breakout_down:
+        range_event = "up_breakout"
+    elif breakout_down and not breakout_up:
+        range_event = "down_breakout"
+    elif breakout_up and breakout_down:
+        range_event = "volatile_break"
+    else:
+        range_event = "inside_range"
+
+    return {
+        # numerical features
+        "return_15": return_15,
+        "return_30": return_30,
+        "return_60": return_60,
+
+        "bullish_ratio": bullish_ratio,
+        "bearish_ratio": bearish_ratio,
+        "directional_imbalance": directional_imbalance,
+
+        "volatility": volatility,
+        "volatility_ratio": volatility_ratio,
+
+        "location_in_range": location_in_range,
+        "normalized_slope": normalized_slope,
+
+        "momentum_5": momentum_5,
+        "momentum_10": momentum_10,
+        "momentum_20": momentum_20,
+        "momentum_acceleration": momentum_acceleration,
+
+        "recent_body_ratio": recent_body_ratio,
+        "recent_upper_wick": recent_upper_wick,
+        "recent_lower_wick": recent_lower_wick,
+
+        # categorical features
+        "directional_regime": directional_regime,
+        "volatility_regime": volatility_regime,
+        "trend_consistency": trend_consistency,
+        "location_state": location_state,
+        "momentum_state": momentum_state,
+        "candle_pressure": candle_pressure,
+        "range_event": range_event,
+    }
+
+
+# ============================================================
+# STRUCTURE SIGNATURE
+# ============================================================
+
+NUMERIC_FEATURES = [
+    "return_15",
+    "return_30",
+    "return_60",
+    "bullish_ratio",
+    "bearish_ratio",
+    "directional_imbalance",
+    "volatility_ratio",
+    "location_in_range",
+    "normalized_slope",
+    "momentum_5",
+    "momentum_10",
+    "momentum_20",
+    "momentum_acceleration",
+    "recent_body_ratio",
+    "recent_upper_wick",
+    "recent_lower_wick",
+]
+
+
+CATEGORICAL_FEATURES = [
+    "directional_regime",
+    "volatility_regime",
+    "trend_consistency",
+    "location_state",
+    "momentum_state",
+    "candle_pressure",
+    "range_event",
+]
+
+
+def structure_signature(f):
+    return tuple(
+        f[x] for x in CATEGORICAL_FEATURES
+    )
+
+
+# ============================================================
+# FEATURE DISTANCE
+# ============================================================
+
+def numeric_distance(a, b):
+    """
+    Robust normalized distance.
+
+    Features are normalized so price scale itself does not
+    dominate similarity.
+    """
+
+    scales = {
+        "return_15": 0.005,
+        "return_30": 0.008,
+        "return_60": 0.015,
+
+        "bullish_ratio": 0.20,
+        "bearish_ratio": 0.20,
+        "directional_imbalance": 0.20,
+
+        "volatility_ratio": 0.30,
+        "location_in_range": 0.30,
+        "normalized_slope": 0.015,
+
+        "momentum_5": 0.004,
+        "momentum_10": 0.006,
+        "momentum_20": 0.010,
+        "momentum_acceleration": 0.005,
+
+        "recent_body_ratio": 0.30,
+        "recent_upper_wick": 0.30,
+        "recent_lower_wick": 0.30,
+    }
+
+    total = 0.0
+
+    for key in NUMERIC_FEATURES:
+        scale = scales.get(key, 1.0)
+
+        d = abs(a[key] - b[key])
+
+        total += min(d / scale, 5.0) ** 2
+
+    categorical_penalty = 0.0
+
+    for key in CATEGORICAL_FEATURES:
+
+        if a[key] != b[key]:
+            categorical_penalty += 0.75
+
+    return math.sqrt(total + categorical_penalty)
+
+
+# ============================================================
+# OUTCOME CLASSIFICATION
+# ============================================================
+
+def classify_outcome(candles, index, horizon):
+    """
+    Classification is based ONLY on future candles after index.
+
+    BUY:
+        future return >= +0.15%
+
+    SELL:
+        future return <= -0.15%
+
+    NEUTRAL:
+        otherwise
+    """
+
+    future_index = index + horizon
+
+    if future_index >= len(candles):
+        return None
+
+    current_price = candles[index]["close"]
+    future_price = candles[future_index]["close"]
+
+    if current_price == 0:
+        return None
+
+    future_return = (
+        future_price - current_price
+    ) / current_price
+
+    if future_return >= CLASSIFICATION_THRESHOLD:
+        return "BUY"
+
+    if future_return <= -CLASSIFICATION_THRESHOLD:
+        return "SELL"
+
+    return "NEUTRAL"
+
+
+# ============================================================
+# BUILD HISTORICAL RECORDS
+# ============================================================
+
+def build_records(candles, horizon):
+    records = []
+
+    last_index = len(candles) - horizon - 1
+
+    for index in range(WINDOW - 1, last_index + 1):
+
+        features = build_structure(
+            candles,
+            index
+        )
+
+        if features is None:
+            continue
+
+        outcome = classify_outcome(
+            candles,
+            index,
+            horizon
+        )
+
+        if outcome is None:
+            continue
+
+        records.append(
+            {
+                "index": index,
+                "timestamp": candles[index]["timestamp"],
+                "features": features,
+                "outcome": outcome,
+            }
+        )
+
+    return records
+
+
+# ============================================================
+# BASELINE METRICS
+# ============================================================
+
+def accuracy(predictions):
+    if not predictions:
+        return 0.0
+
+    correct = sum(
+        1 for p, y in predictions
+        if p == y
+    )
+
+    return correct / len(predictions)
+
+
+def precision(predictions, direction):
+    selected = [
+        (p, y)
+        for p, y in predictions
+        if p == direction
+    ]
+
+    if not selected:
+        return 0.0
+
+    correct = sum(
+        1 for p, y in selected
+        if p == y
+    )
+
+    return correct / len(selected)
+
+
+def print_baselines(validation):
+    print()
+    print("-" * 70)
+    print("BASELINE COMPARISON")
+    print("-" * 70)
+
+    outcomes = [
+        r["outcome"]
+        for r in validation
+    ]
+
+    total = len(outcomes)
+
+    if total == 0:
+        return
+
+    counts = Counter(outcomes)
+
+    buy_rate = counts["BUY"] / total
+    sell_rate = counts["SELL"] / total
+    neutral_rate = counts["NEUTRAL"] / total
+
+    print(f"Validation records: {total}")
+
+    print(
+        f"BUY frequency:     {buy_rate:.2%}"
+    )
+
+    print(
+        f"SELL frequency:    {sell_rate:.2%}"
+    )
+
+    print(
+        f"NEUTRAL frequency: {neutral_rate:.2%}"
+    )
+
+    majority = max(
+        ["BUY", "SELL", "NEUTRAL"],
+        key=lambda x: counts[x]
+    )
+
+    majority_accuracy = counts[majority] / total
+
+    print(
+        f"Majority baseline ({majority}): "
+        f"{majority_accuracy:.2%}"
+    )
+
+
+# ============================================================
+# RULE DISCOVERY
+# ============================================================
+
+def discover_rules(calibration):
+    """
+    Discover categorical combinations that have enough samples.
+
+    IMPORTANT:
+        Only calibration records are used.
+    """
+
+    groups = defaultdict(list)
+
+    for record in calibration:
+
+        f = record["features"]
+
+        key = (
+            f["directional_regime"],
+            f["volatility_regime"],
+            f["trend_consistency"],
+            f["location_state"],
+            f["momentum_state"],

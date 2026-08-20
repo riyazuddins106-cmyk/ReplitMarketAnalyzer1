@@ -1,0 +1,166 @@
+print("CURRENT 60-CANDLE MARKET STATE")
+print("=" * 70)
+
+current_window = candles[-WINDOW:]
+
+current_features = build_features(
+    current_window
+)
+
+current_regime = detect_regime(
+    current_features
+)
+
+current_confidence = calculate_confidence(
+    current_features,
+    current_regime
+)
+
+print()
+
+print(
+    "Latest candle:",
+    candles[-1]["datetime"]
+)
+
+print(
+    "Latest price:",
+    candles[-1]["close"]
+)
+
+print()
+
+print(
+    "Directional regime:",
+    current_regime[0]
+)
+
+print(
+    "Volatility regime:",
+    current_regime[1]
+)
+
+print(
+    "Bull regime score:",
+    current_regime[2]
+)
+
+print(
+    "Bear regime score:",
+    current_regime[3]
+)
+
+print()
+
+print(
+    "Raw structural prediction:",
+    current_confidence["prediction"]
+)
+
+print(
+    "Structural confidence:",
+    f"{current_confidence['confidence']:.2f}%"
+)
+
+print(
+    "Bull evidence:",
+    f"{current_confidence['bull_evidence']:.2f}"
+)
+
+print(
+    "Bear evidence:",
+    f"{current_confidence['bear_evidence']:.2f}"
+)
+
+print()
+
+print(
+    "IMPORTANT:"
+)
+
+print(
+    "This current-market output is NOT a trading signal."
+)
+
+print(
+    "It is only a diagnostic representation of the"
+)
+
+print(
+    "current 60-candle structure."
+)
+
+
+# ============================================================
+# FINAL VERDICT
+# ============================================================
+
+print()
+print("=" * 70)
+print("MLAI v3.3.2 DIAGNOSTIC VERDICT")
+print("=" * 70)
+
+print()
+print(
+    "This experiment does NOT modify MLAI production logic."
+)
+
+print(
+    "It does NOT modify market_data.bin."
+)
+
+print(
+    "It does NOT modify learning memory."
+)
+
+print()
+
+print(
+    "The purpose is to determine whether different"
+)
+
+print(
+    "60-candle regimes have measurably different"
+)
+
+print(
+    "future directional outcomes."
+)
+
+print()
+
+print(
+    "The important discovery we are looking for is:"
+)
+
+print(
+    "SOME STRUCTURES -> stronger directional edge"
+)
+
+print(
+    "OTHER STRUCTURES -> weak / uncertain outcome"
+)
+
+print(
+    "Therefore MLAI may eventually need:"
+)
+
+print(
+    "BUY / SELL / NO TRADE"
+)
+
+print()
+
+print(
+    "Do NOT interpret these diagnostic results as"
+)
+
+print(
+    "guaranteed future trading probabilities."
+)
+
+print()
+
+print("=" * 70)
+print("MLAI v3.3.2 REGIME DIAGNOSTIC COMPLETE")
+print("=" * 70)

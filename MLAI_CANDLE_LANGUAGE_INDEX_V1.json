@@ -1,0 +1,18 @@
+{
+  "knowledge_base": "MLAI Candle Language KB V1",
+  "created_utc": "2026-08-20T11:00:06.420357+00:00",
+  "record_count": 16,
+  "sha256": "8eefd6c34dd8a70ab24598d6ba39508c14fd6f0e0333b9abb69a437d51c2d12a",
+  "source_count": 5,
+  "topics": [
+    "RSI",
+    "bollinger",
+    "candle_anatomy",
+    "causality",
+    "patterns",
+    "prediction",
+    "structure",
+    "support_resistance",
+    "volume"
+  ]
+}

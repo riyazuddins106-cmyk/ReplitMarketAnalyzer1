@@ -1,0 +1,94 @@
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    print("=" * 70)
+    print("MLAI v3.3.4 STRUCTURE EDGE DISCOVERY")
+    print("=" * 70)
+
+    print()
+    print(
+        "Purpose:"
+    )
+
+    print(
+        "Find which combinations of:"
+    )
+
+    print(
+        "60-candle structure + regime + "
+        "volatility + historical similarity"
+    )
+
+    print(
+        "show repeatable directional information."
+    )
+
+    print()
+
+    protection_check()
+
+    candles = load_market_data(
+        MARKET_FILE
+    )
+
+    print(
+        f"Total candles: {len(candles)}"
+    )
+
+    print()
+
+    for horizon in HORIZONS:
+
+        run_horizon(
+            candles,
+            horizon
+        )
+
+    print()
+    print("=" * 70)
+    print("MLAI v3.3.4 DIAGNOSTIC VERDICT")
+    print("=" * 70)
+
+    print()
+    print(
+        "This experiment does NOT modify "
+        "MLAI production logic."
+    )
+
+    print(
+        "market_data.bin was READ ONLY."
+    )
+
+    print(
+        "mlai_v31.py was NOT modified."
+    )
+
+    print(
+        "Learning memory was NOT modified."
+    )
+
+    print(
+        "Production thresholds were NOT modified."
+    )
+
+    print()
+    print(
+        "The objective was to discover whether "
+        "specific market structures have stronger "
+        "historical directional evidence than others."
+    )
+
+    print()
+    print(
+        "MLAI v3.3.4 COMPLETE"
+    )
+
+
+if __name__ == "__main__":
+    main()

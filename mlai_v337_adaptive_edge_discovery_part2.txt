@@ -1,0 +1,400 @@
+        location_state = "middle_range"
+
+    if momentum_5 > 0 and momentum_10 > 0:
+        momentum_state = "bullish"
+    elif momentum_5 < 0 and momentum_10 < 0:
+        momentum_state = "bearish"
+    else:
+        momentum_state = "mixed"
+
+    if bullish_ratio > 0.55:
+        pressure = "bullish"
+    elif bearish_ratio > 0.55:
+        pressure = "bearish"
+    else:
+        pressure = "balanced"
+
+    if location >= 0.90:
+        range_event = "near_high"
+    elif location <= 0.10:
+        range_event = "near_low"
+    else:
+        range_event = "inside_range"
+
+    return {
+        "return_5": momentum_5,
+        "return_10": momentum_10,
+        "return_20": momentum_20,
+        "return_30": ret(30),
+        "return_60": ret(60),
+
+        "bullish_ratio": bullish_ratio,
+        "bearish_ratio": bearish_ratio,
+        "directional_imbalance": directional_imbalance,
+
+        "volatility": volatility,
+        "volatility_ratio": volatility_ratio,
+
+        "location_in_range": location,
+
+        "normalized_slope": slope,
+
+        "momentum_5": momentum_5,
+        "momentum_10": momentum_10,
+        "momentum_20": momentum_20,
+
+        "momentum_acceleration": momentum_acceleration,
+
+        "recent_body_ratio": recent_body_ratio,
+        "recent_upper_wick": recent_upper_wick,
+        "recent_lower_wick": recent_lower_wick,
+
+        "directional_regime": directional_regime,
+        "trend_consistency": trend_consistency,
+        "volatility_regime": volatility_regime,
+        "location_state": location_state,
+        "momentum_state": momentum_state,
+        "pressure": pressure,
+        "range_event": range_event,
+    }
+
+
+# ============================================================
+# BUILD HISTORICAL RECORDS
+# ============================================================
+
+def classify_outcome(index, horizon):
+
+    future_index = index + horizon
+
+    if future_index >= len(closes):
+        return None
+
+    current = closes[index]
+    future = closes[future_index]
+
+    if current == 0:
+        return None
+
+    change = (
+        future - current
+    ) / current
+
+    if change >= CLASSIFICATION_THRESHOLD:
+        return "BUY"
+
+    if change <= -CLASSIFICATION_THRESHOLD:
+        return "SELL"
+
+    return "NEUTRAL"
+
+
+def build_records(horizon):
+
+    records = []
+
+    first = WINDOW - 1
+
+    last = len(closes) - horizon - 1
+
+    for index in range(first, last + 1):
+
+        features = structure_features(index)
+
+        if features is None:
+            continue
+
+        outcome = classify_outcome(index, horizon)
+
+        if outcome is None:
+            continue
+
+        records.append({
+            "index": index,
+            "features": features,
+            "outcome": outcome,
+        })
+
+    return records
+
+
+# ============================================================
+# FEATURE TYPES
+# ============================================================
+
+CATEGORICAL_FEATURES = [
+    "directional_regime",
+    "trend_consistency",
+    "volatility_regime",
+    "location_state",
+    "momentum_state",
+    "pressure",
+    "range_event",
+]
+
+
+NUMERIC_FEATURES = [
+    "return_5",
+    "return_10",
+    "return_20",
+    "return_30",
+    "return_60",
+    "bullish_ratio",
+    "bearish_ratio",
+    "directional_imbalance",
+    "volatility",
+    "volatility_ratio",
+    "location_in_range",
+    "normalized_slope",
+    "momentum_acceleration",
+    "recent_body_ratio",
+    "recent_upper_wick",
+    "recent_lower_wick",
+]
+
+
+# ============================================================
+# ADAPTIVE FEATURE REPRESENTATION
+# ============================================================
+
+def prepare_feature_values(calibration_records):
+
+    edges = {}
+
+    for feature in NUMERIC_FEATURES:
+
+        values = [
+            r["features"][feature]
+            for r in calibration_records
+            if math.isfinite(r["features"][feature])
+        ]
+
+        edges[feature] = quantile_edges(
+            values,
+            QUANTILE_BINS
+        )
+
+    return edges
+
+
+def get_rule_value(record, feature, edges):
+
+    value = record["features"][feature]
+
+    if feature in NUMERIC_FEATURES:
+
+        return (
+            feature,
+            quantile_label(
+                value,
+                edges.get(feature, [])
+            )
+        )
+
+    return (
+        feature,
+        str(value)
+    )
+
+
+# ============================================================
+# RULE DISCOVERY
+# ============================================================
+
+def discover_rules(calibration_records):
+
+    edges = prepare_feature_values(
+        calibration_records
+    )
+
+    candidates = []
+
+    feature_pool = (
+        CATEGORICAL_FEATURES
+        + NUMERIC_FEATURES
+    )
+
+    # --------------------------------------------------------
+    # 1 FEATURE RULES
+    # --------------------------------------------------------
+
+    for feature in feature_pool:
+
+        groups = defaultdict(list)
+
+        for record in calibration_records:
+
+            key = (
+                get_rule_value(
+                    record,
+                    feature,
+                    edges
+                ),
+            )
+
+            groups[key].append(
+                record["outcome"]
+            )
+
+        for key, outcomes in groups.items():
+
+            if len(outcomes) < MIN_CALIBRATION_SAMPLES:
+                continue
+
+            counts = Counter(outcomes)
+
+            directional_count = (
+                counts["BUY"]
+                + counts["SELL"]
+            )
+
+            if directional_count == 0:
+                continue
+
+            direction = (
+                "BUY"
+                if counts["BUY"] > counts["SELL"]
+                else "SELL"
+            )
+
+            confidence = (
+                counts[direction]
+                / len(outcomes)
+            )
+
+            directional_rate = (
+                directional_count
+                / len(outcomes)
+            )
+
+            # Compare against overall calibration
+            # directional frequency.
+            calibration_counts = Counter(
+                r["outcome"]
+                for r in calibration_records
+            )
+
+            base_direction_rate = (
+                calibration_counts[direction]
+                / len(calibration_records)
+            )
+
+            lift = (
+                confidence
+                - base_direction_rate
+            )
+
+            if confidence < MIN_CONFIDENCE:
+                continue
+
+            if lift < MIN_DIRECTIONAL_LIFT:
+                continue
+
+            candidates.append({
+                "features": key,
+                "direction": direction,
+                "samples": len(outcomes),
+                "confidence": confidence,
+                "directional_rate": directional_rate,
+                "lift": lift,
+            })
+
+    # --------------------------------------------------------
+    # 2 FEATURE RULES
+    # --------------------------------------------------------
+
+    for feature_a, feature_b in combinations(
+        feature_pool,
+        2
+    ):
+
+        groups = defaultdict(list)
+
+        for record in calibration_records:
+
+            value_a = get_rule_value(
+                record,
+                feature_a,
+                edges
+            )
+
+            value_b = get_rule_value(
+                record,
+                feature_b,
+                edges
+            )
+
+            key = (
+                value_a,
+                value_b,
+            )
+
+            groups[key].append(
+                record["outcome"]
+            )
+
+        for key, outcomes in groups.items():
+
+            if len(outcomes) < MIN_CALIBRATION_SAMPLES:
+                continue
+
+            counts = Counter(outcomes)
+
+            directional_count = (
+                counts["BUY"]
+                + counts["SELL"]
+            )
+
+            if directional_count == 0:
+                continue
+
+            direction = (
+                "BUY"
+                if counts["BUY"] > counts["SELL"]
+                else "SELL"
+            )
+
+            confidence = (
+                counts[direction]
+                / len(outcomes)
+            )
+
+            directional_rate = (
+                directional_count
+                / len(outcomes)
+            )
+
+            calibration_counts = Counter(
+                r["outcome"]
+                for r in calibration_records
+            )
+
+            base_direction_rate = (
+                calibration_counts[direction]
+                / len(calibration_records)
+            )
+
+            lift = (
+                confidence
+                - base_direction_rate
+            )
+
+            if confidence < MIN_CONFIDENCE:
+                continue
+
+            if lift < MIN_DIRECTIONAL_LIFT:
+                continue
+
+            candidates.append({
+                "features": key,
+                "direction": direction,
+                "samples": len(outcomes),
+                "confidence": confidence,
+                "directional_rate": directional_rate,
+                "lift": lift,
+            })
+
+    # --------------------------------------------------------
+    # SORT
+    # --------------------------------------------------------
+

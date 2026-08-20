@@ -1,0 +1,400 @@
+    candidates.sort(
+        key=lambda x: (
+            x["lift"],
+            x["confidence"],
+            math.log1p(x["samples"])
+        ),
+        reverse=True
+    )
+
+    return candidates
+
+
+# ============================================================
+# RULE MATCHING
+# ============================================================
+
+def rule_matches(
+    record,
+    rule,
+    edges
+):
+
+    for feature_name, expected_value in rule["features"]:
+
+        actual = get_rule_value(
+            record,
+            feature_name,
+            edges
+        )
+
+        if actual != expected_value:
+            return False
+
+    return True
+
+
+# ============================================================
+# VALIDATION
+# ============================================================
+
+def evaluate_rules(
+    validation_records,
+    rules,
+    calibration_records
+):
+
+    if not rules:
+        return {
+            "predictions": 0,
+            "correct": 0,
+            "accuracy": 0.0,
+            "coverage": 0.0,
+            "buy_predictions": 0,
+            "sell_predictions": 0,
+            "buy_correct": 0,
+            "sell_correct": 0,
+            "buy_precision": 0.0,
+            "sell_precision": 0.0,
+        }
+
+    edges = prepare_feature_values(
+        calibration_records
+    )
+
+    predictions = []
+
+    for record in validation_records:
+
+        matched_rules = []
+
+        for rule in rules:
+
+            if rule_matches(
+                record,
+                rule,
+                edges
+            ):
+                matched_rules.append(rule)
+
+        if not matched_rules:
+            continue
+
+        # Strongest matching rule.
+        best_rule = max(
+            matched_rules,
+            key=lambda r: (
+                len(r["features"]),
+                r["confidence"],
+                r["lift"],
+                r["samples"]
+            )
+        )
+
+        predictions.append(
+            (
+                best_rule["direction"],
+                record["outcome"]
+            )
+        )
+
+    if not predictions:
+        return {
+            "predictions": 0,
+            "correct": 0,
+            "accuracy": 0.0,
+            "coverage": 0.0,
+            "buy_predictions": 0,
+            "sell_predictions": 0,
+            "buy_correct": 0,
+            "sell_correct": 0,
+            "buy_precision": 0.0,
+            "sell_precision": 0.0,
+        }
+
+    correct = sum(
+        1
+        for predicted, actual in predictions
+        if predicted == actual
+    )
+
+    buy_predictions = sum(
+        1
+        for predicted, _ in predictions
+        if predicted == "BUY"
+    )
+
+    sell_predictions = sum(
+        1
+        for predicted, _ in predictions
+        if predicted == "SELL"
+    )
+
+    buy_correct = sum(
+        1
+        for predicted, actual in predictions
+        if predicted == "BUY"
+        and actual == "BUY"
+    )
+
+    sell_correct = sum(
+        1
+        for predicted, actual in predictions
+        if predicted == "SELL"
+        and actual == "SELL"
+    )
+
+    total_validation = len(validation_records)
+
+    return {
+        "predictions": len(predictions),
+
+        "correct": correct,
+
+        "accuracy": (
+            correct / len(predictions)
+        ) * 100,
+
+        "coverage": (
+            len(predictions)
+            / total_validation
+        ) * 100
+        if total_validation else 0.0,
+
+        "buy_predictions": buy_predictions,
+
+        "sell_predictions": sell_predictions,
+
+        "buy_correct": buy_correct,
+
+        "sell_correct": sell_correct,
+
+        "buy_precision": (
+            buy_correct
+            / buy_predictions
+        ) * 100
+        if buy_predictions else 0.0,
+
+        "sell_precision": (
+            sell_correct
+            / sell_predictions
+        ) * 100
+        if sell_predictions else 0.0,
+    }
+
+
+# ============================================================
+# BASELINE
+# ============================================================
+
+def print_baseline(records):
+
+    counts = Counter(
+        r["outcome"]
+        for r in records
+    )
+
+    total = len(records)
+
+    print("-" * 70)
+    print("VALIDATION BASELINE")
+    print("-" * 70)
+
+    for label in ["BUY", "SELL", "NEUTRAL"]:
+
+        frequency = (
+            counts[label]
+            / total
+            * 100
+        ) if total else 0.0
+
+        print(
+            f"{label:<10}: "
+            f"{frequency:6.2f}%"
+        )
+
+    majority = (
+        max(counts.values()) / total * 100
+        if total
+        else 0.0
+    )
+
+    majority_label = (
+        counts.most_common(1)[0][0]
+        if counts
+        else "NONE"
+    )
+
+    print(
+        f"Majority baseline: "
+        f"{majority_label} "
+        f"({majority:.2f}%)"
+    )
+
+
+# ============================================================
+# RULE FORMAT
+# ============================================================
+
+def rule_text(rule):
+
+    parts = []
+
+    for feature, value in rule["features"]:
+
+        parts.append(
+            f"{feature}={value}"
+        )
+
+    return (
+        " + ".join(parts)
+        + " -> "
+        + rule["direction"]
+    )
+
+
+# ============================================================
+# WALK FORWARD
+# ============================================================
+
+def walk_forward(records):
+
+    n = len(records)
+
+    fold_size = n // (
+        WALK_FORWARD_FOLDS + 1
+    )
+
+    all_results = []
+
+    rule_fold_counts = defaultdict(int)
+
+    stable_rule_candidates = defaultdict(list)
+
+    for fold in range(
+        WALK_FORWARD_FOLDS,
+        0,
+        -1
+    ):
+
+        validation_start = (
+            fold_size * fold
+        )
+
+        validation_end = min(
+            validation_start + fold_size,
+            n
+        )
+
+        calibration_records = records[
+            :validation_start
+        ]
+
+        validation_records = records[
+            validation_start:validation_end
+        ]
+
+        if (
+            len(calibration_records)
+            < MIN_CALIBRATION_SAMPLES
+        ):
+            continue
+
+        if (
+            len(validation_records)
+            < MIN_VALIDATION_SAMPLES
+        ):
+            continue
+
+        print()
+        print("-" * 70)
+        print(f"FOLD {fold}")
+        print("-" * 70)
+
+        print(
+            "Calibration records:",
+            len(calibration_records)
+        )
+
+        print(
+            "Validation records: ",
+            len(validation_records)
+        )
+
+        print(
+            "Rule discovery: CALIBRATION ONLY"
+        )
+
+        rules = discover_rules(
+            calibration_records
+        )
+
+        print()
+        print(
+            "Adaptive rules discovered:",
+            len(rules)
+        )
+
+        if rules:
+
+            print()
+            print("TOP CALIBRATION RULES")
+
+            for rule in rules[
+                :TOP_RULES_TO_PRINT
+            ]:
+
+                print(
+                    f"{rule_text(rule)}"
+                    f" | samples={rule['samples']}"
+                    f" | confidence="
+                    f"{rule['confidence'] * 100:.2f}%"
+                    f" | lift="
+                    f"{rule['lift'] * 100:.2f}%"
+                )
+
+                rule_key = (
+                    tuple(rule["features"]),
+                    rule["direction"]
+                )
+
+                rule_fold_counts[
+                    rule_key
+                ] += 1
+
+                stable_rule_candidates[
+                    rule_key
+                ].append(rule)
+
+        result = evaluate_rules(
+            validation_records,
+            rules,
+            calibration_records
+        )
+
+        all_results.append(result)
+
+        print()
+        print(
+            "Validation matched records:",
+            result["predictions"]
+        )
+
+        print(
+            f"Directional accuracy: "
+            f"{result['accuracy']:.2f}%"
+        )
+
+        print(
+            f"Coverage: "
+            f"{result['coverage']:.2f}%"
+        )
+
+        print(
+            f"BUY precision: "
+            f"{result['buy_precision']:.2f}%"
+        )
+
+        print(
+            f"SELL precision: "
+            f"{result['sell_precision']:.2f}%"

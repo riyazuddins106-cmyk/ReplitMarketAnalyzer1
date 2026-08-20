@@ -1,0 +1,400 @@
+
+import os
+import pickle
+import math
+from collections import defaultdict
+
+# ============================================================
+# MLAI v3.3.5
+# LOCKED REGIME EDGE VALIDATION
+#
+# PURPOSE
+# -------
+# Validate whether structures discovered in calibration data
+# continue to work on completely unseen chronological data.
+#
+# PROTECTION
+# ----------
+# market_data.bin        READ ONLY
+# mlai_v31.py            NOT MODIFIED
+# learning memory        NOT MODIFIED
+# production thresholds  NOT MODIFIED
+#
+# IMPORTANT:
+# This program is diagnostic only.
+# It does NOT create a trading signal.
+# ============================================================
+
+MARKET_FILE = "market_data.bin"
+
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+
+CLASSIFICATION_THRESHOLD = 0.0015
+
+# Four chronological walk-forward folds.
+# Each fold:
+#   calibration = earlier data
+#   validation  = immediately following unseen data
+#
+# The candidate structure is discovered ONLY from calibration.
+# It is then frozen and evaluated on validation.
+N_FOLDS = 4
+
+# Percentage of the usable history allocated to each validation
+# section.
+VALIDATION_RATIO = 0.20
+
+# A candidate regime/volatility combination must have at least
+# this many calibration observations before it can be considered.
+MIN_CALIBRATION_SAMPLES = 25
+
+# Minimum validation observations required before reporting
+# a validation edge as meaningful.
+MIN_VALIDATION_SAMPLES = 20
+
+# Candidate confidence levels.
+CONFIDENCE_THRESHOLDS = [50, 55, 60, 65, 70, 75, 80, 85]
+
+# Candidate structures we specifically want to investigate.
+TARGET_STRUCTURES = [
+    ("bullish", "stable"),
+    ("bullish_bias", "stable"),
+    ("bullish", "contracting"),
+    ("bullish", "expanding"),
+    ("bearish", "stable"),
+    ("bearish_bias", "stable"),
+]
+
+
+# ============================================================
+# PROTECTION / LOAD
+# ============================================================
+
+def protection_check():
+    print("=" * 70)
+    print("PROTECTION CHECK")
+    print("=" * 70)
+
+    print("market_data.bin: READ ONLY")
+
+    if os.path.exists("mlai_v31.py"):
+        print("mlai_v31.py: NOT MODIFIED")
+    else:
+        print("mlai_v31.py: NOT TOUCHED / FILE NOT REQUIRED")
+
+    print("learning memory: NOT MODIFIED")
+    print("production thresholds: NOT MODIFIED")
+    print()
+
+
+def load_market():
+    with open(MARKET_FILE, "rb") as f:
+        data = pickle.load(f)
+
+    if isinstance(data, dict):
+        print("Data type: dict")
+
+        # Common MLAI storage possibilities.
+        if "candles" in data:
+            candles = data["candles"]
+        elif "data" in data:
+            candles = data["data"]
+        elif "market_data" in data:
+            candles = data["market_data"]
+        else:
+            # Try to locate a list of candle dictionaries.
+            candles = None
+
+            for value in data.values():
+                if isinstance(value, list) and value:
+                    if isinstance(value[0], dict):
+                        sample = value[0]
+                        keys = {str(k).lower() for k in sample.keys()}
+
+                        if (
+                            "close" in keys
+                            or "c" in keys
+                        ):
+                            candles = value
+                            break
+
+            if candles is None:
+                raise ValueError(
+                    "Could not locate candle data inside market_data.bin"
+                )
+
+    elif isinstance(data, list):
+        candles = data
+    else:
+        raise ValueError(
+            "Unsupported market_data.bin format"
+        )
+
+    return candles
+
+
+# ============================================================
+# CANDLE HELPERS
+# ============================================================
+
+def get_value(candle, *names):
+    if not isinstance(candle, dict):
+        return None
+
+    lower_map = {
+        str(k).lower(): v
+        for k, v in candle.items()
+    }
+
+    for name in names:
+        if name.lower() in lower_map:
+            return lower_map[name.lower()]
+
+    return None
+
+
+def extract_close(candle):
+    value = get_value(
+        candle,
+        "close",
+        "Close",
+        "c",
+    )
+
+    if value is None:
+        raise ValueError(
+            "Candle does not contain a close price."
+        )
+
+    return float(value)
+
+
+def extract_timestamp(candle, index):
+    value = get_value(
+        candle,
+        "timestamp",
+        "time",
+        "datetime",
+        "date",
+        "t",
+    )
+
+    if value is None:
+        return index
+
+    return value
+
+
+def safe_return(closes, start, end):
+    if start < 0 or end >= len(closes):
+        return None
+
+    base = closes[start]
+
+    if base == 0:
+        return None
+
+    return (closes[end] - base) / base
+
+
+# ============================================================
+# STRUCTURE FEATURES
+# ============================================================
+
+def calculate_features(closes, index):
+    """
+    Calculates the same general 60-candle structural concepts
+    investigated by v3.3.4.
+
+    The feature vector is deliberately simple and deterministic.
+    """
+
+    if index < CURRENT_WINDOW - 1:
+        return None
+
+    start = index - CURRENT_WINDOW + 1
+    window = closes[start:index + 1]
+
+    if len(window) < CURRENT_WINDOW:
+        return None
+
+    r15 = safe_return(
+        closes,
+        index - 14,
+        index
+    )
+
+    r30 = safe_return(
+        closes,
+        index - 29,
+        index
+    )
+
+    r60 = safe_return(
+        closes,
+        index - 59,
+        index
+    )
+
+    if r15 is None or r30 is None or r60 is None:
+        return None
+
+    bullish = 0
+    bearish = 0
+
+    for j in range(start + 1, index + 1):
+        if closes[j] > closes[j - 1]:
+            bullish += 1
+        elif closes[j] < closes[j - 1]:
+            bearish += 1
+
+    total_directional = bullish + bearish
+
+    if total_directional == 0:
+        bullish_ratio = 0.0
+        bearish_ratio = 0.0
+    else:
+        bullish_ratio = bullish / total_directional
+        bearish_ratio = bearish / total_directional
+
+    directional_imbalance = (
+        bullish_ratio - bearish_ratio
+    )
+
+    returns = []
+
+    for j in range(start + 1, index + 1):
+        if closes[j - 1] != 0:
+            returns.append(
+                (closes[j] - closes[j - 1])
+                / closes[j - 1]
+            )
+
+    if not returns:
+        volatility = 0.0
+    else:
+        mean_r = sum(returns) / len(returns)
+
+        variance = sum(
+            (x - mean_r) ** 2
+            for x in returns
+        ) / len(returns)
+
+        volatility = math.sqrt(variance)
+
+    # Compare recent volatility with the older portion
+    # of the 60-candle window.
+    recent_returns = returns[-20:]
+    old_returns = returns[:40]
+
+    def std(values):
+        if not values:
+            return 0.0
+
+        mean_v = sum(values) / len(values)
+
+        return math.sqrt(
+            sum((x - mean_v) ** 2 for x in values)
+            / len(values)
+        )
+
+    recent_vol = std(recent_returns)
+    old_vol = std(old_returns)
+
+    if old_vol == 0:
+        volatility_ratio = 1.0
+    else:
+        volatility_ratio = (
+            recent_vol / old_vol
+        )
+
+    minimum = min(window)
+    maximum = max(window)
+
+    if maximum == minimum:
+        location_in_range = 0.5
+    else:
+        location_in_range = (
+            closes[index] - minimum
+        ) / (maximum - minimum)
+
+    normalized_slope = r60
+
+    # --------------------------------------------------------
+    # Regime classification
+    # --------------------------------------------------------
+
+    if r60 > 0.004 and directional_imbalance > 0.05:
+        directional_regime = "bullish"
+
+    elif r60 > 0.001 and directional_imbalance > 0.02:
+        directional_regime = "bullish_bias"
+
+    elif r60 < -0.004 and directional_imbalance < -0.05:
+        directional_regime = "bearish"
+
+    elif r60 < -0.001 and directional_imbalance < -0.02:
+        directional_regime = "bearish_bias"
+
+    else:
+        directional_regime = "neutral"
+
+    if volatility_ratio > 1.20:
+        volatility_regime = "expanding"
+
+    elif volatility_ratio < 0.85:
+        volatility_regime = "contracting"
+
+    else:
+        volatility_regime = "stable"
+
+    return {
+        "return_15": r15,
+        "return_30": r30,
+        "return_60": r60,
+        "bullish_ratio": bullish_ratio,
+        "bearish_ratio": bearish_ratio,
+        "directional_imbalance": directional_imbalance,
+        "volatility": volatility,
+        "volatility_ratio": volatility_ratio,
+        "location_in_range": location_in_range,
+        "normalized_slope": normalized_slope,
+        "directional_regime": directional_regime,
+        "volatility_regime": volatility_regime,
+    }
+
+
+# ============================================================
+# OUTCOME
+# ============================================================
+
+def classify_outcome(
+    closes,
+    index,
+    horizon
+):
+    future_index = index + horizon
+
+    if future_index >= len(closes):
+        return None
+
+    base = closes[index]
+
+    if base == 0:
+        return None
+
+    future = closes[future_index]
+
+    change = (
+        future - base
+    ) / base
+
+    if change >= CLASSIFICATION_THRESHOLD:
+        return "bullish"
+
+    if change <= -CLASSIFICATION_THRESHOLD:
+        return "bearish"
+
+    return "neutral"
+

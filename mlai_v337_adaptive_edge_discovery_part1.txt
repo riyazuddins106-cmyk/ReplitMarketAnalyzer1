@@ -1,0 +1,400 @@
+
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+from itertools import combinations
+
+
+# ============================================================
+# MLAI v3.3.7 ADAPTIVE EDGE DISCOVERY
+# ============================================================
+#
+# PURPOSE
+# -------
+# Search for repeatable directional structures without requiring
+# an exact predefined combination of market states.
+#
+# v3.3.7 improvements:
+#
+# 1. Categorical structure rules
+# 2. Continuous feature quantile bins
+# 3. One-feature rules
+# 4. Two-feature rules
+# 5. Calibration-only discovery
+# 6. Strict chronological walk-forward validation
+# 7. Cross-fold stability analysis
+# 8. Majority-baseline comparison
+# 9. Rule confidence / lift reporting
+#
+# PROTECTION
+# ----------
+# market_data.bin is READ ONLY
+# mlai_v31.py is NOT MODIFIED
+# learning memory is NOT MODIFIED
+# production thresholds are NOT MODIFIED
+#
+# THIS SCRIPT DOES NOT CREATE TRADING SIGNALS.
+# THIS SCRIPT DOES NOT MODIFY PRODUCTION MLAI.
+#
+# ============================================================
+
+
+MARKET_FILE = "market_data.bin"
+
+WINDOW = 60
+
+HORIZONS = [4, 8, 16]
+
+CLASSIFICATION_THRESHOLD = 0.0015
+
+WALK_FORWARD_FOLDS = 4
+
+MIN_CALIBRATION_SAMPLES = 20
+
+MIN_VALIDATION_SAMPLES = 20
+
+MIN_CONFIDENCE = 0.45
+
+MIN_DIRECTIONAL_LIFT = 0.05
+
+MIN_STABILITY_FOLDS = 2
+
+TOP_RULES_TO_PRINT = 20
+
+QUANTILE_BINS = 3
+
+
+# ============================================================
+# LOAD DATA
+# ============================================================
+
+print("=" * 70)
+print("MLAI v3.3.7 ADAPTIVE EDGE DISCOVERY")
+print("=" * 70)
+
+print("""
+Purpose:
+Search for repeatable directional information using adaptive
+market-structure features while preserving strict chronological
+walk-forward validation.
+
+Rules are discovered using calibration data only.
+Validation data is never used to discover rules.
+""")
+
+print("=" * 70)
+print("PROTECTION CHECK")
+print("=" * 70)
+
+print("market_data.bin: READ ONLY")
+print("mlai_v31.py: NOT MODIFIED")
+print("learning memory: NOT MODIFIED")
+print("production thresholds: NOT MODIFIED")
+
+if not os.path.exists(MARKET_FILE):
+    raise FileNotFoundError(f"{MARKET_FILE} not found.")
+
+with open(MARKET_FILE, "rb") as f:
+    market_data = pickle.load(f)
+
+print()
+print("Data type:", type(market_data).__name__)
+
+
+# ============================================================
+# EXTRACT CANDLES
+# ============================================================
+
+def extract_candles(data):
+    if isinstance(data, dict):
+
+        for key in ["candles", "data", "market_data", "ohlcv"]:
+            if key in data and isinstance(data[key], list):
+                return data[key]
+
+        if all(k in data for k in ["open", "high", "low", "close"]):
+            opens = data["open"]
+            highs = data["high"]
+            lows = data["low"]
+            closes = data["close"]
+
+            n = min(
+                len(opens),
+                len(highs),
+                len(lows),
+                len(closes),
+            )
+
+            return [
+                {
+                    "open": opens[i],
+                    "high": highs[i],
+                    "low": lows[i],
+                    "close": closes[i],
+                }
+                for i in range(n)
+            ]
+
+    if isinstance(data, list):
+        return data
+
+    raise ValueError("Unsupported market_data.bin structure.")
+
+
+candles = extract_candles(market_data)
+
+print("Total candles:", len(candles))
+print("PASS: market_data.bin loaded.")
+print("PASS: Close prices extracted.")
+print("PASS: market_data.bin will NOT be modified.")
+print("PASS: Production MLAI will NOT be modified.")
+
+
+# ============================================================
+# SAFE CANDLE ACCESS
+# ============================================================
+
+def get_value(candle, key, default=0.0):
+    if isinstance(candle, dict):
+        value = candle.get(key, default)
+
+        try:
+            return float(value)
+        except Exception:
+            return default
+
+    return default
+
+
+opens = [get_value(c, "open") for c in candles]
+highs = [get_value(c, "high") for c in candles]
+lows = [get_value(c, "low") for c in candles]
+closes = [get_value(c, "close") for c in candles]
+
+
+# ============================================================
+# BASIC STATISTICS
+# ============================================================
+
+def safe_div(a, b):
+    if b == 0:
+        return 0.0
+
+    return a / b
+
+
+def mean(values):
+    if not values:
+        return 0.0
+
+    return sum(values) / len(values)
+
+
+def std(values):
+    if len(values) < 2:
+        return 0.0
+
+    m = mean(values)
+
+    return math.sqrt(
+        sum((x - m) ** 2 for x in values)
+        / (len(values) - 1)
+    )
+
+
+def quantile_edges(values, bins=3):
+    """
+    Quantile edges calculated only from calibration data.
+    """
+    values = sorted(v for v in values if math.isfinite(v))
+
+    if len(values) < bins:
+        return []
+
+    edges = []
+
+    for i in range(1, bins):
+        pos = (len(values) - 1) * i / bins
+
+        low = int(math.floor(pos))
+        high = int(math.ceil(pos))
+
+        if low == high:
+            q = values[low]
+        else:
+            fraction = pos - low
+            q = (
+                values[low]
+                + (values[high] - values[low]) * fraction
+            )
+
+        edges.append(q)
+
+    return edges
+
+
+def quantile_label(value, edges):
+    if not edges:
+        return "unknown"
+
+    if value <= edges[0]:
+        return "q1"
+
+    if len(edges) == 1:
+        return "q2"
+
+    if value <= edges[1]:
+        return "q2"
+
+    return "q3"
+
+
+# ============================================================
+# STRUCTURE CALCULATION
+# ============================================================
+
+def structure_features(index):
+    start = index - WINDOW + 1
+
+    if start < 0:
+        return None
+
+    c60 = closes[start:index + 1]
+
+    if len(c60) < WINDOW:
+        return None
+
+    current = closes[index]
+
+    if current <= 0:
+        return None
+
+    def ret(n):
+        if len(c60) <= n:
+            return 0.0
+
+        previous = closes[index - n]
+
+        if previous == 0:
+            return 0.0
+
+        return (current - previous) / previous
+
+    returns = []
+
+    for j in range(start + 1, index + 1):
+
+        previous = closes[j - 1]
+
+        if previous != 0:
+            returns.append(
+                (closes[j] - previous) / previous
+            )
+
+    volatility = std(returns)
+
+    recent_returns = returns[-20:] if len(returns) >= 20 else returns
+
+    recent_volatility = std(recent_returns)
+
+    volatility_ratio = safe_div(
+        volatility,
+        recent_volatility
+    ) if recent_volatility != 0 else 1.0
+
+    bullish = 0
+    bearish = 0
+
+    body_sizes = []
+    upper_wicks = []
+    lower_wicks = []
+
+    for j in range(start, index + 1):
+
+        o = opens[j]
+        h = highs[j]
+        l = lows[j]
+        c = closes[j]
+
+        if c > o:
+            bullish += 1
+        elif c < o:
+            bearish += 1
+
+        candle_range = max(h - l, 1e-12)
+
+        body_sizes.append(abs(c - o) / candle_range)
+
+        upper_wicks.append(
+            max(0.0, h - max(o, c)) / candle_range
+        )
+
+        lower_wicks.append(
+            max(0.0, min(o, c) - l) / candle_range
+        )
+
+    total = max(len(c60), 1)
+
+    bullish_ratio = bullish / total
+    bearish_ratio = bearish / total
+
+    directional_imbalance = (
+        bullish_ratio - bearish_ratio
+    )
+
+    high60 = max(highs[start:index + 1])
+    low60 = min(lows[start:index + 1])
+
+    range60 = max(high60 - low60, 1e-12)
+
+    location = (
+        current - low60
+    ) / range60
+
+    momentum_5 = ret(5)
+    momentum_10 = ret(10)
+    momentum_20 = ret(20)
+
+    momentum_acceleration = (
+        momentum_5 - momentum_10
+    )
+
+    slope = ret(60)
+
+    recent_body_ratio = mean(body_sizes[-10:])
+
+    recent_upper_wick = mean(upper_wicks[-10:])
+
+    recent_lower_wick = mean(lower_wicks[-10:])
+
+    # --------------------------------------------------------
+    # CATEGORICAL STATES
+    # --------------------------------------------------------
+
+    if slope > 0.002:
+        directional_regime = "bullish"
+    elif slope < -0.002:
+        directional_regime = "bearish"
+    else:
+        directional_regime = "neutral"
+
+    if abs(slope) > 0.005:
+        trend_consistency = "strong"
+    elif abs(slope) > 0.002:
+        trend_consistency = "moderate"
+    else:
+        trend_consistency = "weak"
+
+    if volatility_ratio > 1.15:
+        volatility_regime = "expanding"
+    elif volatility_ratio < 0.85:
+        volatility_regime = "contracting"
+    else:
+        volatility_regime = "stable"
+
+    if location >= 0.75:
+        location_state = "upper_range"
+    elif location <= 0.25:
+        location_state = "lower_range"
+    else:

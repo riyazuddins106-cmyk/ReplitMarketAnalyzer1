@@ -1,0 +1,41 @@
+MLAI v4.1.5 — FINAL REMAINING REVIEW VERIFICATION
+====================================================================================================
+Target: C:\Users\HomePC\mlai-test\mlai_market_structure_v415.py
+Data: C:\Users\HomePC\mlai-test\market_data.bin
+Python: 3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]
+
+[PASS] INPUT_INTEGRITY
+    Target source and market_data.bin exist.
+[PASS] IMPORT
+    v4.1.5 imported successfully.
+[PASS] TARGET_LOADER
+    Target loader returned 1309 candles.
+[PASS] CANDLE_VALIDATION
+    All 1309 candles valid.
+[PASS] CHRONOLOGY
+    Timestamps strictly increase.
+[PASS] STRUCTURE_CONFIRMATION_RUNTIME
+    Checked 225 swings; no swing confirmed before pivot + SWING_RIGHT.
+[PASS] PATH_CAUSALITY_FINAL
+    3 future-mutation prefix tests passed.
+[PASS] MARKET_STATE_CAUSALITY_FINAL
+    State prefix through 654 is invariant to future mutation.
+[PASS] EXPERIENCE_TRAINING_BOUNDARY
+    633 records stayed within training boundary 654.
+[PASS] PERMUTATION_INDEX_SEMANTICS
+    i + 1 / modulo indexing is confined to deterministic shuffle logic.
+[PASS] WALK_FORWARD_STRUCTURAL_CONTRACT
+    5 windows contain valid train_start/train_end/oos_start/oos_end boundaries.
+[PASS] WALK_FORWARD_RUNTIME_FINAL
+    5 windows passed train/OOS/horizon boundary verification.
+[PASS] FUTURE_INDEX_STATIC_FINAL
+    All previously flagged future-index references have explicit causal semantics or boundary-only semantics.
+[PASS] SOURCE_MUTATION_FINAL
+    Target source remained byte-for-byte unchanged.
+[PASS] DATA_MUTATION_FINAL
+    market_data.bin remained byte-for-byte unchanged.
+
+====================================================================================================
+FINAL VERDICT
+====================================================================================================
+PASS — CAUSAL CERTIFICATION PASSED

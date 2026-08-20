@@ -1,0 +1,500 @@
+﻿
+    if total <= 1e-12:
+        return {
+            "UP": 1.0 / 3.0,
+            "DOWN": 1.0 / 3.0,
+            "NEUTRAL": 1.0 / 3.0,
+        }
+
+    probabilities = {
+        cls: evidence[cls] / total
+        for cls in ("UP", "DOWN", "NEUTRAL")
+    }
+
+    return probabilities
+
+def _mlai_fix_predict_from_evidence(
+    current,
+    records,
+    horizon,
+    query_index,
+    *,
+    min_probability=0.40,
+    min_margin=0.05,
+):
+    """
+    Final repaired decision rule.
+
+    The decision layer no longer blindly follows:
+      - raw top-k majority
+      - power aggregation
+      - the historical class prior
+
+    It requires positive evidence and a minimum separation between the
+    best and second-best classes.
+
+    Otherwise it returns NEUTRAL.
+
+    This is deliberately conservative.
+    """
+
+    probabilities = _mlai_fix_class_evidence(
+        current,
+        records,
+        horizon,
+        query_index,
+    )
+
+    ranked = sorted(
+        probabilities.items(),
+        key=lambda x: x[1],
+        reverse=True,
+    )
+
+    best_class, best_probability = ranked[0]
+    second_probability = ranked[1][1]
+
+    margin = best_probability - second_probability
+
+    # If evidence is ambiguous, do not manufacture a directional signal.
+    if best_probability < min_probability:
+        prediction = "NEUTRAL"
+    elif margin < min_margin:
+        prediction = "NEUTRAL"
+    else:
+        prediction = best_class
+
+    return {
+        "prediction": prediction,
+        "probabilities": probabilities,
+        "margin": margin,
+        "best_probability": best_probability,
+    }
+
+def mlai_v415_repaired_prediction(
+    current,
+    records,
+    horizon,
+    query_index,
+):
+    """
+    Public repaired predictive layer.
+
+    Existing v4.1.5 retrieval remains available.
+
+    Use this function for the repaired decision path.
+    """
+
+    return _mlai_fix_predict_from_evidence(
+        current=current,
+        records=records,
+        horizon=horizon,
+        query_index=query_index,
+    )
+
+# =====================================================================
+def main() -> None:
+    print("=" * 96)
+    print("MLAI v4.1.5 ROBUST CAUSAL HISTORICAL EXPERIENCE RETRIEVAL")
+    print("=" * 96)
+    print("RESEARCH / VALIDATION ONLY")
+
+    print()
+    print("=" * 96)
+    print("PROTECTION CHECK")
+    print("=" * 96)
+    print(f"{MARKET_DATA_FILE:<26}: READ ONLY")
+    print("Production MLAI            : NOT MODIFIED")
+    print("Learning memory            : NOT MODIFIED")
+    print("Trading                    : DISABLED")
+
+    guard = ProtectionGuard(MARKET_DATA_FILE)
+    protection_before = guard.before_hash
+
+    candles, invalid = load_market_data(MARKET_DATA_FILE)
+    chronology = audit_chronology(candles)
+
+    if not chronology["ordered"] or chronology["duplicates"]:
+        raise RuntimeError("Chronology audit failed.")
+    if len(candles) < 500:
+        raise RuntimeError("Insufficient candle history.")
+
+    windows = create_walk_forward_windows(
+        len(candles),
+        DEFAULT_TRAIN_WINDOWS,
+        DEFAULT_OOS_SIZE,
+    )
+
+    atr = calculate_atr(candles)
+    engine = CausalStructureEngine(candles)
+    structure_states = engine.build()
+
+    causality = audit_structure_causality(
+        candles,
+        engine.swings,
+        structure_states,
+        engine.events,
+    )
+    if not causality["passed"]:
+        raise RuntimeError("Causality audit failed.")
+
+    market_states = build_market_states(
+        candles,
+        structure_states,
+        atr,
+    )
+
+    episode_ids = assign_episode_ids(market_states)
+
+    print()
+    print("=" * 96)
+    print("FOUNDATION STATUS")
+    print("=" * 96)
+    print(f"Valid candles             : {len(candles)}")
+    print(f"Invalid candles           : {invalid}")
+    print(f"Confirmed swings          : {len(engine.swings)}")
+    print(
+        f"Structural events         : "
+        f"{sum(1 for e in engine.events.values() if e != 'NONE')}"
+    )
+    print("Chronology                : PASS")
+    print("Causal structure          : PASS")
+    print(f"Episodes                  : {len(set(episode_ids.values()))}")
+
+    print()
+    print("Sequence states:")
+    for name, count in Counter(state.sequence_state for state in market_states).most_common():
+        print(f"  {name:<34}: {count}")
+
+    print()
+    print("Regimes:")
+    for name, count in Counter(state.regime for state in market_states).most_common():
+        print(f"  {name:<34}: {count}")
+
+    all_windows: List[Dict[str, Any]] = []
+    bucket_rows: List[Dict[str, Any]] = []
+    null_rows: List[Dict[str, Any]] = []
+
+    print()
+    print("=" * 96)
+    print("STRICT WALK-FORWARD HISTORICAL RETRIEVAL")
+    print("=" * 96)
+
+    for window in windows:
+        window_result = {
+            "window": asdict(window),
+            "horizons": {},
+        }
+
+        print()
+        print("-" * 96)
+        print(
+            f"WINDOW {window.number} | "
+            f"TRAIN [{window.train_start}:{window.train_end}] | "
+            f"OOS [{window.oos_start}:{window.oos_end}]"
+        )
+
+        for horizon in HORIZONS:
+            records = build_experience_records(
+                candles,
+                atr,
+                market_states,
+                episode_ids,
+                window.train_start,
+                window.train_end,
+                horizon,
+            )
+
+            evaluations = []
+
+            for query_index in range(window.oos_start, window.oos_end):
+                if query_index + horizon >= len(candles):
+                    continue
+
+                query_state = market_states[query_index]
+                retrieval = retrieve_historical_experience(
+                    query_state,
+                    records,
+                    horizon,
+                    query_index,
+                )
+
+                # ---------------------------------------------------------
+                # REPAIRED PREDICTIVE DECISION PATH
+                #
+                # The historical retrieval object remains available for
+                # diagnostics, but the actual directional decision now
+                # comes from the repaired evidence layer.
+                #
+                # This is deliberately evaluated using only:
+                #   - query_state
+                #   - training records
+                #   - horizon
+                #   - query_index
+                #
+                # No OOS outcome is supplied to the predictor.
+                # ---------------------------------------------------------
+
+                repaired_prediction = mlai_v415_repaired_prediction(
+                    current=query_state,
+                    records=records,
+                    horizon=horizon,
+                    query_index=query_index,
+                )
+
+                outcome = make_outcome(
+                    candles,
+                    atr,
+                    query_index,
+                    horizon,
+                )
+                if outcome is None:
+                    continue
+
+                # ---------------------------------------------------------
+                # REPAIRED PREDICTION EVALUATION
+                #
+                # This is the first point where the repaired predictive
+                # layer is connected to an actual out-of-sample evaluation.
+                #
+                # The outcome is used ONLY AFTER prediction has been
+                # generated, so it cannot leak into the prediction.
+                # ---------------------------------------------------------
+
+                repaired_prediction_value = repaired_prediction["prediction"]
+                repaired_probabilities = repaired_prediction["probabilities"]
+
+                repaired_eval = evaluate_distribution(
+                    repaired_probabilities,
+                    outcome.direction,
+                )
+
+                retrieval_distribution = {
+                    "UP": retrieval.up_share,
+                    "DOWN": retrieval.down_share,
+                    "NEUTRAL": retrieval.neutral_share,
+                }
+
+                retrieval_eval = evaluate_distribution(
+                    retrieval_distribution,
+                    outcome.direction,
+                )
+
+                baseline_level, baseline_distribution, baseline_samples = conditional_baseline(
+                    query_state,
+                    records,
+                )
+
+                baseline_eval = evaluate_distribution(
+                    baseline_distribution,
+                    outcome.direction,
+                )
+
+                row = {
+                    "query_index": query_index,
+                    "actual": outcome.direction,
+
+                    # -----------------------------------------------------
+                    # REPAIRED PREDICTIVE RESULT
+                    # -----------------------------------------------------
+                    "repaired_prediction": repaired_prediction_value,
+                    "repaired_probabilities": repaired_probabilities,
+                    "repaired_margin": repaired_prediction["margin"],
+                    "repaired_best_probability": repaired_prediction[
+                        "best_probability"
+                    ],
+                    "repaired_evaluation": repaired_eval,
+                    "retrieval": asdict(retrieval),
+                    "retrieval_evaluation": retrieval_eval,
+                    "baseline": baseline_distribution,
+                    "baseline_level": baseline_level,
+                    "baseline_samples": baseline_samples,
+                    "baseline_evaluation": baseline_eval,
+                    "brier_lift": baseline_eval["brier"] - retrieval_eval["brier"],
+                    "log_loss_lift": baseline_eval["log_loss"] - retrieval_eval["log_loss"],
+                    "similarity_bucket": bucket_name(retrieval.top_similarity),
+                }
+
+                null_result = null_retrieval_sanity_test(
+                    query_state,
+                    records,
+                    query_index,
+                    horizon,
+                )
+                row["null_test"] = null_result
+
+                evaluations.append(row)
+                bucket_rows.append(row)
+                if null_result["available"]:
+                    null_rows.append(null_result)
+
+            repaired_accuracy = (
+                mean_or_zero(
+                    [
+                        1.0
+                        if row["repaired_evaluation"]["correct"]
+                        else 0.0
+                        for row in evaluations
+                    ]
+                )
+                if evaluations
+                else None
+            )
+
+            repaired_brier = (
+                mean_or_zero(
+                    [
+                        row["repaired_evaluation"]["brier"]
+                        for row in evaluations
+                    ]
+                )
+                if evaluations
+                else None
+            )
+
+            repaired_log_loss = (
+                mean_or_zero(
+                    [
+                        row["repaired_evaluation"]["log_loss"]
+                        for row in evaluations
+                    ]
+                )
+                if evaluations
+                else None
+            )
+
+            retrieval_accuracy = (
+                mean_or_zero(
+                    [
+                        1.0
+                        if row["retrieval_evaluation"]["correct"]
+                        else 0.0
+                        for row in evaluations
+                    ]
+                )
+                if evaluations
+                else None
+            )
+
+            baseline_accuracy = (
+                mean_or_zero(
+                    [
+                        1.0
+                        if row["baseline_evaluation"]["correct"]
+                        else 0.0
+                        for row in evaluations
+                    ]
+                )
+                if evaluations
+                else None
+            )
+
+            retrieval_brier = (
+                mean_or_zero(
+                    [row["retrieval_evaluation"]["brier"] for row in evaluations]
+                )
+                if evaluations
+                else None
+            )
+            baseline_brier = (
+                mean_or_zero(
+                    [row["baseline_evaluation"]["brier"] for row in evaluations]
+                )
+                if evaluations
+                else None
+            )
+            retrieval_log_loss = (
+                mean_or_zero(
+                    [row["retrieval_evaluation"]["log_loss"] for row in evaluations]
+                )
+                if evaluations
+                else None
+            )
+            baseline_log_loss = (
+                mean_or_zero(
+                    [row["baseline_evaluation"]["log_loss"] for row in evaluations]
+                )
+                if evaluations
+                else None
+            )
+
+            non_sparse = [
+                row
+                for row in evaluations
+                if not row["retrieval"]["sparse_warning"]
+            ]
+
+            result = {
+                "training_records": len(records),
+                "oos_queries": len(evaluations),
+
+                # Repaired predictive layer
+                "repaired_accuracy": repaired_accuracy,
+                "repaired_brier": repaired_brier,
+                "repaired_log_loss": repaired_log_loss,
+                "retrieval_accuracy": retrieval_accuracy,
+                "baseline_accuracy": baseline_accuracy,
+                "retrieval_brier": retrieval_brier,
+                "baseline_brier": baseline_brier,
+                "brier_lift": (
+                    baseline_brier - retrieval_brier
+                    if retrieval_brier is not None and baseline_brier is not None
+                    else None
+                ),
+                "retrieval_log_loss": retrieval_log_loss,
+                "baseline_log_loss": baseline_log_loss,
+                "log_loss_lift": (
+                    baseline_log_loss - retrieval_log_loss
+                    if retrieval_log_loss is not None and baseline_log_loss is not None
+                    else None
+                ),
+                "retrieval_coverage": safe_div(len(non_sparse), len(evaluations)),
+                "sparse_rate": 1.0 - safe_div(len(non_sparse), len(evaluations)),
+                "mean_top_similarity": mean_or_zero(
+                    [row["retrieval"]["top_similarity"] for row in evaluations]
+                ),
+                "mean_matches": mean_or_zero(
+                    [row["retrieval"]["deduplicated_matches"] for row in evaluations]
+                ),
+                "mean_supporting_matches": mean_or_zero(
+                    [row["retrieval"]["supporting_matches"] for row in evaluations]
+                ),
+                "mean_conflicting_matches": mean_or_zero(
+                    [row["retrieval"]["conflicting_matches"] for row in evaluations]
+                ),
+                "evaluations": evaluations,
+            }
+
+            window_result["horizons"][horizon] = result
+
+            print()
+            print(
+                f"H+{horizon}: "
+                f"TrainRecords={len(records)} | OOSQueries={len(evaluations)}"
+            )
+            print(
+                f"Retrieval Accuracy={fmt_pct(retrieval_accuracy)} | "
+                f"Baseline={fmt_pct(baseline_accuracy)}"
+            )
+
+            print(
+                f"REPAIRED Accuracy={fmt_pct(repaired_accuracy)} | "
+                f"REPAIRED Brier={fmt_num(repaired_brier)} | "
+                f"REPAIRED LogLoss={fmt_num(repaired_log_loss)}"
+            )
+            print(
+                f"Retrieval Brier={fmt_num(retrieval_brier)} | "
+                f"Baseline Brier={fmt_num(baseline_brier)} | "
+                f"Lift={fmt_num(result['brier_lift'])}"
+            )
+            print(
+                f"Retrieval LogLoss={fmt_num(retrieval_log_loss)} | "
+                f"Baseline LogLoss={fmt_num(baseline_log_loss)} | "
+                f"Lift={fmt_num(result['log_loss_lift'])}"
+            )
+            print(
+                f"Coverage={fmt_pct(result['retrieval_coverage'])} | "
+                f"Sparse={fmt_pct(result['sparse_rate'])} | "
+                f"Matches={result['mean_matches']:.2f} | "
+                f"TopSimilarity={fmt_pct(result['mean_top_similarity'])}"
+            )

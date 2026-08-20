@@ -1,0 +1,824 @@
+Yes. Based on the goal you just defined, the next step should not be to change MLAI yet. First, we should audit the current project against your actual vision and identify exactly what is missing, what is already correct, and what should be rebuilt.
+Use this prompt with me when you want me to analyze the project:
+MLAI PROJECT — FULL GOAL-BASED ARCHITECTURE & LEARNING AUDIT
+ROLE
+Act as the senior AI/ML architect, quantitative researcher, market-structure researcher, Python engineer, data-engineering engineer, and software auditor for my MLAI project.
+You are NOT being asked to blindly improve the existing code.
+You must first understand my actual objective and then audit the existing MLAI project against that objective.
+________________________________________
+1. MY ACTUAL OBJECTIVE
+I am building:
+MLAI — Market Language AI
+The ultimate goal is NOT to create a simple candlestick-pattern detector.
+The goal is to build a system that can eventually receive a real market chart/data stream and understand the language of price behaviour.
+Humans learn language through repeated exposure, context, relationships, history, and experience.
+For example:
+An experienced person may see:
+•	a particular season,
+•	cloud conditions,
+•	wind,
+•	humidity,
+•	temperature,
+•	environmental changes,
+and say:
+"Rain is probably coming."
+A three-year-old may see the exact same sky but not understand what it means because the child does not have the accumulated knowledge and experience.
+I want MLAI to develop a similar form of market understanding.
+MLAI should learn from:
+•	historical market data,
+•	candlestick sequences,
+•	price behaviour,
+•	market structure,
+•	context,
+•	repeated situations,
+•	successful and failed patterns,
+•	changing market conditions,
+•	active/current market data,
+•	continuous testing,
+•	statistical evidence,
+•	and accumulated machine-readable knowledge.
+The goal is NOT certainty.
+The goal is:
+probabilistic understanding based on evidence and learned historical relationships.
+________________________________________
+2. IMPORTANT PRINCIPLE
+I understand that:
+What happened in history will NOT necessarily happen again in exactly the same way.
+Historical behaviour is evidence, not a guarantee.
+Therefore MLAI must ultimately reason in terms of:
+•	probability,
+•	evidence,
+•	uncertainty,
+•	confidence,
+•	similarity,
+•	context,
+•	historical frequency,
+•	confirmation,
+•	invalidation,
+•	and alternative scenarios.
+It must never assume:
+"This happened before, therefore it must happen again."
+Instead it should reason:
+"The current market behaviour resembles previous situations in these ways. Historically, under similar conditions, these outcomes occurred with these frequencies. Current evidence therefore increases/decreases the probability of these scenarios."
+________________________________________
+3. CORE VISION
+The brain must learn:
+Market Language → Market Understanding → Human Language
+The system should eventually be able to take chart information and reason approximately like:
+What do I see?
+↓
+What happened before?
+↓
+What changed?
+↓
+What is happening now?
+↓
+What does the candle sequence communicate?
+↓
+What does the structure communicate?
+↓
+What context are we in?
+↓
+What historical situations are similar?
+↓
+What happened in those situations?
+↓
+How reliable is that historical evidence?
+↓
+Is there conflicting evidence?
+↓
+What scenarios are currently plausible?
+↓
+What would strengthen each scenario?
+↓
+What would invalidate each scenario?
+↓
+Explain the current market story in simple English.
+________________________________________
+4. KNOWLEDGE DOMAINS MLAI SHOULD EVENTUALLY UNDERSTAND
+Audit whether the current project has the architecture/data/model capability to learn the following.
+Candlestick Fundamentals
+•	Open
+•	High
+•	Low
+•	Close
+•	Body
+•	Upper wick
+•	Lower wick
+•	Range
+•	Body/range ratio
+•	Wick/body ratio
+•	Relative candle size
+•	Bullish candles
+•	Bearish candles
+•	Neutral candles
+•	Expansion candles
+•	Compression candles
+•	Large-range candles
+•	Small-range candles
+•	Candle location
+Candlestick Patterns
+Including but not limited to:
+•	Doji
+•	Hammer
+•	Hanging Man
+•	Inverted Hammer
+•	Shooting Star
+•	Spinning Top
+•	Marubozu
+•	Pin Bar
+•	Bullish Engulfing
+•	Bearish Engulfing
+•	Harami
+•	Piercing Pattern
+•	Dark Cloud Cover
+•	Tweezer Top
+•	Tweezer Bottom
+•	Inside Bar
+•	Outside Bar
+•	Morning Star
+•	Evening Star
+•	Three White Soldiers
+•	Three Black Crows
+•	Three Inside Up
+•	Three Inside Down
+•	Three Outside Up
+•	Three Outside Down
+•	Abandoned Baby
+•	Rising Three Methods
+•	Falling Three Methods
+But patterns must NOT be treated as automatic trading signals.
+________________________________________
+5. CANDLE SEQUENCES
+Audit whether MLAI can understand relationships between multiple candles.
+A candle is not enough.
+A sequence is a message.
+For example:
+Selling
+↓
+More selling
+↓
+Selling slows
+↓
+Lower rejection
+↓
+Bullish response
+↓
+Recovery
+↓
+Previous high tested
+MLAI should eventually understand the sequence as a story rather than seven independent pattern labels.
+________________________________________
+6. PRICE ACTION
+Audit whether the system can learn:
+•	impulse
+•	correction
+•	pullback
+•	retracement
+•	rejection
+•	consolidation
+•	expansion
+•	compression
+•	momentum
+•	momentum loss
+•	breakout
+•	breakdown
+•	retest
+•	failed breakout
+•	failed breakdown
+•	continuation
+•	reversal
+•	transition
+•	exhaustion
+•	recovery
+________________________________________
+7. MARKET STRUCTURE
+Audit support for:
+•	Higher High
+•	Higher Low
+•	Lower High
+•	Lower Low
+•	Swing High
+•	Swing Low
+•	Trend
+•	Range
+•	Break of Structure
+•	Change of Character
+•	Structural failure
+•	Structural transition
+•	Continuation
+•	Reversal
+MLAI must understand that one candle does not determine the entire market direction.
+________________________________________
+8. SUPPORT / RESISTANCE
+Audit support for:
+•	horizontal levels
+•	swing levels
+•	previous highs
+•	previous lows
+•	reaction areas
+•	breakout levels
+•	retest levels
+•	failed support
+•	failed resistance
+•	role reversal
+•	strong/weak levels
+Levels should be treated as areas of reaction rather than magical exact prices.
+________________________________________
+9. SUPPLY / DEMAND
+Audit support for:
+•	supply zones
+•	demand zones
+•	strong reactions
+•	weak reactions
+•	fresh zones
+•	tested zones
+•	mitigation
+•	zone failure
+•	return to reaction areas
+The system must distinguish theoretical concepts from directly observable evidence.
+________________________________________
+10. LIQUIDITY
+Audit support for:
+•	equal highs
+•	equal lows
+•	previous highs/lows
+•	conceptual liquidity areas
+•	liquidity sweeps
+•	false breaks
+•	rejection after taking a prior high/low
+The system must NOT claim to see hidden orders unless actual order-book/market-depth data exists.
+________________________________________
+11. CHART PATTERNS
+Audit support for:
+•	Double Top
+•	Double Bottom
+•	W
+•	M
+•	Head and Shoulders
+•	Inverse Head and Shoulders
+•	Triangles
+•	Ascending Triangle
+•	Descending Triangle
+•	Symmetrical Triangle
+•	Flags
+•	Pennants
+•	Channels
+•	Wedges
+•	Ranges
+•	Breakout structures
+•	Continuation structures
+•	Reversal structures
+Patterns must be interpreted through:
+Formation
++
+Context
++
+Structure
++
+Confirmation
++
+Failure
+Interpretation
+________________________________________
+12. MOMENTUM
+Audit support for:
+•	momentum increase
+•	momentum decrease
+•	acceleration
+•	exhaustion
+•	directional candle strength
+•	follow-through
+•	failed pushes
+•	momentum divergence when appropriate data exists
+The system must distinguish:
+"Price is moving higher"
+from:
+"Price is moving higher with increasing strength."
+________________________________________
+13. BUYER / SELLER BEHAVIOUR
+MLAI should eventually be able to describe apparent behaviour such as:
+•	buyers responding
+•	sellers responding
+•	rejection of lower prices
+•	rejection of higher prices
+•	increasing relative buying pressure
+•	increasing relative selling pressure
+•	weakening control
+•	failed recovery
+•	failed breakout
+•	lack of follow-through
+•	balanced conditions
+But it must NOT invent invisible facts.
+It should say:
+"Price behaviour suggests..."
+rather than claiming exact trader intentions.
+________________________________________
+14. CONTEXT
+Audit whether the system can combine:
+•	trend
+•	range
+•	location
+•	previous movement
+•	highs/lows
+•	support/resistance
+•	supply/demand
+•	volatility
+•	volume
+•	timeframe
+•	session
+•	previous reactions
+•	market state
+The same candle must be capable of receiving different interpretations depending on context.
+________________________________________
+15. MULTI-TIMEFRAME UNDERSTANDING
+Audit whether MLAI can eventually reason across:
+•	monthly
+•	weekly
+•	daily
+•	4H
+•	1H
+•	30M
+•	15M
+•	5M
+•	1M
+•	other available timeframes
+Example:
+Higher timeframe:
+Downtrend
+Lower timeframe:
+Temporary upward recovery
+MLAI must understand that the lower-timeframe recovery does not automatically mean the higher-timeframe trend has reversed.
+________________________________________
+16. VOLUME
+When volume is available, audit support for:
+•	volume expansion
+•	volume contraction
+•	breakout confirmation
+•	volume disagreement
+•	volume during reversals
+•	volume during continuation
+If volume is unavailable, MLAI must NOT fabricate it.
+________________________________________
+17. VOLATILITY
+Audit support for:
+•	volatility expansion
+•	volatility contraction
+•	large ranges
+•	small ranges
+•	rapid movement
+•	slow movement
+•	changing volatility regimes
+________________________________________
+18. HISTORICAL EXPERIENCE
+This is extremely important.
+I want MLAI to gain "experience" through historical data.
+The system should be able to encounter many historical situations and learn relationships such as:
+Current situation
+↓
+Similar historical situations
+↓
+Historical outcomes
+↓
+Outcome frequencies
+↓
+Context differences
+↓
+Reliability
+↓
+Current probability estimate
+But this must be statistically valid.
+Do NOT call something "learning" merely because a Python script stores historical records.
+Audit whether the system actually learns reusable representations or relationships.
+________________________________________
+19. ACTIVE INTERNET / LIVE MARKET DATA
+I want MLAI eventually to connect to live/current market data.
+Audit the current project for:
+•	API connectivity
+•	market-data ingestion
+•	candle retrieval
+•	symbol handling
+•	timeframe handling
+•	historical backfill
+•	incremental updates
+•	live updates
+•	data validation
+•	duplicate handling
+•	missing candle handling
+•	timestamp handling
+•	reconnection
+•	rate limits
+•	API failures
+•	data persistence
+Determine whether current implementation is actually capable of continuously receiving market data.
+Do not assume that "internet access" means learning.
+Clearly distinguish:
+DATA COLLECTION
+from
+LEARNING
+from
+VALIDATION
+from
+INFERENCE.
+________________________________________
+20. CONTINUOUS LEARNING
+My intended concept is:
+Market data arrives
+↓
+Historical dataset grows
+↓
+MLAI studies new data
+↓
+Tests previous knowledge
+↓
+Finds where previous knowledge worked
+↓
+Finds where it failed
+↓
+Updates knowledge/evidence
+↓
+Re-tests
+↓
+Validates on unseen data
+↓
+Retains only reliable knowledge
+Audit whether the current project actually implements this.
+If not, explain what is missing.
+Do NOT automatically recommend online learning simply because it sounds appropriate.
+Determine the statistically and architecturally safest approach.
+________________________________________
+21. REPEATED TESTING
+I want MLAI to test itself repeatedly.
+But repeated testing must NOT mean:
+"Run the same backtest until the desired accuracy appears."
+Audit for:
+•	train/validation/test separation
+•	chronological splitting
+•	walk-forward testing
+•	purging
+•	embargo
+•	leakage
+•	selection bias
+•	multiple testing
+•	hyperparameter overfitting
+•	pattern-search overfitting
+•	null/permutation testing
+•	benchmark comparison
+•	regime robustness
+Explain whether the current v3.x testing methodology is genuinely protecting against overfitting.
+________________________________________
+22. VERY IMPORTANT: CURRENT v3.4.2 RESULTS
+The current diagnostic output shows, among other things:
+HORIZON 4:
+Rules often disappear completely.
+HORIZON 8:
+Outer directional accuracy approximately 22.07%.
+HORIZON 16:
+Outer directional accuracy approximately 34.39%.
+The majority baselines remain substantially higher in these tests.
+The permutation/null tests for horizon 16 produce extremely strong null-rule results, including:
+Mean best null-rule accuracy around 96–98%.
+This is a major warning sign.
+Audit this carefully.
+Do NOT interpret these numbers as evidence that MLAI has learned candlestick language.
+Determine exactly what these results mean.
+Explain whether:
+•	the rule-search space is too flexible,
+•	the feature representation is insufficient,
+•	the validation threshold is flawed,
+•	the target definition is problematic,
+•	the baseline is appropriate,
+•	the null test implementation is correct,
+•	the permutation logic is correct,
+•	the candidate rule system is overfitting,
+•	or multiple problems exist.
+________________________________________
+23. IMPORTANT DISTINCTION
+Do not confuse:
+Pattern recognition
+"I see a hammer."
+with:
+Market understanding
+"I see a lower rejection after a decline near a previously important reaction area, followed by bullish follow-through. Historically, similar sequences have sometimes led to recovery, but the evidence is weaker because the higher timeframe remains bearish."
+The second capability is my actual goal.
+Audit whether my current architecture can reach the second capability.
+________________________________________
+24. KNOWLEDGE VS MODEL
+Determine whether the project currently has:
+1.	Static knowledge
+2.	Hand-written rules
+3.	Feature engineering
+4.	Statistical pattern discovery
+5.	Machine learning
+6.	Representation learning
+7.	Sequence learning
+8.	Context modelling
+9.	Historical retrieval
+10.	Probabilistic reasoning
+11.	Continuous learning
+12.	Explainable reasoning
+Clearly identify what exists and what does not.
+Do not call a hand-written rule engine "AI learning."
+________________________________________
+25. MARKET LANGUAGE REPRESENTATION
+Determine what the best internal representation should be.
+I do NOT want MLAI to permanently depend only on labels such as:
+HAMMER
+ENGULFING
+DOJI
+BUY
+SELL
+Instead investigate whether the system should represent market observations using concepts such as:
+Candle anatomy
++
+relative movement
++
+sequence
++
+location
++
+structure
++
+context
++
+momentum
++
+volatility
++
+historical similarity
++
+outcome distribution.
+Explain what representation is currently used and what representation is required.
+________________________________________
+26. HISTORICAL MEMORY
+Audit whether MLAI has a proper historical memory system.
+The memory should eventually be capable of storing things such as:
+Situation
+Context
+Observed sequence
+Market state
+Features
+Historical outcomes
+Outcome distribution
+Timeframe
+Instrument
+Volatility regime
+Confidence
+Sample count
+Failure rate
+Validation evidence
+Last verification date
+But do NOT automatically store everything.
+Determine what information is statistically useful and how it should be indexed/retrieved.
+________________________________________
+27. SIMILARITY / EXPERIENCE ENGINE
+Investigate whether MLAI should eventually have a component like:
+CURRENT MARKET STATE
+↓
+Find historically similar states
+↓
+Retrieve outcomes
+↓
+Weight similarity
+↓
+Adjust for regime
+↓
+Calculate conditional probabilities
+↓
+Compare with current evidence
+↓
+Produce interpretation
+Audit whether the current project has anything equivalent.
+________________________________________
+28. PROBABILITY ENGINE
+The eventual system should NOT say:
+"Price will definitely go up."
+It should be able to say something conceptually like:
+Current evidence:
+•	bullish rejection
+•	improving momentum
+•	support holding
+•	previous high nearby
+•	higher timeframe still mixed
+Historical comparable situations:
+•	1,240 examples
+•	58% moved higher over the next N candles
+•	42% moved lower
+•	results vary by volatility regime
+Therefore:
+"Historical evidence gives a moderate bullish probability, but the evidence is not strong enough to treat the outcome as certain."
+Audit whether the current system has a statistically sound probability layer.
+________________________________________
+29. CALIBRATION
+Audit:
+•	probability calibration
+•	reliability curves
+•	Brier score
+•	log loss
+•	confidence calibration
+•	sample-size effects
+•	uncertainty
+•	prediction intervals where appropriate
+Do not focus only on accuracy.
+A probability system must be evaluated on whether its probabilities are meaningful.
+________________________________________
+30. REGIME AWARENESS
+Market behaviour changes.
+Audit whether MLAI can distinguish:
+•	trending markets
+•	ranging markets
+•	high-volatility markets
+•	low-volatility markets
+•	expansion regimes
+•	compression regimes
+•	changing regimes
+A pattern that works in one regime may fail in another.
+The system should eventually learn:
+Pattern
++
+Context
++
+Regime
+Conditional interpretation.
+________________________________________
+31. GENERALIZATION
+My ultimate requirement is:
+If I open a new XAUUSD chart that MLAI has never seen before, it should be able to analyze the candles and explain what it sees based on learned knowledge.
+It should NOT need the exact historical sequence to have occurred previously.
+Audit whether the current system learns generalizable concepts or merely memorizes combinations of historical features.
+________________________________________
+32. NEW DATA / UNSEEN CHART TEST
+Design a test that answers:
+"Can MLAI analyze a completely unseen chronological period?"
+The test must ensure:
+•	no future leakage
+•	no accidental training overlap
+•	no feature leakage
+•	no target leakage
+•	no reuse of validation information
+•	no manual rule adjustment after seeing test results
+The test should determine whether MLAI genuinely generalizes.
+________________________________________
+33. EXACT PROJECT AUDIT
+When I provide the project files, inspect them systematically.
+Inspect:
+•	all Python files
+•	configuration files
+•	data files where appropriate
+•	database schema
+•	model code
+•	feature extraction
+•	training code
+•	testing code
+•	validation code
+•	API/data ingestion code
+•	memory/knowledge code
+•	output/reporting code
+Do not modify anything during the first audit.
+________________________________________
+34. DO NOT CHANGE PRODUCTION
+During this audit:
+DO NOT modify:
+•	production MLAI
+•	mlai_v31.py
+•	market_data.bin
+•	production knowledge
+•	production memory
+Unless I explicitly authorize changes later.
+The audit must be read-only.
+________________________________________
+35. REQUIRED OUTPUT
+After inspecting the project, give me a structured report with:
+A. CURRENT ARCHITECTURE
+Explain exactly what the current MLAI system is.
+Use the actual code, not assumptions.
+B. WHAT IT CURRENTLY LEARNS
+Explain exactly what is being learned.
+C. WHAT IT DOES NOT LEARN
+Be explicit.
+D. WHAT THE v3.4.2 RESULTS ACTUALLY MEAN
+Explain every important warning.
+E. DATA PIPELINE AUDIT
+Explain:
+Internet
+→ API
+→ candles
+→ feature extraction
+→ storage
+→ training
+→ validation
+→ inference
+and identify missing components.
+F. LEARNING ARCHITECTURE GAP
+Compare:
+CURRENT MLAI
+against:
+MY MARKET LANGUAGE BRAIN VISION.
+G. KNOWLEDGE GAP
+Identify missing market-language knowledge.
+H. MODEL GAP
+Identify missing ML/statistical components.
+I. MEMORY GAP
+Identify missing historical experience/memory.
+J. REASONING GAP
+Identify missing context and relationship reasoning.
+K. PROBABILITY GAP
+Identify missing probability/calibration components.
+L. GENERALIZATION GAP
+Determine whether MLAI can actually understand an unseen chart.
+M. OVERFITTING RISK
+Identify all current overfitting risks.
+N. DATA LEAKAGE RISK
+Identify all possible leakage paths.
+O. VALIDATION QUALITY
+Determine whether current testing is trustworthy.
+P. WHAT IS ALREADY GOOD
+Do not discard working architecture unnecessarily.
+Identify what should be preserved.
+Q. WHAT MUST CHANGE
+Prioritize changes.
+Use:
+P0 = Critical
+P1 = Important
+P2 = Later
+P3 = Optional
+R. RECOMMENDED FUTURE ARCHITECTURE
+Design the architecture needed to reach my actual goal.
+It should be evolutionary where possible.
+Do not propose replacing everything unless necessary.
+S. LEARNING LOOP
+Design the eventual loop:
+Historical Data
+↓
+Representation
+↓
+Pattern/Sequence Understanding
+↓
+Context
+↓
+Historical Retrieval
+↓
+Outcome Learning
+↓
+Probability
+↓
+Validation
+↓
+Memory
+↓
+New Data
+↓
+Revalidation
+↓
+Improved Knowledge
+T. FINAL VERDICT
+Answer clearly:
+1.	Is the current MLAI actually learning market language?
+2.	Is it currently learning only statistical rules?
+3.	Can it currently understand an unseen chart?
+4.	What is preventing it?
+5.	What is the shortest scientifically valid path from the current system to the Market Language Brain?
+________________________________________
+36. VERY IMPORTANT RULE
+Do NOT optimize MLAI for a fake target such as:
+"highest historical accuracy."
+The goal is:
+Generalizable market understanding.
+A system with 55% well-calibrated, genuinely out-of-sample probabilistic understanding may be far more valuable than a system with 90% historical accuracy caused by overfitting.
+________________________________________
+37. FINAL SUCCESS CRITERION
+The final MLAI should eventually be able to receive:
+OHLCV data
++
+timeframe
++
+instrument
++
+historical context
++
+available market information
+and produce an explanation such as:
+"I observe a short-term recovery inside a larger bearish structure. The latest candles show rejection of lower prices, but the recovery has not yet broken the previous significant swing high. Similar historical situations produced mixed outcomes. The evidence currently favours a continuation of the recovery with moderate probability, but confirmation would require sustained movement above the previous swing level. A failure back below the recent support would weaken the bullish interpretation."
+That is the capability I want.
+NOT:
+"Pattern = BUY."
+NOT:
+"Pattern = SELL."
+NOT:
+"Historical pattern happened 73% of the time, therefore it will happen again."
+I want:
+Market observation → context → historical experience → reasoning → probability → explanation.
+________________________________________
+FINAL INSTRUCTION
+First audit my existing MLAI project completely against this objective.
+Do NOT write new code yet.
+Do NOT modify production.
+Do NOT assume that existing "learning" is genuine learning.
+Do NOT assume that statistical rules equal market understanding.
+Do NOT optimize for historical accuracy alone.
+Find the exact gap between:
+WHAT MLAI IS TODAY
+and
+THE MARKET LANGUAGE BRAIN I WANT TO BUILD.
+Then tell me what must be done, in order, to bridge that gap scientifically and without destroying the parts of the current project that are already correct.
+

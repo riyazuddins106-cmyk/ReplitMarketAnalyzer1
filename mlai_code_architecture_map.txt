@@ -1,0 +1,4352 @@
+﻿============================================================
+MLAI CODE ARCHITECTURE MAP
+Generated: 08/15/2026 20:20:24
+============================================================
+
+
+############################################################
+FILE: check_mlai_versions.py
+SIZE: 23753 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import re
+import ast
+from pathlib import Path
+from datetime import datetime
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def print_line(char="=", length=80):
+def safe_read_text(path):
+def find_all(pattern, text, flags=re.IGNORECASE):
+def get_functions(text):
+def get_imports(text):
+def contains_any(text, patterns):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+BASE_DIR = Path.cwd()
+OUTPUT_FILE = BASE_DIR / "MLAI_VERSION_AUDIT.txt"
+MARKET_PATTERNS = [
+LEARNING_PATTERNS = [
+ACCURACY_PATTERNS = [
+FAILURE_PATTERNS = [
+PREDICTION_PATTERNS = [
+CONTEXT_PATTERNS = [
+HORIZON_PATTERNS = [
+LEAKAGE_PATTERNS = [
+STATUS_PATTERNS = [
+all_python_files = sorted(
+mlai_files = []
+audit_results = []
+categories = {
+important_terms = [
+function_locations = {}
+duplicates_found = False
+memory_writers = []
+market_writers = []
+warnings = []
+report_lines = []
+
+--- MAIN ENTRY POINT ---
+            and "__main__" in text,
+
+############################################################
+FILE: inspect_market_data.py
+SIZE: 769 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_market_representation_v1.py
+SIZE: 61339 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+import random
+from collections import Counter, defaultdict
+from itertools import combinations
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_div(a, b):
+def mean(values):
+def std(values):
+def clamp(value, low, high):
+def protection_check():
+def load_market_data():
+def extract_candles(data):
+def get_value(candle, key, default=0.0):
+def data_quality_report():
+def candle_features(index):
+def candle_type(index):
+def return_from(index, periods):
+def structure_features(index):
+def detect_swing(index, radius=2):
+def market_structure_state(index):
+def candle_sequence(index, length):
+def classify_outcome(
+def build_records(horizon):
+def quantile_edges(
+def prepare_edges(records):
+def numeric_bin(
+def get_feature_value(
+def baseline_statistics(records):
+def print_baseline(records):
+def discover_rules(
+def rule_matches(
+def evaluate_rules(
+def build_walk_forward_folds(
+def rule_text(rule):
+def feature_distance(
+def similarity_test(
+def sequence_analysis(
+def print_sequence_analysis(
+def regime_analysis(records):
+def calibration_report(
+def permutation_test(
+def print_current_structure():
+def run_horizon(
+def final_diagnostic(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+CLASSIFICATION_THRESHOLD = 0.0015
+WALK_FORWARD_FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 40
+MIN_VALIDATION_SAMPLES = 20
+MIN_RULE_SAMPLES = 30
+MIN_RULE_CONFIDENCE = 0.50
+MIN_LIFT = 0.03
+MAX_RULES_FOR_VALIDATION = 100
+TOP_RULES_TO_PRINT = 20
+QUANTILE_BINS = 3
+NEIGHBOR_K = [10, 20, 40]
+RANDOM_SEED = 42
+PERMUTATION_TESTS = 100
+SEQUENCE_LENGTHS = [2, 3, 5]
+market_data = load_market_data()
+candles = extract_candles(
+opens = [
+highs = [
+lows = [
+closes = [
+CATEGORICAL_FEATURES = [
+NUMERIC_FEATURES = [
+STRUCTURE_FEATURES = [
+SIMILARITY_NUMERIC = [
+SIMILARITY_CATEGORICAL = [
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_market_representation_v2.py
+SIZE: 68976 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import math
+import pickle
+import random
+from collections import Counter, defaultdict
+    import hashlib
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def file_hash(path):
+def protection_check():
+def load_market_data():
+def get_value(
+def extract_ohlc(candle):
+def audit_ohlc(candles):
+def safe_div(a, b):
+def clamp(x, low, high):
+def classify_candle(
+def return_n(
+def rolling_returns(
+def volatility(
+def quantile(
+def quantile_label(
+def build_raw_features(candles):
+def outcome_label(
+def build_dataset(
+def fit_discretizer(records):
+def discretize_record(
+def discretize_records(
+def discover_rules_from_states(
+def discover_rules(
+def rule_matches(
+def predict_from_state(
+def predict_with_rules(
+def evaluate_fold(
+def baseline_report(records):
+def walk_forward(
+def sequence_analysis(
+def current_state(
+def build_permutation_fold_cache(
+def evaluate_permutation_fold(
+def permutation_test(
+def format_rule(rule):
+def print_rules(
+def run_horizon(
+def print_current_market(
+def final_diagnostic(
+def save_output(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+OUTPUT_BIN = "mlai_market_representation_v2.bin"
+OUTPUT_REPORT = "MLAI_MARKET_REPRESENTATION_V2_REPORT.md"
+RANDOM_SEED = 42
+VALIDATION_FOLDS = 4
+MIN_RULE_SAMPLES = 20
+MIN_RULE_CONFIDENCE = 0.50
+MAX_RULES_TO_PRINT = 20
+PERMUTATION_COUNT = 100
+PERMUTATION_PROGRESS_INTERVAL = 10
+LABELS = (
+NUMERIC_FEATURES = [
+CATEGORICAL_FEATURES = [
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_test.py
+SIZE: 10751 bytes
+############################################################
+
+--- IMPORTS ---
+import json
+import pickle
+import requests
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def download_candles():
+def extract_candles(data):
+def analyse_candle(candle):
+def analyse_market(candles):
+def save_binary(
+def print_summary(candles):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+SYMBOL = "GC=F"
+INTERVAL = "5m"
+RANGE = "5d"
+API_URL = (
+OUTPUT_FILE = "market_data.bin"
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v02.py
+SIZE: 30337 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def load_market_memory():
+def average(values):
+def percentage_change(old, new):
+def candle_direction(candle):
+def is_bullish(candle):
+def is_bearish(candle):
+def candle_range(candle):
+def analyse_recent_candles(candles, window=12):
+def detect_pressure(stats):
+def detect_momentum_change(candles, window=12):
+def detect_rejection(candles, window=6):
+def detect_recent_sequence(candles):
+def detect_structure(candles, window=10):
+def detect_range_condition(candles, window=12):
+def build_evidence(
+def build_interpretation(
+def build_market_story(
+def print_report(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+INPUT_FILE = "market_data.bin"
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v03.py
+SIZE: 63605 bytes
+############################################################
+
+--- IMPORTS ---
+from __future__ import annotations
+import pickle
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List
+
+--- CLASSES ---
+class CandleObservation:
+
+--- FUNCTIONS ---
+def safe_float(
+def get_value(
+def calculate_anatomy(
+def determine_direction(
+def determine_rejection(
+def convert_candle(
+def load_market_memory(
+def find_candles(
+def price_change(
+def analyse_candle_relationships(
+def analyse_recovery(
+def analyse_failed_movement(
+def analyse_continuation_sequence(
+def analyse_recent_extremes(
+def analyse_break_sequence(
+def analyse_retest(
+def analyse_reversal_attempt(
+def analyse_momentum(
+def analyse_direction(
+def analyse_wicks(
+def analyse_conflict(
+def build_market_story(
+def analyse_sequence(
+def print_analysis(
+def update_project_status(
+def main() -> None:
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "MLAI v0.3.1"
+DEFAULT_SEQUENCE_LENGTH = 12
+EPSILON = 1e-12
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v04.py
+SIZE: 51576 bytes
+############################################################
+
+--- IMPORTS ---
+from __future__ import annotations
+import pickle
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+--- CLASSES ---
+class Candle:
+class SwingPoint:
+
+--- FUNCTIONS ---
+def safe_float(
+def get_value(
+def load_market_memory(
+def find_candles(
+def convert_candle(
+def detect_swing_highs(
+def detect_swing_lows(
+def combine_swings(
+def classify_highs(
+def classify_lows(
+def count_structure(
+def determine_structural_direction(
+def analyse_trend_structure(
+def analyse_range_structure(
+def analyse_structural_breaks(
+def analyse_change_of_character(
+def analyse_structural_conflict(
+def build_structure_story(
+def analyse_market_structure(
+def print_analysis(
+def update_project_status(
+def main() -> None:
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "MLAI v0.4"
+DEFAULT_SEQUENCE_LENGTH = 30
+SWING_LEFT = 2
+SWING_RIGHT = 2
+EPSILON = 1e-12
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+MARKET_DATA_FILE = "market_data.bin"
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v05.py
+SIZE: 24273 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, *names, default=None):
+def number(value, default=0.0):
+def candle_values(candle):
+def candle_direction(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def percentage_change(first, last):
+def classify_volatility(avg_range, reference_range):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+LOOKBACK = 30
+candles = market_data[-LOOKBACK:]
+directions = [candle_direction(c) for c in candles]
+ranges = [candle_range(c) for c in candles]
+bodies = [candle_body(c) for c in candles]
+upper_wicks = [upper_wick(c) for c in candles]
+lower_wicks = [lower_wick(c) for c in candles]
+opens = [candle_values(c)[0] for c in candles]
+highs = [candle_values(c)[1] for c in candles]
+lows = [candle_values(c)[2] for c in candles]
+closes = [candle_values(c)[3] for c in candles]
+first_close = closes[0]
+latest_close = closes[-1]
+total_change = latest_close - first_close
+total_change_percent = percentage_change(first_close, latest_close)
+bullish_count = directions.count("bullish")
+bearish_count = directions.count("bearish")
+neutral_count = directions.count("neutral")
+split = LOOKBACK // 2
+early_ranges = ranges[:split]
+recent_ranges = ranges[split:]
+early_bodies = bodies[:split]
+recent_bodies = bodies[split:]
+early_avg_range = mean(early_ranges)
+recent_avg_range = mean(recent_ranges)
+early_avg_body = mean(early_bodies)
+recent_avg_body = mean(recent_bodies)
+range_change_percent = percentage_change(
+body_change_percent = percentage_change(
+overall_avg_range = mean(ranges)
+volatility_state = classify_volatility(
+range_high = max(highs)
+range_low = min(lows)
+range_size = range_high - range_low
+recent_window = min(10, LOOKBACK)
+recent_highs = highs[-recent_window:]
+recent_lows = lows[-recent_window:]
+recent_high = max(recent_highs)
+recent_low = min(recent_lows)
+near_recent_high = latest_close >= recent_high * 0.998
+near_recent_low = latest_close <= recent_low * 1.002
+upper_rejection_count = 0
+lower_rejection_count = 0
+large_body_count = 0
+small_body_count = 0
+body_reference = mean(bodies)
+bullish_follow_through = 0
+bearish_follow_through = 0
+failed_directional_moves = 0
+direction_changes = 0
+first_high = highs[0]
+last_high = highs[-1]
+first_low = lows[0]
+last_low = lows[-1]
+higher_price_bias = last_high > first_high
+lower_price_bias = last_low < first_low
+context_flags = []
+context_conditions = []
+conflicts = []
+story_parts = []
+market_story = " ".join(story_parts)
+status_entry = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v06.py
+SIZE: 27793 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, *names, default=None):
+def number(value, default=0.0):
+def values(candle):
+def direction(candle):
+def candle_range(candle):
+def body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def body_ratio(candle):
+def is_bullish(candle):
+def is_bearish(candle):
+def is_small_body(candle):
+def is_large_body(candle):
+def detect_single_patterns(candles):
+def detect_two_candle_patterns(candles):
+def detect_three_candle_patterns(candles):
+def evaluate_pattern(pattern, candles):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+LOOKBACK = 60
+candles = market_data[-LOOKBACK:]
+single_patterns = detect_single_patterns(candles)
+two_patterns = detect_two_candle_patterns(candles)
+three_patterns = detect_three_candle_patterns(candles)
+patterns = single_patterns + two_patterns + three_patterns
+evaluated_patterns = []
+bullish_patterns = 0
+bearish_patterns = 0
+indecision_patterns = 0
+continuation_patterns = 0
+compression_patterns = 0
+expansion_patterns = 0
+confirmed_patterns = 0
+failed_patterns = 0
+recent_patterns = [
+story = []
+market_story = " ".join(story)
+status_entry = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v07.py
+SIZE: 24316 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, *names):
+def normalize_candle(candle):
+def load_market_memory():
+def candle_features(candle):
+def sequence_features(candles):
+def bounded_similarity_difference(a, b, maximum):
+def calculate_similarity(current, historical):
+def classify_future_outcome(future_candles):
+def search_historical_behaviour(
+def print_report(
+def update_project_status(matches):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "0.7"
+DATA_FILE = "market_data.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+CURRENT_WINDOW = 30
+HISTORICAL_WINDOW = 8
+OUTCOME_WINDOW = 8
+MIN_SIMILARITY = 0.60
+MAX_MATCHES = 20
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v08.py
+SIZE: 15437 bytes
+############################################################
+
+--- IMPORTS ---
+from pathlib import Path
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+path = Path("mlai_v341.py")
+text = path.read_text(encoding="utf-8")
+start_marker = "# MAIN EXPERIMENT"
+end_marker = "# FINAL VERDICT"
+start = text.index(start_marker)
+end = text.index(end_marker)
+new_main = r'''
+all_results = {}
+new_text = (
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v09.py
+SIZE: 41792 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, key, default=0.0):
+def candle_direction(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def percentage_change(first, last):
+def safe_mean(values):
+def feature_vector(sequence):
+def similarity(a, b):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+HISTORICAL_SEQUENCE = 8
+OUTCOME_WINDOW = 8
+HISTORICAL_MIN_SIMILARITY = 0.60
+TOP_HISTORICAL_MATCHES = 10
+recent = candles[-ANALYSIS_CANDLES:]
+directions = [
+bullish_count = directions.count("bullish")
+bearish_count = directions.count("bearish")
+neutral_count = directions.count("neutral")
+ranges = [
+bodies = [
+upper_wicks = [
+lower_wicks = [
+first_close = get_value(
+latest_close = get_value(
+net_change = (
+net_change_pct = percentage_change(
+average_range = safe_mean(ranges)
+upper_rejection_count = sum(
+lower_rejection_count = sum(
+bullish_follow_through = 0
+bearish_follow_through = 0
+direction_changes = 0
+failed_movements = direction_changes
+swing_highs = []
+swing_lows = []
+higher_highs = 0
+lower_highs = 0
+higher_lows = 0
+lower_lows = 0
+bullish_break = False
+bearish_break = False
+latest_swing_high = None
+latest_swing_low = None
+early_ranges = ranges[:15]
+recent_ranges = ranges[-15:]
+early_range_avg = safe_mean(
+recent_range_avg = safe_mean(
+early_bodies = bodies[:15]
+recent_bodies = bodies[-15:]
+early_body_avg = safe_mean(
+recent_body_avg = safe_mean(
+historical_matches = []
+historical_bullish = sum(
+historical_bearish = sum(
+historical_neutral = sum(
+historical_total = len(
+supporting_evidence = []
+conflicting_evidence = []
+neutral_evidence = []
+support_score = len(
+conflict_score = len(
+confirmation_conditions = []
+invalidation_conditions = []
+story_parts = []
+status_text = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v10.py
+SIZE: 40276 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, key, default=0.0):
+def safe_mean(values):
+def percentage_change(first, last):
+def candle_direction(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def historical_feature_vector(sequence):
+def similarity(a, b):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+HISTORICAL_SEQUENCE = 8
+OUTCOME_WINDOW = 8
+HISTORICAL_SIMILARITY_THRESHOLD = 0.60
+candles = market_memory["candles"]
+candles = list(candles)
+recent = candles[-ANALYSIS_CANDLES:]
+directions = [
+bullish_count = directions.count("bullish")
+bearish_count = directions.count("bearish")
+neutral_count = directions.count("neutral")
+ranges = [
+bodies = [
+upper_wicks = [
+lower_wicks = [
+first_close = get_value(
+latest_close = get_value(
+net_change = latest_close - first_close
+net_change_pct = percentage_change(
+bullish_follow_through = 0
+bearish_follow_through = 0
+direction_changes = 0
+failed_movements = 0
+average_range = safe_mean(ranges)
+upper_rejection_count = sum(
+lower_rejection_count = sum(
+swing_highs = []
+swing_lows = []
+higher_highs = 0
+lower_highs = 0
+higher_lows = 0
+lower_lows = 0
+bullish_break = False
+bearish_break = False
+latest_swing_high = None
+latest_swing_low = None
+early_ranges = ranges[:15]
+recent_ranges = ranges[-15:]
+early_bodies = bodies[:15]
+recent_bodies = bodies[-15:]
+early_range_avg = safe_mean(
+recent_range_avg = safe_mean(
+early_body_avg = safe_mean(
+recent_body_avg = safe_mean(
+historical_matches = []
+historical_bullish = sum(
+historical_bearish = sum(
+historical_neutral = sum(
+historical_total = len(
+bullish_evidence = 0
+bearish_evidence = 0
+supporting_evidence = []
+conflicting_evidence = []
+neutral_evidence = []
+total_directional_evidence = (
+conflict_count = len(
+support_count = len(
+base_confidence = directional_strength
+conflict_penalty = min(
+confidence = max(
+confirmation_conditions = []
+invalidation_conditions = []
+story = []
+integrated_story = " ".join(story)
+status_text = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v11.py
+SIZE: 39153 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, key, default=0.0):
+def candle_direction(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def percentage_change(first, last):
+def safe_mean(values):
+def utc_now():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+OUTCOME_WINDOWS = [4, 8, 16]
+DISPLAY_EXPERIENCES = 10
+memory_metadata = {}
+recent = candles[
+directions = [
+bullish_count = directions.count(
+bearish_count = directions.count(
+neutral_count = directions.count(
+ranges = [
+bodies = [
+upper_wicks = [
+lower_wicks = [
+first_close = get_value(
+latest_close = get_value(
+net_change = (
+net_change_pct = percentage_change(
+swing_highs = []
+swing_lows = []
+higher_highs = 0
+lower_highs = 0
+higher_lows = 0
+lower_lows = 0
+bullish_break = False
+bearish_break = False
+latest_swing_high = None
+latest_swing_low = None
+average_range = safe_mean(
+upper_rejection_count = sum(
+lower_rejection_count = sum(
+bullish_follow_through = 0
+bearish_follow_through = 0
+failed_movements = 0
+direction_changes = 0
+early_bodies = bodies[:15]
+recent_bodies = bodies[-15:]
+early_body_avg = safe_mean(
+recent_body_avg = safe_mean(
+early_ranges = ranges[:15]
+recent_ranges = ranges[-15:]
+early_range_avg = safe_mean(
+recent_range_avg = safe_mean(
+bullish_score = 0
+bearish_score = 0
+supporting_evidence = []
+conflicting_evidence = []
+neutral_evidence = []
+total_direction_score = (
+experience_memory = None
+records = experience_memory.setdefault(
+statistics = experience_memory.setdefault(
+observation_id = (
+current_observation = {
+already_exists = False
+recent_records = records[
+story = (
+status_text = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v12.py
+SIZE: 36662 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, key, default=0.0):
+def candle_direction(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def percentage_change(first, last):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+OUTCOME_WINDOWS = [4, 8, 16]
+NEUTRAL_THRESHOLD_PERCENT = 0.05
+candles = list(candles)
+recent = candles[
+current_candle_index = (
+directions = [
+bullish_count = directions.count(
+bearish_count = directions.count(
+neutral_count = directions.count(
+ranges = [
+bodies = [
+upper_wicks = [
+lower_wicks = [
+first_close = get_value(
+latest_close = get_value(
+net_change = (
+net_change_pct = percentage_change(
+swing_highs = []
+swing_lows = []
+higher_highs = 0
+lower_highs = 0
+higher_lows = 0
+lower_lows = 0
+average_range = (
+upper_rejection_count = sum(
+lower_rejection_count = sum(
+bullish_follow_through = 0
+bearish_follow_through = 0
+failed_movements = 0
+early_ranges = ranges[:15]
+recent_ranges = ranges[-15:]
+early_bodies = bodies[:15]
+recent_bodies = bodies[-15:]
+early_range_avg = (
+recent_range_avg = (
+early_body_avg = (
+recent_body_avg = (
+bullish_break = False
+bearish_break = False
+latest_swing_high = None
+latest_swing_low = None
+observations = []
+normalized_observations = []
+observations = normalized_observations
+current_observation = None
+newly_resolved = 0
+newly_confirmed = 0
+newly_not_confirmed = 0
+newly_neutral = 0
+total_observations = len(
+bullish_observations = sum(
+bearish_observations = sum(
+mixed_observations = (
+statistics = {}
+pending_windows = 0
+resolved_windows = 0
+new_memory = {
+overall_resolved = sum(
+overall_confirmed = sum(
+status_text = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v13.py
+SIZE: 43686 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from collections import Counter, defaultdict
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, key, default=0.0):
+def candle_direction(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def safe_mean(values):
+def percentage_change(first, last):
+def clamp(value, minimum, maximum):
+def candle_feature(candle):
+def behaviour_symbol(candle):
+def direction_symbol(candle):
+def direction_sequence(sequence):
+def behaviour_sequence(sequence):
+def classify_outcome(
+def create_pattern_record(
+def update_pattern_outcome(
+def pattern_statistics(record):
+def pattern_score(record):
+def exact_current_match(
+def summarize_current_matches(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+PATTERN_LENGTH = 6
+OUTCOME_WINDOWS = [4, 8, 16]
+MIN_PATTERN_OCCURRENCES = 3
+TOP_PATTERNS_TO_SHOW = 15
+CURRENT_PATTERN_THRESHOLD = 0.65
+candles = list(candles)
+recent = candles[
+current_directions = [
+bullish_count = (
+bearish_count = (
+neutral_count = (
+current_ranges = [
+average_range = safe_mean(
+upper_rejections = 0
+lower_rejections = 0
+body_values = [
+early_body = safe_mean(
+recent_body = safe_mean(
+early_range = safe_mean(
+recent_range = safe_mean(
+current_direction_pattern = (
+current_behaviour_pattern = (
+direction_patterns = {}
+behaviour_patterns = {}
+direction_counter = Counter()
+behaviour_counter = Counter()
+search_limit = (
+direction_patterns = {
+behaviour_patterns = {
+top_direction_patterns = sorted(
+top_behaviour_patterns = sorted(
+current_direction_matches = []
+current_behaviour_matches = []
+current_direction_experience = (
+current_behaviour_experience = (
+direction_occurrences = sum(
+behaviour_occurrences = sum(
+experience_memory = None
+experience_observations = []
+resolved_experience = 0
+pending_experience = 0
+pattern_memory = {
+pattern_interpretation = (
+best_current_result = None
+story_parts = []
+status_text = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v14.py
+SIZE: 38786 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from collections import Counter, defaultdict
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def get_value(candle, key, default=0.0):
+def candle_direction(candle):
+def direction_symbol(candle):
+def candle_range(candle):
+def candle_body(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def percentage_change(first, last):
+def safe_mean(values):
+def normalize_direction(value):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+LEARNING_FILE = "mlai_learning_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+PATTERN_LENGTH = 6
+OUTCOME_WINDOWS = {
+MIN_PATTERN_OCCURRENCES = 3
+MAX_DISPLAY_PATTERNS = 20
+market_metadata = {}
+recent = candles[-ANALYSIS_CANDLES:]
+directions = [
+bullish_count = directions.count(
+bearish_count = directions.count(
+neutral_count = directions.count(
+ranges = [
+bodies = [
+first_close = get_value(
+latest_close = get_value(
+net_change = (
+net_change_pct = percentage_change(
+early_range_avg = safe_mean(
+recent_range_avg = safe_mean(
+early_body_avg = safe_mean(
+recent_body_avg = safe_mean(
+upper_wicks = [
+lower_wicks = [
+average_range = safe_mean(
+upper_rejection_count = sum(
+lower_rejection_count = sum(
+current_pattern_candles = candles[
+current_direction_pattern = " ".join(
+experience_memory = None
+observations = experience_memory.get(
+newly_resolved = []
+resolved_confirmed = 0
+resolved_not_confirmed = 0
+resolved_neutral = 0
+pattern_memory = None
+direction_patterns = {}
+behaviour_patterns = {}
+historical_pattern_stats = defaultdict(
+max_start = (
+learning_memory = {
+current_stats = learning_memory[
+current_pattern_status = (
+experience_statistics = {
+pattern_learning_classification = (
+total_resolved = sum(
+total_confirmed = sum(
+total_not_confirmed = sum(
+total_neutral = sum(
+pending_windows = 0
+ranked_patterns = []
+story = []
+status_text = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v15.py
+SIZE: 39417 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_float(value, default=0.0):
+def clamp(value, low=0.0, high=100.0):
+def pct(value):
+def load_pickle(path):
+def save_pickle(path, obj):
+def now_iso():
+def normalize_candle(candle):
+def extract_candles(memory):
+def candle_direction(candle):
+def direction_name(code):
+def calculate_context(candles):
+def calculate_structure(candles):
+def direction_pattern(candles):
+def pattern_from_codes(codes):
+def outcome_for_horizon(candles, index, horizon):
+def collect_pattern_statistics(candles):
+def pattern_similarity(pattern_a, pattern_b):
+def find_similar_patterns(current_pattern, stats, limit=10):
+def distribution(data):
+def dominant_outcome(data):
+def normalize_experience(memory):
+def get_experience_statistics(memory):
+def experience_reliability(stats):
+def calculate_pattern_score(
+def build_adaptive_evidence(
+def confidence_level(confidence, experience_stats):
+def create_adaptive_memory(
+def update_status(memory, context, structure, evidence):
+def print_distribution(label, data):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+LEARNING_FILE = "mlai_learning_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+WINDOW_SIZE = 60
+PATTERN_SIZE = 6
+HORIZONS = (4, 8, 16)
+MIN_PATTERN_OCCURRENCES = 3
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v16.py
+SIZE: 35070 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_float(value, default=0.0):
+def safe_int(value, default=0):
+def load_pickle(path, default=None):
+def save_pickle(path, data):
+def get_field(candle, name, default=None):
+def normalize_candles(raw):
+def extract_market_memory(memory):
+def candle_direction(candle):
+def body_size(candle):
+def candle_range(candle):
+def upper_wick(candle):
+def lower_wick(candle):
+def analyse_context(candles):
+def calculate_alignment(contexts):
+def calculate_structure_alignment(contexts):
+def calculate_momentum_alignment(contexts):
+def calculate_volatility_alignment(contexts):
+def calculate_mtf_evidence(
+def memory_counts():
+def update_project_status(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MEMORY_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+LATEST_WINDOW = 60
+CONTEXT_WINDOWS = {
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v17.py
+SIZE: 29237 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_float(value, default=0.0):
+def safe_int(value, default=0):
+def get_value(obj, key, default=None):
+def normalize_candle(candle):
+def analyse_context(data):
+def detect_structure(data):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+MTF_FILE = "mlai_multitimeframe_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+LOOKBACK = 60
+SHORT_LOOKBACK = 20
+MEDIUM_LOOKBACK = 60
+HIGHER_LOOKBACK = 120
+raw_candles = None
+candles = [
+metadata = market_memory if isinstance(market_memory, dict) else {}
+latest = candles[-LOOKBACK:]
+short_context = analyse_context(
+medium_context = analyse_context(
+higher_context = analyse_context(
+short_structure = detect_structure(
+medium_structure = detect_structure(
+higher_structure = detect_structure(
+mtf_memory = None
+adaptive_memory = None
+scores = {
+contexts = [
+structures = [
+volatility_values = [
+expanding_count = volatility_values.count("expanding")
+contracting_count = volatility_values.count("contracting")
+short_direction = short_context["direction"]
+medium_direction = medium_context["direction"]
+higher_direction = higher_context["direction"]
+primary_regime = max(
+primary_score = scores[primary_regime]
+total_score = sum(scores.values())
+regime_labels = {
+regime_label = regime_labels.get(
+supporting = []
+conflicting = []
+experience_observations = 0
+resolved_windows = 0
+pending_windows = 0
+regime_memory = {
+REGIME_FILE = "mlai_regime_memory.bin"
+story = (
+principles = [
+status_entry = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v18.py
+SIZE: 37078 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_float(value, default=0.0):
+def safe_int(value, default=0):
+def pct_change(first, last):
+def normalize_direction(value):
+def normalize_structure(value):
+def normalize_momentum(value):
+def normalize_volatility(value):
+def print_line():
+def load_pickle(filename):
+def save_pickle(filename, data):
+def get_value(obj, *keys, default=None):
+def extract_candles(memory):
+def candle_value(candle, names, default=None):
+def get_close(candle):
+def get_open(candle):
+def get_high(candle):
+def get_low(candle):
+def analyse_context(candles):
+def extract_regime(regime_memory):
+def classify_regime(contexts):
+def calculate_stability(history, current_regime):
+def detect_transition(history, current_regime):
+def calculate_regime_statistics(history):
+def normalize_transition_memory(memory):
+def update_status(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+MTF_FILE = "mlai_multitimeframe_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+REGIME_FILE = "mlai_regime_memory.bin"
+TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+REGIME_HISTORY_LIMIT = 500
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v19.py
+SIZE: 30979 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def now_iso():
+def load_pickle(path, default=None):
+def save_pickle(path, data):
+def get_value(obj, *keys, default=None):
+def clamp(value, low=0.0, high=100.0):
+def pct(value, digits=1):
+def safe_float(value, default=0.0):
+def direction_from_change(change):
+def outcome_from_change(change, threshold=0.03):
+def normalize_candle(candle):
+def extract_candles(memory):
+def analyse_context(data):
+def calculate_structure(data):
+def detect_regime(context_data, structure_data):
+def next_observation_id(observations):
+def calculate_regime_statistics(observations):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "1.9"
+MARKET_FILE = "market_data.bin"
+TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+MULTITIMEFRAME_FILE = "mlai_multitimeframe_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+LEARNING_FILE = "mlai_regime_learning_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+WINDOWS = (4, 8, 16)
+MAX_ANALYSIS_CANDLES = 60
+market_memory = load_pickle(MARKET_FILE)
+metadata = {}
+candles = extract_candles(market_memory)
+analysis = candles[-MAX_ANALYSIS_CANDLES:]
+context = analyse_context(analysis)
+structure = calculate_structure(analysis)
+current_regime = detect_regime(context, structure)
+transition_memory = load_pickle(TRANSITION_FILE, {})
+multitimeframe_memory = load_pickle(MULTITIMEFRAME_FILE, {})
+adaptive_memory = load_pickle(ADAPTIVE_FILE, {})
+learning_memory = load_pickle(LEARNING_FILE)
+newly_resolved = []
+current_index = len(candles) - 1
+current_price = candles[-1]["close"]
+observed_today = False
+regime_statistics = calculate_regime_statistics(
+transition_statistics = {}
+previous_regime = None
+global_stats = {
+total_resolved = sum(
+total_confirmed = sum(
+pending_windows = (
+principles = [
+story = (
+status_text = f"""# MLAI PROJECT STATUS
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v20.py
+SIZE: 54018 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def load_pickle(path):
+def save_pickle(path, obj):
+def first_value(obj, keys, default=None):
+def safe_float(value, default=0.0):
+def safe_int(value, default=0):
+def clamp(value, low, high):
+def percentage(value, digits=1):
+def normalize_direction(value):
+def normalize_structure(value):
+def extract_candles(memory):
+def candle_value(candle, names, default=0.0):
+def normalize_candle(candle):
+def candle_direction(candle):
+def analyze_candles(candles):
+    def average_body(data):
+    def average_range(data):
+def memory_dict(memory):
+def extract_experience_info(memory):
+    def inspect(value):
+def extract_pattern_info(memory):
+def extract_adaptive_info(memory):
+def extract_mtf_info(memory):
+def extract_regime_info(memory):
+def extract_transition_info(memory):
+def evidence_engine(
+def determine_market_state(
+def update_status(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "2.0"
+MARKET_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+MTF_FILE = "mlai_multitimeframe_memory.bin"
+REGIME_FILE = "mlai_regime_memory.bin"
+TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+REGIME_LEARNING_FILE = "mlai_regime_learning_memory.bin"
+OUTPUT_FILE = "mlai_unified_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+ANALYSIS_CANDLES = 60
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v21.py
+SIZE: 40128 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def load_pickle(path, default=None):
+def save_pickle(path, data):
+def get(d, *keys, default=None):
+def number(value, default=0.0):
+def pct(value):
+def direction_from_candles(candles):
+def calculate_net_change(candles):
+def simple_structure(candles):
+def infer_momentum(candles):
+def infer_volatility(candles):
+def infer_rejection(candles):
+def extract_timeframe(memory, names):
+def context_direction(ctx):
+def context_structure(ctx):
+def horizon_scenarios(base_bullish, base_bearish, base_neutral, horizon):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+MTF_FILE = "mlai_multitimeframe_memory.bin"
+REGIME_FILE = "mlai_regime_memory.bin"
+TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+REGIME_LEARNING_FILE = "mlai_regime_learning_memory.bin"
+UNIFIED_FILE = "mlai_unified_memory.bin"
+SCENARIO_FILE = "mlai_scenario_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+LOOKBACK = 60
+HORIZONS = [4, 8, 16]
+market_memory = load_pickle(MARKET_FILE)
+metadata = {}
+candles = []
+first_close = number(analysis[0].get("close"))
+latest_close = number(analysis[-1].get("close"))
+structure = simple_structure(analysis)
+momentum = infer_momentum(analysis)
+volatility = infer_volatility(analysis)
+rejection = infer_rejection(analysis)
+experience_memory = load_pickle(EXPERIENCE_FILE, {})
+pattern_memory = load_pickle(PATTERN_FILE, {})
+adaptive_memory = load_pickle(ADAPTIVE_FILE, {})
+mtf_memory = load_pickle(MTF_FILE, {})
+regime_memory = load_pickle(REGIME_FILE, {})
+transition_memory = load_pickle(TRANSITION_FILE, {})
+regime_learning_memory = load_pickle(REGIME_LEARNING_FILE, {})
+unified_memory = load_pickle(UNIFIED_FILE, {})
+short_ctx = extract_timeframe(
+medium_ctx = extract_timeframe(
+higher_ctx = extract_timeframe(
+short_direction = context_direction(short_ctx)
+medium_direction = context_direction(medium_ctx)
+higher_direction = context_direction(higher_ctx)
+short_structure = context_structure(short_ctx)
+medium_structure = context_structure(medium_ctx)
+higher_structure = context_structure(higher_ctx)
+mtf_directions = [
+valid_mtf = [
+bullish_contexts = valid_mtf.count("bullish")
+bearish_contexts = valid_mtf.count("bearish")
+neutral_contexts = valid_mtf.count("neutral")
+mixed_contexts = valid_mtf.count("mixed")
+regime = "unknown"
+regime_strength = "unknown"
+regime_direction = "unknown"
+regime_confidence = 0.0
+observations = []
+resolved_windows = 0
+pending_windows = 0
+confirmed = 0
+not_confirmed = 0
+neutral_outcomes = 0
+experience_reliability = 0.0
+bullish_score = 0.0
+bearish_score = 0.0
+neutral_score = 0.0
+total_directional = bullish + bearish
+historical_bullish = 0.0
+historical_bearish = 0.0
+historical_neutral = 0.0
+historical_total = (
+raw_total = (
+raw_bullish = bullish_score / raw_total
+raw_bearish = bearish_score / raw_total
+raw_neutral = neutral_score / raw_total
+MAX_SCENARIO_SHARE = 0.80
+bullish_share = 0.33 + (raw_bullish - 0.33) * 0.70
+bearish_share = 0.33 + (raw_bearish - 0.33) * 0.70
+neutral_share = 0.34 + (raw_neutral - 0.34) * 0.70
+shares = [
+share_total = sum(shares)
+max_index = max(range(3), key=lambda i: shares[i])
+bullish_scenario = shares[0] * 100
+bearish_scenario = shares[1] * 100
+neutral_scenario = shares[2] * 100
+scenario_4 = horizon_scenarios(
+scenario_8 = horizon_scenarios(
+scenario_16 = horizon_scenarios(
+scenario_values = {
+primary_scenario = max(
+sorted_scores = sorted(
+confidence = 50.0 + separation * 40.0
+confidence = max(0.0, min(95.0, confidence))
+supporting = []
+conflicting = []
+limiting = []
+scenario_memory = {
+story = (
+status = f"""# MLAI PROJECT STATUS
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v22.py
+SIZE: 29068 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_float(value, default=0.0):
+def clamp(value, low=0.0, high=100.0):
+def direction_from_change(change):
+def normalize_direction(value):
+def get_close(candle):
+def load_pickle(path, default):
+def save_pickle(path, obj):
+def find_percentage(keys, default=0.0):
+def horizon_scenario(horizon):
+def calculate_outcome(start_index, horizon):
+def make_calibration_record(
+def calculate_statistics(records):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+SCENARIO_FILE = "mlai_scenario_memory.bin"
+CALIBRATION_FILE = "mlai_calibration_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+HORIZONS = [4, 8, 16]
+market_memory = load_pickle(MARKET_FILE, None)
+candles = []
+analysis_window = min(60, len(candles))
+latest = candles[-analysis_window:]
+closes = [get_close(c) for c in latest]
+first_close = closes[0]
+latest_close = closes[-1]
+net_change = latest_close - first_close
+bullish_candles = 0
+bearish_candles = 0
+neutral_candles = 0
+scenario_memory = load_pickle(SCENARIO_FILE, {})
+current_scenario = {}
+bullish_scenario = find_percentage(
+bearish_scenario = find_percentage(
+neutral_scenario = find_percentage(
+scenario_by_horizon = {
+primary_scenario = current_scenario.get(
+calibration_memory = load_pickle(
+experience_memory = load_pickle(
+experience_observations = experience_memory.get(
+current_candle_index = len(candles) - 1
+existing_ids = {
+newly_resolved = []
+resolved_records = [
+pending_records = [
+statistics_by_horizon = {}
+direction_statistics = {}
+sample_count = len(resolved_records)
+principles = [
+story = (
+status_text = f"""# MLAI Project Status
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v23.py
+SIZE: 27206 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def load_pickle(filename):
+def save_pickle(filename, data):
+def safe_float(value, default=0.0):
+def safe_int(value, default=0):
+def extract_candles(memory):
+def extract_close(candle):
+def analyse_market(candles, window=60):
+def find_observations(memory):
+def get_outcomes(observation):
+def classify(value):
+def experience_statistics(memory):
+def calculate_reliability(
+def calculate_trust_profile(reliability):
+def save_reliability_memory(
+def update_status(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+EXPERIENCE_FILE = "mlai_experience.bin"
+PATTERN_FILE = "mlai_pattern_memory.bin"
+ADAPTIVE_FILE = "mlai_adaptive_memory.bin"
+MTF_FILE = "mlai_multitimeframe_memory.bin"
+REGIME_FILE = "mlai_regime_memory.bin"
+TRANSITION_FILE = "mlai_regime_transition_memory.bin"
+REGIME_LEARNING_FILE = "mlai_regime_learning_memory.bin"
+UNIFIED_FILE = "mlai_unified_memory.bin"
+SCENARIO_FILE = "mlai_scenario_memory.bin"
+CALIBRATION_FILE = "mlai_calibration_memory.bin"
+RELIABILITY_FILE = "mlai_reliability_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v24.py
+SIZE: 35367 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import json
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def path(name):
+def load_pickle(filename, default=None):
+def save_pickle(filename, data):
+def number(value, default=0.0):
+def text(value, default="unknown"):
+def first_value(data, keys, default=None):
+def find_nested(data, keys, default=None):
+def normalize_direction(value):
+def distribution_from_direction(direction):
+def normalize_distribution(b, s, n):
+def distribution_from_object(data):
+def extract_market_data(memory):
+def candle_close(candle):
+def calculate_market_context(candles):
+def extract_mtf(memory):
+    def get_context(name):
+def extract_regime(memory):
+def extract_experience(memory):
+def extract_reliability(memory):
+def direct_distribution(context):
+def regime_distribution(regime):
+def mtf_distribution(mtf):
+def scenario_distribution(memory):
+def adaptive_distribution(memory):
+def fuse_distributions(layers):
+def calculate_confidence(distribution):
+def confidence_level(confidence):
+def dominant_direction(distribution):
+def write_status(result):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MARKET_FILE = os.path.join(BASE_DIR, "market_data.bin")
+DECISION_FILE = os.path.join(BASE_DIR, "mlai_decision_memory.bin")
+STATUS_FILE = os.path.join(BASE_DIR, "MLAI_PROJECT_STATUS.md")
+market_memory = load_pickle("market_data.bin")
+metadata = (
+candles = extract_market_data(market_memory)
+context = calculate_market_context(candles)
+experience_memory = load_pickle(
+pattern_memory = load_pickle(
+adaptive_memory = load_pickle(
+mtf_memory = load_pickle(
+regime_memory = load_pickle(
+regime_transition_memory = load_pickle(
+regime_learning_memory = load_pickle(
+unified_memory = load_pickle(
+scenario_memory = load_pickle(
+calibration_memory = load_pickle(
+reliability_memory = load_pickle(
+mtf = extract_mtf(mtf_memory)
+regime = extract_regime(regime_memory)
+experience = extract_experience(
+reliability = extract_reliability(
+direct = direct_distribution(context)
+scenario = scenario_distribution(
+mtf_dist = mtf_distribution(
+regime_dist = regime_distribution(
+adaptive = adaptive_distribution(
+layers = {
+distribution = fuse_distributions(
+integrated_direction = dominant_direction(
+confidence = calculate_confidence(
+level = confidence_level(
+decision_memory = {
+conflict_found = False
+principles = decision_memory["principles"]
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v25.py
+SIZE: 34713 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def load_pickle(path, default=None):
+def save_pickle(path, data):
+def safe_float(value, default=0.0):
+def clamp(value, low=0.0, high=100.0):
+def normalize_distribution(bullish, bearish, neutral):
+def direction_to_distribution(direction):
+def get_value(data, *keys, default=None):
+def candle_value(candle, key, index=None):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MARKET_FILE = os.path.join(BASE_DIR, "market_data.bin")
+DECISION_FILE = os.path.join(BASE_DIR, "mlai_decision_memory.bin")
+SCENARIO_FILE = os.path.join(BASE_DIR, "mlai_scenario_memory.bin")
+CALIBRATION_FILE = os.path.join(BASE_DIR, "mlai_calibration_memory.bin")
+RELIABILITY_FILE = os.path.join(BASE_DIR, "mlai_reliability_memory.bin")
+MTF_FILE = os.path.join(BASE_DIR, "mlai_multitimeframe_memory.bin")
+REGIME_FILE = os.path.join(BASE_DIR, "mlai_regime_memory.bin")
+ADAPTIVE_FILE = os.path.join(BASE_DIR, "mlai_adaptive_memory.bin")
+OUTPUT_FILE = os.path.join(BASE_DIR, "mlai_validation_memory.bin")
+STATUS_FILE = os.path.join(BASE_DIR, "MLAI_PROJECT_STATUS.md")
+market_memory = load_pickle(MARKET_FILE)
+candles = []
+window = candles[-60:]
+closes = []
+first_close = closes[0]
+latest_close = closes[-1]
+net_change = latest_close - first_close
+bullish_candles = 0
+bearish_candles = 0
+neutral_candles = 0
+total_candles = bullish_candles + bearish_candles + neutral_candles
+half = max(10, len(closes) // 2)
+first_half = closes[:half]
+second_half = closes[-half:]
+first_move = first_half[-1] - first_half[0]
+second_move = second_half[-1] - second_half[0]
+returns = []
+structure_window = min(20, len(closes))
+recent = closes[-structure_window:]
+mid = structure_window // 2
+upper_rejections = 0
+lower_rejections = 0
+decision_memory = load_pickle(DECISION_FILE, {})
+scenario_memory = load_pickle(SCENARIO_FILE, {})
+calibration_memory = load_pickle(CALIBRATION_FILE, {})
+reliability_memory = load_pickle(RELIABILITY_FILE, {})
+mtf_memory = load_pickle(MTF_FILE, {})
+regime_memory = load_pickle(REGIME_FILE, {})
+adaptive_memory = load_pickle(ADAPTIVE_FILE, {})
+short_direction = "unknown"
+medium_direction = "unknown"
+higher_direction = "unknown"
+mtf_integrated = "unknown"
+mtf_alignment = 0.0
+regime = "unknown"
+regime_direction = "unknown"
+regime_strength = "unknown"
+regime_confidence = 0.0
+scenario_bullish = 0.0
+scenario_bearish = 0.0
+scenario_neutral = 100.0
+primary_scenario = "unknown"
+adaptive_bullish = 33.333
+adaptive_bearish = 33.333
+adaptive_neutral = 33.334
+experience_resolved = 0
+experience_pending = 0
+experience_reliability = 0.0
+weights = {
+bullish_score = (
+bearish_score = (
+neutral_score = (
+scores = {
+integrated_direction = max(
+largest_score = max(
+second_score = sorted(scores.values(), reverse=True)[1]
+spread = largest_score - second_score
+evidence_confidence = clamp(
+previous_direction = "unknown"
+conflicts = []
+supporting = []
+limitations = []
+readiness_score = evidence_confidence
+readiness_score = clamp(readiness_score)
+validation_record = {
+status_text = f"""# MLAI PROJECT STATUS
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v26.py
+SIZE: 38358 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def line(char="-", width=70):
+def title(text):
+def safe_float(value, default=None):
+def clamp(value, low=0.0, high=1.0):
+def pct(value):
+def mean(values):
+def normalize_distribution(values):
+def extract_candles(memory):
+def get_value(candle, names, default=None):
+def candle_ohlc(candle):
+def candle_direction(candle):
+def direction_symbol(direction):
+def calculate_context(candles):
+    def half_change(items):
+def calculate_mtf(all_candles, end_index):
+def detect_regime(context, mtf):
+def calculate_historical_decision(
+def classify_future_outcome(
+def calculate_brier(
+def run_backtest(candles):
+def calculate_statistics(results):
+def confidence_statistics(results):
+def save_memory(results, statistics, confidence):
+def write_status(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "2.6"
+MARKET_FILE = "market_data.bin"
+OUTPUT_FILE = "mlai_backtest_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+NEUTRAL_THRESHOLD_PCT = 0.05
+STEP = 1
+MAX_SAMPLES = None
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v27.py
+SIZE: 29836 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import json
+import pickle
+import math
+from datetime import datetime, timezone
+from raw market_data.bin and future candles are used only
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct(value):
+def safe_float(value, default=None):
+def print_header(title):
+def print_section(title):
+def get_value(obj, *names):
+def normalize_candle(raw):
+def extract_candles(memory):
+def candle_direction(candle):
+def calculate_context(window_candles):
+def build_decision(window_candles):
+def resolve_outcome(
+def empty_stats():
+def finalize_stats(stats):
+def get_confidence_bucket(confidence):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "2.7"
+MARKET_FILE = "market_data.bin"
+ERROR_MEMORY_FILE = "mlai_error_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+NEUTRAL_THRESHOLD = 0.0005
+SEPARATOR = "=" * 70
+LINE = "-" * 70
+candles = extract_candles(market_memory)
+records = []
+start_index = WINDOW
+last_index = (
+overall = empty_stats()
+horizon_stats = {
+direction_stats = {
+confidence_buckets = {
+failure_patterns = {}
+failure_patterns = sorted(
+error_memory = {
+principles = [
+status_text = f"""# MLAI Project Status
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v28.py
+SIZE: 27575 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_float(value, default=0.0):
+def get_value(obj, *names):
+def normalize_candle(raw):
+def extract_candles(memory):
+def candle_direction(candle):
+def calculate_context(window):
+def pattern_matches(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "2.8"
+MARKET_FILE = "market_data.bin"
+ERROR_MEMORY_FILE = "mlai_error_memory.bin"
+FAILURE_MEMORY_FILE = "mlai_failure_aware_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+NEUTRAL_THRESHOLD = 0.0005
+SEPARATOR = "=" * 70
+LINE = "-" * 70
+candles = extract_candles(market_memory)
+latest = candles[-WINDOW:]
+context = calculate_context(
+failure_patterns = error_memory.get(
+records = error_memory.get(
+bullish_score = 0.0
+bearish_score = 0.0
+neutral_score = 0.0
+matched_patterns = []
+total_failure_count = sum(
+baseline_total = (
+adjusted = dict(
+dominant_direction = max(
+removed = (
+total = sum(
+primary_direction = max(
+sorted_distribution = sorted(
+final_confidence = max(
+failure_aware_memory = {
+principles = [
+status = f"""
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v29.py
+SIZE: 42616 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct(value):
+def safe_float(value, default=0.0):
+def clamp(value, low, high):
+def normalize_distribution(bullish, bearish, neutral):
+def get_value(obj, *names, default=None):
+def load_pickle_file(filename):
+def recursively_find_values(obj, target_names, depth=0, max_depth=8):
+def extract_candles(memory):
+def candle_ohlc(candle):
+def calculate_market_context(candles):
+def calculate_baseline(context):
+def normalize_failure_record(record):
+def recover_detailed_records(memory):
+def recover_failure_patterns(memory):
+def build_failure_patterns(records):
+def match_failure_patterns(
+def calculate_adaptive_penalty(matches):
+def apply_failure_penalty(
+def calculate_confidence(
+def primary_direction(
+def save_memory(memory):
+def update_status(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "2.9-fixed"
+MARKET_FILE = "market_data.bin"
+ERROR_FILE = "mlai_error_memory.bin"
+OUTPUT_FILE = "mlai_adaptive_failure_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+MAX_FAILURE_PENALTY = 25.0
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v30.py
+SIZE: 61960 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def print_header(text):
+def print_section(text):
+def safe_float(value, default=None):
+def normalize_candle(raw):
+    def find_value(names):
+def load_market_data():
+def percentage_change(old, new):
+def average(values):
+def analyze_context(candles):
+def predict_from_context(context):
+def classify_outcome(movement):
+def build_historical_records(candles):
+def calculate_statistics(records):
+def context_match_score(
+def calculate_recency_weight(
+def calculate_historical_evidence(
+def calculate_failure_learning(
+def build_failure_patterns(
+def normalize_distribution(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "MLAI v3.1 CORRECTED ADAPTIVE HISTORICAL LEARNING ENGINE"
+MARKET_FILE = "market_data.bin"
+LEARNING_FILE = "mlai_learning_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+MIN_DIRECTIONAL_SEPARATION = 5.0
+STRONG_DIRECTION_SEPARATION = 20.0
+MAX_HISTORICAL_INFLUENCE = 25.0
+WEAK_ACCURACY_THRESHOLD = 50.0
+MAX_FAILURE_PENALTY = 8.0
+MIN_FAILURE_SAMPLE = 20
+EXACT_CONTEXT_WEIGHT = 1.50
+SIMILAR_CONTEXT_WEIGHT = 1.00
+HORIZON_WEIGHTS = {
+RECENCY_MIN_WEIGHT = 0.50
+RECENCY_MAX_WEIGHT = 1.00
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v31.py
+SIZE: 57668 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def print_header(text):
+def print_section(text):
+def safe_float(value, default=None):
+def normalize_candle(raw):
+    def find_value(names):
+def load_market_data():
+def percentage_change(old, new):
+def average(values):
+def analyze_context(candles):
+def predict_from_context(context):
+def classify_outcome(movement):
+def build_historical_records(candles):
+def calculate_statistics(records):
+def calculate_directional_statistics(records):
+def context_match_score(
+def calculate_recency_weight(
+def calculate_historical_evidence(
+def calculate_failure_learning(
+def build_failure_patterns(
+def normalize_distribution(
+def determine_final_direction(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "MLAI v3.1 CORRECTED ADAPTIVE HISTORICAL LEARNING ENGINE"
+MARKET_FILE = "market_data.bin"
+LEARNING_FILE = "mlai_learning_memory.bin"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+MIN_DIRECTIONAL_SEPARATION = 5.0
+MIN_DIRECTIONAL_OVER_NEUTRAL = 5.0
+STRONG_DIRECTION_SEPARATION = 20.0
+MAX_HISTORICAL_INFLUENCE = 25.0
+WEAK_ACCURACY_THRESHOLD = 50.0
+MAX_FAILURE_PENALTY = 8.0
+MIN_FAILURE_SAMPLE = 20
+EXACT_CONTEXT_WEIGHT = 1.50
+SIMILAR_CONTEXT_WEIGHT = 1.00
+HORIZON_WEIGHTS = {
+RECENCY_MIN_WEIGHT = 0.50
+RECENCY_MAX_WEIGHT = 1.00
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v32.py
+SIZE: 41707 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def header(text):
+def section(text):
+def safe_float(value, default=None):
+def normalize_candle(raw):
+    def find_value(names):
+def load_market_data():
+def percentage_change(old, new):
+def average(values):
+def analyze_context(candles):
+def predict_from_context(context):
+def classify_outcome(movement, threshold):
+def build_calibration_records(
+def confusion_matrix(records):
+def calculate_metrics(records):
+def calculate_threshold_summary(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "MLAI v3.2 HISTORICAL PREDICTION CALIBRATION ENGINE"
+MARKET_FILE = "market_data.bin"
+CALIBRATION_FILE = "mlai_v32_calibration.bin"
+REPORT_FILE = "MLAI_V32_CALIBRATION_REPORT.md"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [
+MIN_DIRECTIONAL_SEPARATION = 5.0
+MIN_DIRECTIONAL_OVER_NEUTRAL = 5.0
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v321.py
+SIZE: 42334 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def print_header(text):
+def print_section(text):
+def safe_float(value, default=None):
+def normalize_candle(raw):
+    def find_value(names):
+def load_market_data():
+def percentage_change(old, new):
+def classify_outcome(
+def build_confusion_matrix(
+def calculate_metrics(
+def average(values):
+def analyze_context(candles):
+def build_predictions(candles):
+def calculate_stability(
+def calculate_calibration_score(
+def create_report(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "MLAI v3.2.1 FINE-GRAINED HISTORICAL THRESHOLD CALIBRATION"
+MARKET_FILE = "market_data.bin"
+CALIBRATION_FILE = "mlai_v321_calibration.bin"
+REPORT_FILE = "MLAI_V321_CALIBRATION_REPORT.md"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [
+MIN_CLASS_PERCENT = 5.0
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v322.py
+SIZE: 20356 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+from collections import Counter
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct_change(start_price, end_price):
+def classify_actual(change_pct, threshold):
+def safe_div(a, b):
+def f1_score(precision, recall):
+def extract_close(candle):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CALIBRATION_FILE = "mlai_v321_calibration.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [
+EPSILON = 1e-12
+closes = []
+predictions = {
+results = []
+best = results[0]
+output = {
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v323.py
+SIZE: 31930 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import json
+from statistics import mean
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct(value):
+def safe_mean(values):
+def clamp(value, low=0.0, high=1.0):
+def load_market_data():
+def extract_close_prices(data):
+def classify_outcome(start_price, future_price, threshold):
+def predict_direction(closes, index):
+def build_dataset(closes, validation_start):
+def confusion_matrix(records):
+def calculate_metrics(records):
+def calculate_oos_score(metrics_by_horizon):
+def calculate_stability(metrics_by_horizon):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+OUTPUT_BIN = "mlai_v323_oos_validation.bin"
+OUTPUT_REPORT = "MLAI_V323_OOS_VALIDATION_REPORT.md"
+STATUS_FILE = "MLAI_PROJECT_STATUS.md"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [0.0015, 0.0018, 0.0020, 0.0024]
+VALIDATION_RATIO = 0.30
+MIN_CLASS_COUNT = 5
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v324_audit.py
+SIZE: 12836 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def banner(title):
+def pct(value):
+def extract_close(item):
+def classify_return(return_pct, threshold):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [
+VALIDATION_RATIO = 0.30
+closes = []
+split_index = int(len(closes) * (1.0 - VALIDATION_RATIO))
+calibration_closes = closes[:split_index]
+validation_closes = closes[split_index:]
+audit_results = []
+coverage_by_threshold = {}
+monotonic_pass = True
+lookahead_pass = True
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v325.py
+SIZE: 22202 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def header(title):
+def section(title):
+def extract_close_prices(data):
+def classify_return(start_price, future_price, threshold):
+def safe_div(a, b):
+def f1_score(precision, recall):
+def calculate_metrics(rows, threshold):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [0.0015, 0.0018, 0.0020, 0.0024]
+VALIDATION_RATIO = 0.30
+closes = extract_close_prices(market_data)
+split_index = int(len(closes) * (1 - VALIDATION_RATIO))
+calibration_candles = closes[:split_index]
+validation_candles = closes[split_index:]
+records = []
+all_results = []
+ranked = sorted(
+best = ranked[0]
+output = {
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v326.py
+SIZE: 22906 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct(value):
+def threshold_label(threshold):
+def safe_div(a, b):
+def harmonic_mean(a, b):
+def extract_close_prices(data):
+def classify_return(return_pct, threshold):
+def calculate_metrics(records):
+def build_window_records(start, end, threshold):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [
+VALIDATION_RATIO = 0.30
+WINDOW_COUNT = 4
+OUTPUT_BIN = "mlai_v326_robustness_validation.bin"
+OUTPUT_REPORT = "MLAI_V326_ROBUSTNESS_VALIDATION_REPORT.md"
+closes = extract_close_prices(market_data)
+validation_start = int(n * (1.0 - VALIDATION_RATIO))
+validation_length = n - validation_start
+window_size = validation_length // WINDOW_COUNT
+windows = []
+all_results = []
+ranking = sorted(
+best = ranking[0]
+output_data = {
+report = []
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v327.py
+SIZE: 32155 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+import random
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct(value):
+def safe_div(a, b):
+def harmonic_mean(a, b):
+def classify_return(return_value, threshold):
+def extract_close_prices(data):
+def build_records(start, end, threshold, horizon):
+def confusion_matrix(records, prediction_key):
+def calculate_metrics(records, prediction_key):
+def add_random_predictions(records):
+def majority_prediction(records):
+def add_majority_prediction(
+    def average_metric(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLDS = [
+VALIDATION_RATIO = 0.30
+WINDOW_COUNT = 4
+RANDOM_SEED = 327
+OUTPUT_BIN = "mlai_v327_signal_integrity.bin"
+OUTPUT_REPORT = "MLAI_V327_SIGNAL_INTEGRITY_REPORT.md"
+closes = extract_close_prices(market_data)
+validation_start = int(
+validation_length = n - validation_start
+window_size = validation_length // WINDOW_COUNT
+windows = []
+random_generator = random.Random(
+results = []
+ranking = sorted(
+best = ranking[0]
+best_momentum = best["momentum"]
+best_last = best["last_candle"]
+best_random = best["random"]
+directional_lift = (
+f1_lift = (
+output_data = {
+report = []
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v33_feature_test.py
+SIZE: 15736 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+import math
+from collections import defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def percentage_change(start, end):
+def average(values):
+def safe_float(value):
+def classify_return(value):
+def extract_features(window):
+def correlation(x_values, y_values):
+def test_feature(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLD = 0.15
+candles = data["candles"]
+records_by_horizon = {
+last_decision_index = (
+FEATURE_NAMES = [
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v33_model_test.py
+SIZE: 26917 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+import math
+import random
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def pct_change(old, new):
+def safe_mean(values):
+def clamp(value, low=-10.0, high=10.0):
+def classify_return(return_value):
+def extract_features(candles, end_index):
+    def ret(n):
+def build_records(candles, horizon):
+def calculate_stats(records, feature_names):
+def standardize(features, stats):
+def train_model(records, feature_names):
+def predict_model(model, features):
+def confusion_matrix(records):
+def calculate_metrics(records):
+def baseline_majority(train_records, test_records):
+def baseline_momentum(test_records):
+def run_walk_forward(records, feature_names):
+def print_metrics(name, metrics):
+def print_confusion(records):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLD = 0.15
+TEST_BLOCK_SIZE = 120
+TRAIN_SIZE = 600
+FEATURE_NAMES = [
+COMBINATIONS = {
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v331_walkforward.py
+SIZE: 30019 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+import math
+from statistics import mean
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def percentage_change(old, new):
+def safe_div(a, b):
+def classify_return(return_value):
+def harmonic_mean(a, b):
+def calculate_features(candles):
+    def calc_return(n):
+def normalize_value(value, low, high):
+def build_feature_vector(feature):
+def train_feature_model(records):
+def distance(a, b):
+def predict_feature_model(
+def momentum_prediction(feature):
+def build_records(
+def confusion_matrix(
+def classification_metrics(
+def apply_model(
+def print_metrics(
+def print_confusion(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLD = 0.15
+NUM_WINDOWS = 4
+VALIDATION_RATIO = 0.30
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v332_regime_test.py
+SIZE: 27447 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+import math
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def average(values):
+def percentage_change(old, new):
+def clamp(value, low, high):
+def build_features(window):
+    def ret(n):
+def future_classification(
+def detect_regime(features):
+def calculate_confidence(
+def build_records(horizon):
+def evaluate(
+def analyze_regimes(records):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+CLASSIFICATION_THRESHOLD = 0.15
+CALIBRATION_RATIO = 0.70
+MIN_REGIME_SAMPLES = 15
+candles = data["candles"]
+current_window = candles[-WINDOW:]
+current_features = build_features(
+current_regime = detect_regime(
+current_confidence = calculate_confidence(
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v333_regime_model_test.py
+SIZE: 36329 bytes
+############################################################
+
+--- IMPORTS ---
+import pickle
+import math
+import statistics
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def average(values):
+def percentage_change(old, new):
+def safe_ratio(a, b):
+def clamp(value, low, high):
+def extract_features(candles):
+def determine_regime(features):
+def vector_from_features(features):
+def classify_outcome(current_close, future_close):
+def build_records(candles, horizon):
+def calculate_scaler(records):
+def standardize_vector(vector, scaler):
+def regime_distance(
+def euclidean_distance(a, b):
+def calculate_similarity_distance(
+def find_neighbors(
+def predict_from_neighbors(
+def calculate_metrics(
+def print_metrics(metrics):
+def print_action_distribution(
+def analyze_regime_performance(
+def run_horizon(
+def current_market_analysis(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLD = 0.15
+CALIBRATION_RATIO = 0.70
+NEIGHBOR_COUNTS = [10, 20, 40]
+MAX_DISTANCE = 8.0
+DIRECTION_MARGIN = 0.10
+MIN_CONFIDENCE = 0.45
+FEATURE_NAMES = [
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v334_structure_edge.py
+SIZE: 35265 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import defaultdict
+from datetime import datetime
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def protection_check():
+def load_market_data(path):
+def get_value(row, names):
+def get_open(row):
+def get_high(row):
+def get_low(row):
+def get_close(row):
+def get_timestamp(row):
+def safe_div(a, b):
+def mean(values):
+def std(values):
+def build_features(candles, end_index):
+def directional_regime(f):
+def volatility_regime(f):
+def classify_outcome(current_price, future_price):
+def build_records(candles, horizon):
+def vector(record):
+def fit_scaler(records):
+def scale_vector(v, means, stds):
+def distance(a, b):
+def find_neighbors(
+def neighbor_prediction(neighbors):
+def evaluate_predictions(
+def print_edge_table(
+def confidence_test(results):
+def run_horizon(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+THRESHOLD = 0.0015
+CALIBRATION_RATIO = 0.70
+K_VALUES = [10, 20, 40]
+MIN_REGIME_SAMPLES = 10
+MIN_EDGE_PRECISION = 0.50
+CONFIDENCE_LEVELS = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85]
+FEATURE_NAMES = [
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v335_locked_edge_validation.py
+SIZE: 30854 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def protection_check():
+def load_market():
+def get_value(candle, *names):
+def extract_close(candle):
+def extract_timestamp(candle, index):
+def safe_return(closes, start, end):
+def calculate_features(closes, index):
+    def std(values):
+def classify_outcome(
+def build_records(closes, horizon):
+def structure_key(record):
+def discover_rules(calibration):
+def evaluate_locked_rule(
+def make_folds(records):
+def confidence_test(
+def run_horizon(
+def print_current_structure(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+CURRENT_WINDOW = 60
+HORIZONS = [4, 8, 16]
+CLASSIFICATION_THRESHOLD = 0.0015
+N_FOLDS = 4
+VALIDATION_RATIO = 0.20
+MIN_CALIBRATION_SAMPLES = 25
+MIN_VALIDATION_SAMPLES = 20
+CONFIDENCE_THRESHOLDS = [50, 55, 60, 65, 70, 75, 80, 85]
+TARGET_STRUCTURES = [
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v336_robust_edge_discovery.py
+SIZE: 44657 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import math
+import pickle
+from collections import Counter, defaultdict
+from statistics import mean, pstdev
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def protection_check():
+def load_market_data():
+def extract_candles(data):
+            def get_value(*names):
+def safe_div(a, b):
+def clamp(x, low=-10.0, high=10.0):
+def pct_return(a, b):
+def avg(values):
+def std(values):
+def candle_features(c):
+def build_structure(candles, end_index):
+def structure_signature(f):
+def numeric_distance(a, b):
+def classify_outcome(candles, index, horizon):
+def build_records(candles, horizon):
+def accuracy(predictions):
+def precision(predictions, direction):
+def print_baselines(validation):
+def discover_rules(calibration):
+def rule_key(features):
+def apply_rules(validation, rules):
+def nearest_neighbor_prediction(
+def evaluate_neighbors(calibration, validation, k):
+def build_walk_forward_folds(records):
+def print_locked_rules(rules):
+def evaluate_rule_predictions(predictions):
+def run_rule_walk_forward(records):
+def print_aggregated_rule_result(
+def stability_analysis(fold_results):
+def run_neighbor_tests(
+def print_current_structure(candles):
+def current_neighbor_evidence(
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+CLASSIFICATION_THRESHOLD = 0.0015
+N_FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 40
+MIN_VALIDATION_SAMPLES = 20
+NEIGHBORS = [10, 20, 40]
+MIN_RULE_SAMPLES = 40
+MIN_RULE_CONFIDENCE = 0.55
+MIN_VALIDATION_ACCURACY = 0.55
+MIN_STABLE_FOLDS = 2
+NUMERIC_FEATURES = [
+CATEGORICAL_FEATURES = [
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v337_adaptive_edge_discovery.py
+SIZE: 39209 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+from itertools import combinations
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def extract_candles(data):
+def get_value(candle, key, default=0.0):
+def safe_div(a, b):
+def mean(values):
+def std(values):
+def quantile_edges(values, bins=3):
+def quantile_label(value, edges):
+def structure_features(index):
+    def ret(n):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def prepare_feature_values(calibration_records):
+def get_rule_value(record, feature, edges):
+def discover_rules(calibration_records):
+def rule_matches(
+def evaluate_rules(
+def print_baseline(records):
+def rule_text(rule):
+def walk_forward(records):
+def aggregate_results(results):
+def feature_distance(a, b):
+def similarity_test(records):
+def print_current_structure():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+CLASSIFICATION_THRESHOLD = 0.0015
+WALK_FORWARD_FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_SAMPLES = 20
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_LIFT = 0.05
+MIN_STABILITY_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+QUANTILE_BINS = 3
+candles = extract_candles(market_data)
+opens = [get_value(c, "open") for c in candles]
+highs = [get_value(c, "high") for c in candles]
+lows = [get_value(c, "low") for c in candles]
+closes = [get_value(c, "close") for c in candles]
+CATEGORICAL_FEATURES = [
+NUMERIC_FEATURES = [
+all_horizon_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v338.py
+SIZE: 35060 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(calibration_records):
+def apply_quantile_model(features, model):
+def derive_regime_features(features, quantized):
+def transform_records(records, quantile_model):
+def discover_rules(records):
+def rule_matches(rule, features):
+def validate_rules(rules, validation_records):
+def calculate_metrics(predictions, validation_records):
+def baseline_metrics(validation_records):
+def rule_signature(rule):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_SAMPLES = 20
+MIN_CONFIDENCE = 0.45
+MIN_LIFT = 0.10
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v338_calibration_locked_quantile_validation.py
+SIZE: 35060 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(calibration_records):
+def apply_quantile_model(features, model):
+def derive_regime_features(features, quantized):
+def transform_records(records, quantile_model):
+def discover_rules(records):
+def rule_matches(rule, features):
+def validate_rules(rules, validation_records):
+def calculate_metrics(predictions, validation_records):
+def baseline_metrics(validation_records):
+def rule_signature(rule):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_SAMPLES = 20
+MIN_CONFIDENCE = 0.45
+MIN_LIFT = 0.10
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v339.py
+SIZE: 45274 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+    from calibration records.
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def discover_rules(records):
+def rule_matches(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def rule_signature(rule):
+def build_purged_calibration(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_SAMPLES = 20
+MIN_CONFIDENCE = 0.45
+MIN_LIFT = 0.10
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v340.py
+SIZE: 52676 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v341.py
+SIZE: 49466 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v341_backup.py
+SIZE: 52676 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v342.py
+SIZE: 61595 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import random
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v342_backup_before_null_fix.py
+SIZE: 59695 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v342_backup_before_null_integration.py
+SIZE: 59695 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v343.py
+SIZE: 60870 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import random
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+def print_top_rules(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v343_backup_before_null_fix.py
+SIZE: 61595 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import random
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v343_backup_before_selection_null_fix.py
+SIZE: 61595 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import random
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v343_model_test.py
+SIZE: 67229 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import random
+import pickle
+import math
+from collections import Counter, defaultdict
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def safe_return(values, n):
+def mean(values):
+def stdev(values):
+def percentile(sorted_values, p):
+def raw_features(index):
+def classify_outcome(index, horizon):
+def build_records(horizon):
+def fit_quantile_model(
+def apply_quantile_model(
+def derive_regime_features(
+def transform_records(
+def rule_score(
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+def discover_rules(
+def rule_signature(rule):
+def rule_matches(
+def build_purged_calibration(
+def validate_rules(
+def calculate_metrics(
+def baseline_metrics(
+def audit_rule_validation(
+def condition_feature_set(
+def audit_rule_redundancy(
+def print_redundancy_audit(
+def format_rule(rule):
+def print_top_rules(
+def print_top_validated_rules(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+WINDOW = 60
+HORIZONS = [4, 8, 16]
+FOLDS = 4
+MIN_CALIBRATION_SAMPLES = 20
+MIN_VALIDATION_MATCHES = 5
+MIN_CONFIDENCE = 0.45
+MIN_DIRECTIONAL_RATE = 0.20
+STABILITY_MIN_FOLDS = 2
+TOP_RULES_TO_PRINT = 20
+TOP_VALIDATED_RULES_TO_PRINT = 20
+MAX_RULES_FOR_VALIDATION = 500
+PERMUTATIONS = 25
+candles = market_data.get("candles", [])
+closes = []
+QUANTILE_FEATURES = [
+CANDIDATE_FEATURES = [
+all_results = {}
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v35_market_structure.py
+SIZE: 19669 bytes
+############################################################
+
+--- IMPORTS ---
+import numpy as np
+import pandas as pd
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def add_market_structure_features(df):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MS_SWING_LOOKBACK = 3
+MS_SHORT_TREND = 10
+MS_MEDIUM_TREND = 20
+MS_LONG_TREND = 50
+MS_ATR_PERIOD = 14
+MS_SR_LOOKBACK = 20
+MS_DISPLACEMENT_ATR = 1.5
+MS_EXHAUSTION_STREAK = 5
+MS_SR_ATR_DISTANCE = 0.50
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v35_market_structure_test.py
+SIZE: 41507 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def normalize_candle(candle, original_index):
+def mean(values):
+def percentage_change(start, end):
+def true_range(index):
+def calculate_atr(index, period=ATR_PERIOD):
+def detect_swing_highs(lookback=SWING_LOOKBACK):
+def detect_swing_lows(lookback=SWING_LOOKBACK):
+def clean_swings(swings):
+def classify_swings(swings):
+def calculate_structure_score(swings):
+def detect_structure_events(
+def get_last_structural_levels(swings):
+def determine_current_state(
+def calculate_structure_quality(
+def classify_trend(swings):
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+SWING_LOOKBACK = 3
+MIN_CANDLES = 100
+RECENT_CANDLES = 100
+MAX_SWINGS_TO_PRINT = 30
+MAX_EVENTS_TO_PRINT = 30
+MIN_STRUCTURE_MOVE = 0.0002
+ATR_PERIOD = 14
+MIN_DIRECTIONAL_POINTS = 2
+STRUCTURE_DIRECTION_THRESHOLD = 0.25
+Trading                = NOT PERFORMED
+candles = market_data.get("candles", [])
+normalized_candles = []
+invalid_candle_count = 0
+opens = [
+highs = [
+lows = [
+closes = [
+raw_swing_highs = detect_swing_highs()
+raw_swing_lows = detect_swing_lows()
+all_swings = (
+cleaned_swings = clean_swings(
+classified_swings = classify_swings(
+structure_counts = Counter(
+structure_score = calculate_structure_score(
+swings_by_index = {}
+structure_events = detect_structure_events(
+event_counts = Counter(
+recent_start = max(
+recent_swings = [
+recent_events = [
+recent_structure_score = calculate_structure_score(
+latest_index = len(normalized_candles) - 1
+latest_candle = normalized_candles[
+latest_close = latest_candle["close"]
+latest_high = latest_candle["high"]
+latest_low = latest_candle["low"]
+latest_atr = calculate_atr(
+distance_to_high = None
+distance_to_low = None
+latest_event = None
+current_state = determine_current_state(
+structure_quality = calculate_structure_quality(
+trend_classification = classify_trend(
+timestamps = [
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v36_market_context_test.py
+SIZE: 54946 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def normalize_candle(candle, index):
+def mean(values):
+def percentage_change(start, end):
+def safe_percentage(value):
+def candle_direction(index):
+def candle_range(index):
+def candle_body(index):
+def upper_wick(index):
+def lower_wick(index):
+def body_ratio(index):
+def candle_strength(index):
+def true_range(index):
+def calculate_atr(
+def calculate_ema_series(
+def simple_moving_average(
+def calculate_rsi(
+def calculate_momentum(
+def detect_swing_highs(
+def detect_swing_lows(
+def clean_swings(swings):
+def classify_swings(swings):
+def calculate_structure_score(
+def detect_structure_events(
+def cluster_levels(
+def calculate_structure_quality(
+def classify_trend(swings):
+def determine_current_state(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+MARKET_FILE = "market_data.bin"
+SWING_LOOKBACK = 3
+MIN_CANDLES = 100
+RECENT_CANDLES = 100
+MAX_SWINGS_TO_PRINT = 40
+MAX_EVENTS_TO_PRINT = 40
+MAX_LEVELS_TO_PRINT = 10
+ATR_PERIOD = 14
+RSI_PERIOD = 14
+FAST_EMA_PERIOD = 12
+SLOW_EMA_PERIOD = 26
+MACD_SIGNAL_PERIOD = 9
+SHORT_MA_PERIOD = 20
+MEDIUM_MA_PERIOD = 50
+LONG_MA_PERIOD = 200
+MIN_STRUCTURE_MOVE = 0.0002
+SUPPORT_RESISTANCE_TOLERANCE = 0.0015
+MIN_LEVEL_TOUCHES = 2
+RECENT_RANGE_PERIOD = 50
+VOLUME_PERIOD = 20
+Trading                = NOT PERFORMED
+candles = market_data.get(
+normalized_candles = []
+invalid_candles = 0
+opens = [
+highs = [
+lows = [
+closes = [
+volumes = [
+ema_fast = calculate_ema_series(
+ema_slow = calculate_ema_series(
+ema_signal_source = [
+macd_signal = calculate_ema_series(
+swing_highs = detect_swing_highs()
+swing_lows = detect_swing_lows()
+all_swings = (
+all_swings = clean_swings(
+classified_swings = classify_swings(
+structure_counts = Counter(
+structure_score = calculate_structure_score(
+structure_events = detect_structure_events(
+event_counts = Counter(
+swing_high_prices = [
+swing_low_prices = [
+resistance_clusters = cluster_levels(
+support_clusters = cluster_levels(
+support_levels = [
+resistance_levels = [
+latest_close = closes[-1]
+support_levels_below = [
+resistance_levels_above = [
+nearest_support = None
+nearest_resistance = None
+recent_range_start = max(
+recent_high = max(
+recent_low = min(
+recent_range = (
+latest_index = len(closes) - 1
+latest_open = opens[latest_index]
+latest_high = highs[latest_index]
+latest_low = lows[latest_index]
+latest_atr = calculate_atr(
+latest_body = candle_body(
+latest_upper_wick = upper_wick(
+latest_lower_wick = lower_wick(
+latest_range = candle_range(
+latest_body_ratio = body_ratio(
+latest_direction = candle_direction(
+latest_strength = candle_strength(
+atr_previous = calculate_atr(
+ma20 = simple_moving_average(
+ma50 = simple_moving_average(
+ma200 = simple_moving_average(
+latest_rsi = calculate_rsi(
+latest_macd = ema_signal_source[-1]
+latest_macd_signal = macd_signal[-1]
+latest_macd_histogram = (
+latest_momentum = calculate_momentum(
+valid_volumes = [
+breakout_status = "NO_CONFIRMED_BREAKOUT"
+previous_structural_high = None
+previous_structural_low = None
+recent_start = max(
+recent_swings = [
+recent_events = [
+recent_structure_score = (
+structure_quality = (
+trend_classification = classify_trend(
+latest_event = (
+current_state = determine_current_state(
+timestamp_order_pass = True
+previous_timestamp = None
+ohlc_integrity_pass = True
+finite_price_pass = all(
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: mlai_v37_data_foundation_test.py
+SIZE: 26935 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+import statistics
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def separator(char="=", width=80):
+def section(title):
+def pass_check(message):
+def warn_check(message):
+def fail_check(message):
+def is_finite_number(value):
+def normalize_number(value):
+def normalize_timestamp(value):
+def timestamp_text(timestamp):
+def find_value(record, names):
+def normalize_candle(record, original_index):
+def extract_records(data):
+def extract_metadata(data):
+def load_market_data(path):
+def analyze_timestamps(candles):
+def calculate_price_statistics(candles):
+def analyze_volume(candles):
+def quality_report(candles, invalid_reasons, timestamp_analysis):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "3.7.0"
+DATA_FILE = "market_data.bin"
+EXPECTED_SYMBOL = "XAUUSD"
+EXPECTED_TIMEFRAME_SECONDS = 300
+EPSILON = 1e-10
+Training               = NOT PERFORMED
+Trading                = NOT PERFORMED
+Predictions            = NOT PERFORMED
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v38_unified_market_representation_test.py
+SIZE: 41369 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import math
+import pickle
+import statistics
+from collections import Counter
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def section(title):
+def subsection(title):
+def safe_float(value, default=None):
+def clamp(value, minimum, maximum):
+def load_market_data(path):
+def extract_candle(record):
+def normalize_data(raw):
+def true_range(current, previous=None):
+def calculate_atr(candles, index, period=ATR_PERIOD):
+def moving_average(values, period):
+def candle_anatomy(candle):
+def classify_candle(anatomy, atr):
+def relative_movement(candles, index):
+def momentum(candles, index, period=MOMENTUM_PERIOD):
+def volume_context(candles, index, period=VOLUME_PERIOD):
+def volatility_context(candles, index):
+def price_location(
+def sequence_context(candles, index, length=SEQUENCE_LENGTH):
+def follow_through_context(candles, index):
+def generate_description(
+def build_representation(candles, index):
+def validate_representation(rep):
+def numerical_vector(rep):
+def representation_summary(representations):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+DATA_FILE = "market_data.bin"
+SEQUENCE_LENGTH = 5
+ATR_PERIOD = 14
+MOMENTUM_PERIOD = 14
+VOLUME_PERIOD = 20
+LOCATION_PERIOD = 20
+RELATIVE_RANGE_PERIOD = 20
+EPSILON = 1e-12
+Training               = NOT PERFORMED
+Prediction             = NOT PERFORMED
+Trading                = NOT PERFORMED
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: mlai_v39_sequence_context_test.py
+SIZE: 33691 bytes
+############################################################
+
+--- IMPORTS ---
+import os
+import pickle
+import math
+import statistics
+from collections import Counter
+from datetime import datetime, timezone
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def separator(char="=", width=80):
+def section(title):
+def pass_check(message):
+def warn_check(message):
+def fail_check(message):
+def finite(value):
+def number(value):
+def timestamp(value):
+def time_text(ts):
+def get_value(record, names):
+def load_data():
+def extract_records(data):
+def normalize(records):
+def candle_features(candle):
+def sequence_return(candles):
+def directional_sequence(candles):
+def pressure_state(candles):
+def follow_through_state(candles):
+def rejection_state(candles):
+def volatility_state(candles):
+def momentum_state(candles):
+def acceleration_state(candles):
+def local_price_structure(candles):
+def movement_state(candles):
+def volume_state(candles):
+def build_representation(candles, index):
+def build_prefix_representation(candles, index):
+def compare_prefixes(candles):
+def sequence_statistics(candles):
+def main():
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+VERSION = "3.9.0"
+DATA_FILE = "market_data.bin"
+WINDOWS = [3, 5, 10, 20]
+EPSILON = 1e-12
+
+--- MAIN ENTRY POINT ---
+if __name__ == "__main__":
+
+############################################################
+FILE: patch_v342_diagnostics.py
+SIZE: 11177 bytes
+############################################################
+
+--- IMPORTS ---
+from pathlib import Path
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+def outcome_distribution(records):
+def print_outcome_distribution(
+def rule_length_distribution(
+def print_rule_search_diagnostics(
+def calculate_rule_validation_summary(
+def print_validation_selection_diagnostics(
+def shuffled_calibration_records(
+def run_permutation_null_test(
+def print_permutation_null_result(
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+path = Path("mlai_v342.py")
+text = path.read_text(encoding="utf-8")
+marker = "# ============================================================\n# RULE DISCOVERY\n# ============================================================"
+diagnostics = r'''
+text = (
+text = text.replace(
+text = text.replace(
+
+--- MAIN ENTRY POINT ---
+
+############################################################
+FILE: replace_v341_main.py
+SIZE: 15437 bytes
+############################################################
+
+--- IMPORTS ---
+from pathlib import Path
+
+--- CLASSES ---
+
+--- FUNCTIONS ---
+
+--- TOP-LEVEL CONSTANTS / CONFIG ---
+path = Path("mlai_v341.py")
+text = path.read_text(encoding="utf-8")
+start_marker = "# MAIN EXPERIMENT"
+end_marker = "# FINAL VERDICT"
+start = text.index(start_marker)
+end = text.index(end_marker)
+new_main = r'''
+all_results = {}
+new_text = (
+
+--- MAIN ENTRY POINT ---

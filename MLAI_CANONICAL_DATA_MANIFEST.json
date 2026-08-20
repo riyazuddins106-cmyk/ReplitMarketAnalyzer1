@@ -1,0 +1,60 @@
+{
+  "manifest_version": "1.0",
+  "dataset": {
+    "file": "market_data.bin",
+    "sha256": "dd57bccc3526ebaeb900181096adcbf48a84b5a3a334da1f1990a443cde091b5",
+    "protection": "READ_ONLY",
+    "object_type": "dict",
+    "candle_count": 1309,
+    "mlai_version": "0.1",
+    "created_at": "2026-08-15T08:53:20.021889+00:00"
+  },
+  "source": {
+    "provider": "Yahoo Finance",
+    "symbol": "GC=F",
+    "instrument": "GC=F",
+    "timeframe": "5m",
+    "requested_range": "5d"
+  },
+  "canonical_candle_schema": [
+    "timestamp",
+    "datetime",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume"
+  ],
+  "derived_candle_schema": [
+    "direction",
+    "candle_type",
+    "range",
+    "body",
+    "upper_wick",
+    "lower_wick",
+    "body_to_range",
+    "upper_wick_to_range",
+    "lower_wick_to_range"
+  ],
+  "rules": {
+    "timestamp_timezone": "UTC",
+    "raw_data_mutation": "PROHIBITED",
+    "session_gaps": "Preserve observed gaps; never synthesize candles",
+    "derived_features": "Stored separately from canonical raw OHLCV conceptually"
+  },
+  "validation": {
+    "ohlc": "PASS",
+    "timestamp_consistency": "PASS",
+    "duplicate_timestamps": "PASS",
+    "derived_candle_math": "PASS",
+    "expected_interval": "5 minutes",
+    "observed_session_gaps": {
+      "count": 4,
+      "duration_minutes": 65
+    }
+  },
+  "coverage": {
+    "first_timestamp": "2026-08-10T04:00:00+00:00",
+    "last_timestamp": "2026-08-14T21:00:00+00:00"
+  }
+}

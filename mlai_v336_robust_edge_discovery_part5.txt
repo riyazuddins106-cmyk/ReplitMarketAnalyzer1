@@ -1,0 +1,384 @@
+    current_features
+):
+
+    target = {
+        "features": current_features
+    }
+
+    print()
+    print("=" * 70)
+    print("CURRENT STRUCTURE HISTORICAL EVIDENCE")
+    print("=" * 70)
+
+    for k in NEIGHBORS:
+
+        scored = []
+
+        for record in records:
+
+            distance = numeric_distance(
+                current_features,
+                record["features"]
+            )
+
+            scored.append(
+                (
+                    distance,
+                    record["outcome"]
+                )
+            )
+
+        scored.sort(
+            key=lambda x: x[0]
+        )
+
+        neighbors = scored[:k]
+
+        outcomes = [
+            x[1]
+            for x in neighbors
+        ]
+
+        counts = Counter(
+            outcomes
+        )
+
+        directional = [
+            x
+            for x in outcomes
+            if x in ("BUY", "SELL")
+        ]
+
+        print()
+        print(
+            f"TOP {k} HISTORICAL NEIGHBORS"
+        )
+
+        print(
+            f"Bullish outcomes: "
+            f"{counts['BUY']}"
+        )
+
+        print(
+            f"Neutral outcomes: "
+            f"{counts['NEUTRAL']}"
+        )
+
+        print(
+            f"Bearish outcomes: "
+            f"{counts['SELL']}"
+        )
+
+        if not directional:
+
+            print(
+                "Diagnostic prediction: NO TRADE"
+            )
+
+            print(
+                "Confidence: 0.00%"
+            )
+
+            continue
+
+        buy = counts["BUY"]
+        sell = counts["SELL"]
+
+        if buy > sell:
+
+            prediction = "BUY"
+            confidence = safe_div(
+                buy,
+                len(directional)
+            )
+
+        elif sell > buy:
+
+            prediction = "SELL"
+            confidence = safe_div(
+                sell,
+                len(directional)
+            )
+
+        else:
+
+            prediction = "NO TRADE"
+            confidence = 0.50
+
+        print(
+            f"Diagnostic prediction: "
+            f"{prediction}"
+        )
+
+        print(
+            f"Confidence: "
+            f"{confidence:.2%}"
+        )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    print("=" * 70)
+    print("MLAI v3.3.6 ROBUST EDGE DISCOVERY")
+    print("=" * 70)
+
+    print()
+    print("Purpose:")
+    print(
+        "Determine whether multi-dimensional market structures "
+        "contain repeatable directional information that survives "
+        "strict chronological walk-forward validation."
+    )
+
+    print()
+
+    protection_check()
+
+    # --------------------------------------------------------
+    # LOAD DATA
+    # --------------------------------------------------------
+
+    data = load_market_data()
+
+    candles = extract_candles(data)
+
+    print(
+        f"Data type: {type(data).__name__}"
+    )
+
+    print(
+        f"Total candles: {len(candles)}"
+    )
+
+    print(
+        "PASS: market_data.bin loaded."
+    )
+
+    print(
+        "PASS: Close prices extracted."
+    )
+
+    print(
+        "PASS: market_data.bin will NOT be modified."
+    )
+
+    print(
+        "PASS: Production MLAI will NOT be modified."
+    )
+
+    # --------------------------------------------------------
+    # RESULTS STORAGE
+    # --------------------------------------------------------
+
+    all_horizon_results = {}
+
+    # --------------------------------------------------------
+    # HORIZONS
+    # --------------------------------------------------------
+
+    for horizon in HORIZONS:
+
+        print()
+        print()
+        print("=" * 70)
+        print(
+            f"HORIZON: {horizon} CANDLES"
+        )
+        print("=" * 70)
+
+        records = build_records(
+            candles,
+            horizon
+        )
+
+        print(
+            f"Historical records: {len(records)}"
+        )
+
+        if len(records) < 100:
+
+            print(
+                "WARNING: insufficient records."
+            )
+
+            continue
+
+        folds = build_walk_forward_folds(
+            records
+        )
+
+        print(
+            f"Walk-forward folds: {len(folds)}"
+        )
+
+        # ----------------------------------------------------
+        # BASELINE USING FINAL VALIDATION BLOCK
+        # ----------------------------------------------------
+
+        if folds:
+
+            final_fold = folds[-1]
+
+            print_baselines(
+                final_fold[2]
+            )
+
+        # ----------------------------------------------------
+        # LOCKED RULE WALK-FORWARD
+        # ----------------------------------------------------
+
+        fold_results, all_predictions = (
+            run_rule_walk_forward(records)
+        )
+
+        total_validation = sum(
+            len(x[2])
+            for x in folds
+        )
+
+        print_aggregated_rule_result(
+            all_predictions,
+            total_validation
+        )
+
+        # ----------------------------------------------------
+        # STABILITY
+        # ----------------------------------------------------
+
+        stable_rules = stability_analysis(
+            fold_results
+        )
+
+        # ----------------------------------------------------
+        # FINAL-FOLD NEIGHBOR TEST
+        # ----------------------------------------------------
+
+        if folds:
+
+            _, calibration, validation = folds[-1]
+
+            run_neighbor_tests(
+                calibration,
+                validation
+            )
+
+        all_horizon_results[horizon] = {
+            "records": len(records),
+            "folds": fold_results,
+            "stable_rules": stable_rules,
+        }
+
+    # ========================================================
+    # CURRENT STRUCTURE
+    # ========================================================
+
+    current_features = print_current_structure(
+        candles
+    )
+
+    # --------------------------------------------------------
+    # Current evidence using longest horizon
+    # --------------------------------------------------------
+
+    if 16 in HORIZONS:
+
+        records_16 = build_records(
+            candles,
+            16
+        )
+
+        current_neighbor_evidence(
+            candles,
+            records_16,
+            current_features
+        )
+
+    # ========================================================
+    # FINAL VERDICT
+    # ========================================================
+
+    print()
+    print()
+    print("=" * 70)
+    print("MLAI v3.3.6 FINAL VERDICT")
+    print("=" * 70)
+
+    print()
+    print(
+        "This experiment is diagnostic only."
+    )
+
+    print(
+        "No production model was changed."
+    )
+
+    print(
+        "No learning memory was changed."
+    )
+
+    print(
+        "market_data.bin was READ ONLY."
+    )
+
+    print(
+        "mlai_v31.py was NOT modified."
+    )
+
+    print()
+
+    print(
+        "A structure is considered a candidate edge ONLY when:"
+    )
+
+    print(
+        "  1. It has sufficient calibration samples."
+    )
+
+    print(
+        "  2. Calibration confidence exceeds the minimum."
+    )
+
+    print(
+        "  3. The direction remains stable across folds."
+    )
+
+    print(
+        "  4. The rule is tested on unseen chronological data."
+    )
+
+    print(
+        "  5. The out-of-sample result is materially better "
+        "than a trivial baseline."
+    )
+
+    print()
+
+    print(
+        "IMPORTANT:"
+    )
+
+    print(
+        "High calibration accuracy alone is NOT sufficient."
+    )
+
+    print(
+        "High historical similarity accuracy alone is NOT sufficient."
+    )
+
+    print(
+        "No rule should be promoted to production from this script."
+    )
+
+    print()
+
+    print(
+        "MLAI v3.3.6 COMPLETE"
+    )
+
+
+if __name__ == "__main__":
+    main()

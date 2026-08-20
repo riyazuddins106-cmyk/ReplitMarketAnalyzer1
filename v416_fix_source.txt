@@ -1,0 +1,1376 @@
+  1801: 
+  1802: # =====================================================================
+  1803: # SIMILARITY
+  1804: # =====================================================================
+  1805: 
+  1806: def numeric_similarity(
+  1807:     a: float,
+  1808:     b: float,
+  1809:     scale: float,
+  1810: ) -> float:
+  1811: 
+  1812:     return math.exp(
+  1813:         -abs(a - b)
+  1814:         / max(abs(scale), EPS)
+  1815:     )
+  1816: 
+  1817: 
+  1818: def path_row_similarity(
+  1819:     current_row: Tuple[
+  1820:         float,
+  1821:         float,
+  1822:         float,
+  1823:         float,
+  1824:     ],
+  1825:     historical_row: Tuple[
+  1826:         float,
+  1827:         float,
+  1828:         float,
+  1829:         float,
+  1830:     ],
+  1831: ) -> float:
+  1832: 
+  1833:     (
+  1834:         current_return,
+  1835:         current_range,
+  1836:         current_direction,
+  1837:         current_body,
+  1838:     ) = current_row
+  1839: 
+  1840:     (
+  1841:         historical_return,
+  1842:         historical_range,
+  1843:         historical_direction,
+  1844:         historical_body,
+  1845:     ) = historical_row
+  1846: 
+  1847:     return_similarity = numeric_similarity(
+  1848:         current_return,
+  1849:         historical_return,
+  1850:         1.0,
+  1851:     )
+  1852: 
+  1853:     range_similarity = numeric_similarity(
+  1854:         current_range,
+  1855:         historical_range,
+  1856:         1.0,
+  1857:     )
+  1858: 
+  1859:     body_similarity = numeric_similarity(
+  1860:         current_body,
+  1861:         historical_body,
+  1862:         1.0,
+  1863:     )
+  1864: 
+  1865:     direction_similarity = (
+  1866:         1.0
+  1867:         if current_direction
+  1868:         == historical_direction
+  1869:         else 0.0
+  1870:     )
+  1871: 
+  1872:     return (
+  1873:         0.45 * return_similarity
+  1874:         + 0.25 * range_similarity
+  1875:         + 0.20 * body_similarity
+  1876:         + 0.10 * direction_similarity
+  1877:     )
+  1878: 
+  1879: 
+  1880: def path_similarity(
+  1881:     current: MarketState,
+  1882:     record: ExperienceRecord,
+  1883: ) -> float:
+  1884: 
+  1885:     values = [
+  1886:         path_row_similarity(a, b)
+  1887:         for a, b in zip(
+  1888:             current.path_vector,
+  1889:             record.path_vector,
+  1890:         )
+  1891:     ]
+  1892: 
+  1893:     return mean_or_zero(values)
+  1894: 
+  1895: 
+  1896: # =====================================================================
+  1897: # V4.1.6 CAPABILITY 1
+  1898: # EXPLICIT SIMILARITY REPRESENTATION
+  1899: # =====================================================================
+  1900: 
+  1901: def similarity_representation(
+  1902:     current: MarketState,
+  1903:     record: ExperienceRecord,
+  1904: ) -> SimilarityRepresentation:
+  1905: 
+  1906:     structure = mean_or_zero(
+  1907:         [
+  1908:             1.0
+  1909:             if current.trend
+  1910:             == record.state_key[0]
+  1911:             else 0.0,
+  1912: 
+  1913:             1.0
+  1914:             if current.structure_event
+  1915:             == record.structure_event
+  1916:             else 0.0,
+  1917: 
+  1918:             1.0
+  1919:             if current.high_label
+  1920:             == record.state_key[2]
+  1921:             else 0.0,
+  1922: 
+  1923:             1.0
+  1924:             if current.low_label
+  1925:             == record.state_key[3]
+  1926:             else 0.0,
+  1927:         ]
+  1928:     )
+  1929: 
+  1930:     sequence = (
+  1931:         1.0
+  1932:         if current.sequence_state
+  1933:         == record.sequence_state
+  1934:         else 0.0
+  1935:     )
+  1936: 
+  1937:     regime = (
+  1938:         1.0
+  1939:         if current.regime
+  1940:         == record.regime
+  1941:         else 0.0
+  1942:     )
+  1943: 
+  1944:     location = (
+  1945:         1.0
+  1946:         if current.location
+  1947:         == record.location
+  1948:         else 0.0
+  1949:     )
+  1950: 
+  1951:     momentum = (
+  1952:         1.0
+  1953:         if current.momentum_state
+  1954:         == record.momentum_state
+  1955:         else 0.0
+  1956:     )
+  1957: 
+  1958:     volatility = numeric_similarity(
+  1959:         current.volatility_ratio,
+  1960:         record.volatility_ratio,
+  1961:         0.50,
+  1962:     )
+  1963: 
+  1964:     candle = mean_or_zero(
+  1965:         [
+  1966:             numeric_similarity(
+  1967:                 current.body_ratio,
+  1968:                 record.body_ratio,
+  1969:                 1.0,
+  1970:             ),
+  1971:             numeric_similarity(
+  1972:                 current.range_ratio,
+  1973:                 record.range_ratio,
+  1974:                 1.0,
+  1975:             ),
+  1976:         ]
+  1977:     )
+  1978: 
+  1979:     path = path_similarity(
+  1980:         current,
+  1981:         record,
+  1982:     )
+  1983: 
+  1984:     total = (
+  1985:         WEIGHT_STRUCTURE * structure
+  1986:         + WEIGHT_SEQUENCE * sequence
+  1987:         + WEIGHT_REGIME * regime
+  1988:         + WEIGHT_LOCATION * location
+  1989:         + WEIGHT_MOMENTUM * momentum
+  1990:         + WEIGHT_VOLATILITY * volatility
+  1991:         + WEIGHT_CANDLE * candle
+  1992:         + WEIGHT_PATH * path
+  1993:     )
+  1994: 
+  1995:     return SimilarityRepresentation(
+  1996:         structure=clamp(structure),
+  1997:         sequence=clamp(sequence),
+  1998:         regime=clamp(regime),
+  1999:         location=clamp(location),
+  2000:         momentum=clamp(momentum),
+  2001:         volatility=clamp(volatility),
+  2002:         candle=clamp(candle),
+  2003:         path=clamp(path),
+  2004:         total=clamp(total),
+  2005:     )
+  2006: 
+  2007: 
+  2008: def similarity_score(
+  2009:     current: MarketState,
+  2010:     record: ExperienceRecord,
+  2011: ) -> Dict[str, float]:
+  2012: 
+  2013:     representation = similarity_representation(
+  2014:         current,
+  2015:         record,
+  2016:     )
+  2017: 
+  2018:     return {
+  2019:         "total": representation.total,
+  2020:         "structure": representation.structure,
+  2021:         "sequence": representation.sequence,
+  2022:         "regime": representation.regime,
+  2023:         "location": representation.location,
+  2024:         "momentum": representation.momentum,
+  2025:         "volatility": representation.volatility,
+  2026:         "candle": representation.candle,
+  2027:         "path": representation.path,
+  2028:     }
+  2029: 
+  2030: 
+  2031: # =====================================================================
+  2032: # EPISODE REPRESENTATIVES
+  2033: # =====================================================================
+  2034: 
+  2035: def select_episode_representatives(
+  2036:     matches: Sequence[SimilarityMatch],
+  2037: ) -> List[SimilarityMatch]:
+  2038: 
+  2039:     by_episode: Dict[
+  2040:         int,
+  2041:         SimilarityMatch,
+  2042:     ] = {}
+  2043: 
+  2044:     for match in matches:
+  2045: 
+  2046:         current = by_episode.get(
+  2047:             match.episode_id
+  2048:         )
+  2049: 
+  2050:         if (
+  2051:             current is None
+  2052:             or match.similarity
+  2053:             > current.similarity
+  2054:         ):
+  2055: 
+  2056:             by_episode[
+  2057:                 match.episode_id
+  2058:             ] = match
+  2059: 
+  2060:     selected = list(
+  2061:         by_episode.values()
+  2062:     )
+  2063: 
+  2064:     selected.sort(
+  2065:         key=lambda item: (
+  2066:             item.similarity,
+  2067:             item.index,
+  2068:         ),
+  2069:         reverse=True,
+  2070:     )
+  2071: 
+  2072:     return selected[:RETRIEVAL_TOP_K]
+  2073: 
+  2074: 
+  2075: # =====================================================================
+  2076: # DISTRIBUTIONS
+  2077: # =====================================================================
+  2078: 
+  2079: def distribution_from_records(
+  2080:     records: Sequence[ExperienceRecord],
+  2081: ) -> Dict[str, float]:
+  2082: 
+  2083:     counts = Counter(
+  2084:         record.outcome.direction
+  2085:         for record in records
+  2086:     )
+  2087: 
+  2088:     total = len(records)
+  2089: 
+  2090:     return {
+  2091:         "UP": safe_div(
+  2092:             counts["UP"],
+  2093:             total,
+  2094:         ),
+  2095:         "DOWN": safe_div(
+  2096:             counts["DOWN"],
+  2097:             total,
+  2098:         ),
+  2099:         "NEUTRAL": safe_div(
+  2100:             counts["NEUTRAL"],
+  2101:             total,
+  2102:         ),
+  2103:     }
+  2104: 
+  2105: 
+  2106: # =====================================================================
+  2107: # V4.1.6 CAPABILITY 2
+  2108: # RETRIEVAL RANKING / DISCRIMINATION
+  2109: # =====================================================================
+  2110: 
+  2111: def calculate_retrieval_discrimination(
+  2112:     selected_matches: Sequence[SimilarityMatch],
+  2113:     all_candidates: Sequence[SimilarityMatch],
+  2114:     selected_records: Sequence[ExperienceRecord],
+  2115:     candidate_records: Sequence[ExperienceRecord],
+  2116: ) -> RetrievalDiscrimination:
+  2117: 
+  2118:     candidate_count = len(all_candidates)
+  2119:     selected_count = len(selected_matches)
+  2120: 
+  2121:     if not all_candidates:
+  2122: 
+  2123:         return RetrievalDiscrimination(
+  2124:             candidate_count=0,
+  2125:             selected_count=0,
+  2126:             top_similarity=0.0,
+  2127:             mean_selected_similarity=0.0,
+  2128:             mean_candidate_similarity=0.0,
+  2129:             similarity_separation=0.0,
+  2130:             ranking_concentration=0.0,
+  2131:             class_entropy=1.0,
+  2132:             baseline_entropy=1.0,
+  2133:             directional_discrimination=0.0,
+  2134:             discriminative=False,
+  2135:         )
+  2136: 
+  2137:     candidate_similarities = [
+  2138:         match.similarity
+  2139:         for match in all_candidates
+  2140:     ]
+  2141: 
+  2142:     selected_similarities = [
+  2143:         match.similarity
+  2144:         for match in selected_matches
+  2145:     ]
+  2146: 
+  2147:     top_similarity = (
+  2148:         max(selected_similarities)
+  2149:         if selected_similarities
+  2150:         else 0.0
+  2151:     )
+  2152: 
+  2153:     mean_selected = mean_or_zero(
+  2154:         selected_similarities
+  2155:     )
+  2156: 
+  2157:     mean_candidate = mean_or_zero(
+  2158:         candidate_similarities
+  2159:     )
+  2160: 
+  2161:     similarity_separation = clamp(
+  2162:         safe_div(
+  2163:             mean_selected
+  2164:             - mean_candidate,
+  2165:             max(
+  2166:                 1.0 - mean_candidate,
+  2167:                 EPS,
+  2168:             ),
+  2169:         )
+  2170:     )
+  2171: 
+  2172:     if candidate_similarities:
+  2173: 
+  2174:         median_candidate = sorted(
+  2175:             candidate_similarities
+  2176:         )[len(candidate_similarities) // 2]
+  2177: 
+  2178:     else:
+  2179: 
+  2180:         median_candidate = 0.0
+  2181: 
+  2182:     ranking_concentration = clamp(
+  2183:         safe_div(
+  2184:             mean_selected
+  2185:             - median_candidate,
+  2186:             max(
+  2187:                 1.0 - median_candidate,
+  2188:                 EPS,
+  2189:             ),
+  2190:         )
+  2191:     )
+  2192: 
+  2193:     selected_distribution = (
+  2194:         distribution_from_records(
+  2195:             selected_records
+  2196:         )
+  2197:         if selected_records
+  2198:         else {
+  2199:             "UP": 1.0 / 3.0,
+  2200:             "DOWN": 1.0 / 3.0,
+  2201:             "NEUTRAL": 1.0 / 3.0,
+  2202:         }
+  2203:     )
+  2204: 
+  2205:     candidate_distribution = (
+  2206:         distribution_from_records(
+  2207:             candidate_records
+  2208:         )
+  2209:         if candidate_records
+  2210:         else {
+  2211:             "UP": 1.0 / 3.0,
+  2212:             "DOWN": 1.0 / 3.0,
+  2213:             "NEUTRAL": 1.0 / 3.0,
+  2214:         }
+  2215:     )
+  2216: 
+  2217:     class_entropy = entropy3(
+  2218:         selected_distribution["UP"],
+  2219:         selected_distribution["DOWN"],
+  2220:         selected_distribution["NEUTRAL"],
+  2221:     )
+  2222: 
+  2223:     baseline_entropy = entropy3(
+  2224:         candidate_distribution["UP"],
+  2225:         candidate_distribution["DOWN"],
+  2226:         candidate_distribution["NEUTRAL"],
+  2227:     )
+  2228: 
+  2229:     directional_discrimination = clamp(
+  2230:         baseline_entropy
+  2231:         - class_entropy
+  2232:     )
+  2233: 
+  2234:     discriminative = (
+  2235:         selected_count
+  2236:         >= DISCRIMINATION_MIN_MATCHES
+  2237:         and similarity_separation
+  2238:         >= MIN_SIMILARITY_SEPARATION
+  2239:     )
+  2240: 
+  2241:     return RetrievalDiscrimination(
+  2242:         candidate_count=candidate_count,
+  2243:         selected_count=selected_count,
+  2244:         top_similarity=top_similarity,
+  2245:         mean_selected_similarity=mean_selected,
+  2246:         mean_candidate_similarity=mean_candidate,
+  2247:         similarity_separation=similarity_separation,
+  2248:         ranking_concentration=ranking_concentration,
+  2249:         class_entropy=class_entropy,
+  2250:         baseline_entropy=baseline_entropy,
+  2251:         directional_discrimination=directional_discrimination,
+  2252:         discriminative=discriminative,
+  2253:     )
+  2254: 
+  2255: 
+  2256: # =====================================================================
+  2257: # RETRIEVAL
+  2258: # =====================================================================
+  2259: 
+  2260: def retrieve_historical_experience(
+  2261:     current: MarketState,
+  2262:     records: Sequence[ExperienceRecord],
+  2263:     horizon: int,
+  2264:     query_index: int,
+  2265: ) -> RetrievalResult:
+  2266: 
+  2267:     candidates: List[
+  2268:         SimilarityMatch
+  2269:     ] = []
+  2270: 
+  2271:     coarse_records = coarse_filter(
+  2272:         current,
+  2273:         records,
+  2274:         query_index,
+  2275:     )
+  2276: 
+  2277:     for record in coarse_records:
+  2278: 
+  2279:         components = similarity_score(
+  2280:             current,
+  2281:             record,
+  2282:         )
+  2283: 
+  2284:         candidates.append(
+  2285:             SimilarityMatch(
+  2286:                 index=record.index,
+  2287:                 episode_id=record.episode_id,
+  2288:                 similarity=components["total"],
+  2289:                 structure_similarity=components["structure"],
+  2290:                 sequence_similarity=components["sequence"],
+  2291:                 regime_similarity=components["regime"],
+  2292:                 location_similarity=components["location"],
+  2293:                 momentum_similarity=components["momentum"],
+  2294:                 volatility_similarity=components["volatility"],
+  2295:                 candle_similarity=components["candle"],
+  2296:                 path_similarity=components["path"],
+  2297:             )
+  2298:         )
+  2299: 
+  2300:     candidates.sort(
+  2301:         key=lambda item: (
+  2302:             item.similarity,
+  2303:             item.index,
+  2304:         ),
+  2305:         reverse=True,
+  2306:     )
+  2307: 
+  2308:     raw_candidate_count = len(
+  2309:         candidates
+  2310:     )
+  2311: 
+  2312:     selected = select_episode_representatives(
+  2313:         candidates
+  2314:     )
+  2315: 
+  2316:     record_by_index = {
+  2317:         record.index: record
+  2318:         for record in records
+  2319:     }
+  2320: 
+  2321:     selected_rows = [
+  2322:         (
+  2323:             match,
+  2324:             record_by_index[match.index],
+  2325:         )
+  2326:         for match in selected
+  2327:         if match.index in record_by_index
+  2328:     ]
+  2329: 
+  2330:     selected_records = [
+  2331:         record
+  2332:         for _, record in selected_rows
+  2333:     ]
+  2334: 
+  2335:     candidate_records = [
+  2336:         record_by_index[match.index]
+  2337:         for match in candidates
+  2338:         if match.index in record_by_index
+  2339:     ]
+  2340: 
+  2341:     discrimination = calculate_retrieval_discrimination(
+  2342:         selected,
+  2343:         candidates,
+  2344:         selected_records,
+  2345:         candidate_records,
+  2346:     )
+  2347: 
+  2348:     if not selected_rows:
+  2349: 
+  2350:         return RetrievalResult(
+  2351:             horizon=horizon,
+  2352:             query_index=query_index,
+  2353:             raw_candidates=raw_candidate_count,
+  2354:             deduplicated_matches=0,
+  2355:             top_similarity=0.0,
+  2356:             mean_similarity=0.0,
+  2357:             level="NONE",
+  2358:             evidence="NONE",
+  2359:             sparse_warning=True,
+  2360:             regime_agreement=0.0,
+  2361:             structure_agreement=0.0,
+  2362:             context_agreement=0.0,
+  2363:             up_share=0.0,
+  2364:             down_share=0.0,
+  2365:             neutral_share=0.0,
+  2366:             mean_atr_return=None,
+  2367:             mean_mfe_atr=None,
+  2368:             mean_mae_atr=None,
+  2369:             supporting_matches=0,
+  2370:             conflicting_matches=0,
+  2371:             historical_min_index=None,
+  2372:             historical_max_index=None,
+  2373:             selected_match_indices=[],
+  2374:             similarity_representation={
+  2375:                 "structure": 0.0,
+  2376:                 "sequence": 0.0,
+  2377:                 "regime": 0.0,
+  2378:                 "location": 0.0,
+  2379:                 "momentum": 0.0,
+  2380:                 "volatility": 0.0,
+  2381:                 "candle": 0.0,
+  2382:                 "path": 0.0,
+  2383:                 "total": 0.0,
+  2384:             },
+  2385:             discrimination=asdict(
+  2386:                 discrimination
+  2387:             ),
+  2388:         )
+  2389: 
+  2390:     weights = [
+  2391:         match.similarity ** 2
+  2392:         for match, _ in selected_rows
+  2393:     ]
+  2394: 
+  2395:     total_weight = sum(weights)
+  2396: 
+  2397:     up_share = safe_div(
+  2398:         sum(
+  2399:             weight
+  2400:             for weight, (_, record)
+  2401:             in zip(
+  2402:                 weights,
+  2403:                 selected_rows,
+  2404:             )
+  2405:             if record.outcome.direction
+  2406:             == "UP"
+  2407:         ),
+  2408:         total_weight,
+  2409:     )
+  2410: 
+  2411:     down_share = safe_div(
+  2412:         sum(
+  2413:             weight
+  2414:             for weight, (_, record)
+  2415:             in zip(
+  2416:                 weights,
+  2417:                 selected_rows,
+  2418:             )
+  2419:             if record.outcome.direction
+  2420:             == "DOWN"
+  2421:         ),
+  2422:         total_weight,
+  2423:     )
+  2424: 
+  2425:     neutral_share = safe_div(
+  2426:         sum(
+  2427:             weight
+  2428:             for weight, (_, record)
+  2429:             in zip(
+  2430:                 weights,
+  2431:                 selected_rows,
+  2432:             )
+  2433:             if record.outcome.direction
+  2434:             == "NEUTRAL"
+  2435:         ),
+  2436:         total_weight,
+  2437:     )
+  2438: 
+  2439:     dominant = max(
+  2440:         (
+  2441:             "UP",
+  2442:             up_share,
+  2443:         ),
+  2444:         (
+  2445:             "DOWN",
+  2446:             down_share,
+  2447:         ),
+  2448:         (
+  2449:             "NEUTRAL",
+  2450:             neutral_share,
+  2451:         ),
+  2452:         key=lambda x: x[1],
+  2453:     )[0]
+  2454: 
+  2455:     supporting_matches = sum(
+  2456:         1
+  2457:         for _, record in selected_rows
+  2458:         if record.outcome.direction
+  2459:         == dominant
+  2460:     )
+  2461: 
+  2462:     conflicting_matches = (
+  2463:         len(selected_rows)
+  2464:         - supporting_matches
+  2465:     )
+  2466: 
+  2467:     top_similarity = selected[
+  2468:         0
+  2469:     ].similarity
+  2470: 
+  2471:     mean_similarity = mean_or_zero(
+  2472:         [
+  2473:             match.similarity
+  2474:             for match, _
+  2475:             in selected_rows
+  2476:         ]
+  2477:     )
+  2478: 
+  2479:     regime_agreement = mean_or_zero(
+  2480:         [
+  2481:             match.regime_similarity
+  2482:             for match, _
+  2483:             in selected_rows
+  2484:         ]
+  2485:     )
+  2486: 
+  2487:     structure_agreement = mean_or_zero(
+  2488:         [
+  2489:             match.structure_similarity
+  2490:             for match, _
+  2491:             in selected_rows
+  2492:         ]
+  2493:     )
+  2494: 
+  2495:     context_agreement = mean_or_zero(
+  2496:         [
+  2497:             mean_or_zero(
+  2498:                 [
+  2499:                     match.sequence_similarity,
+  2500:                     match.regime_similarity,
+  2501:                     match.location_similarity,
+  2502:                     match.momentum_similarity,
+  2503:                     match.path_similarity,
+  2504:                 ]
+  2505:             )
+  2506:             for match, _
+  2507:             in selected_rows
+  2508:         ]
+  2509:     )
+  2510: 
+  2511:     mean_atr_return = safe_div(
+  2512:         sum(
+  2513:             weight
+  2514:             * (
+  2515:                 record.outcome.atr_return
+  2516:                 or 0.0
+  2517:             )
+  2518:             for weight, (_, record)
+  2519:             in zip(
+  2520:                 weights,
+  2521:                 selected_rows,
+  2522:             )
+  2523:         ),
+  2524:         total_weight,
+  2525:     )
+  2526: 
+  2527:     mean_mfe_atr = safe_div(
+  2528:         sum(
+  2529:             weight
+  2530:             * (
+  2531:                 record.outcome.mfe_atr
+  2532:                 or 0.0
+  2533:             )
+  2534:             for weight, (_, record)
+  2535:             in zip(
+  2536:                 weights,
+  2537:                 selected_rows,
+  2538:             )
+  2539:         ),
+  2540:         total_weight,
+  2541:     )
+  2542: 
+  2543:     mean_mae_atr = safe_div(
+  2544:         sum(
+  2545:             weight
+  2546:             * (
+  2547:                 record.outcome.mae_atr
+  2548:                 or 0.0
+  2549:             )
+  2550:             for weight, (_, record)
+  2551:             in zip(
+  2552:                 weights,
+  2553:                 selected_rows,
+  2554:             )
+  2555:         ),
+  2556:         total_weight,
+  2557:     )
+  2558: 
+  2559:     if (
+  2560:         len(selected_rows)
+  2561:         < MIN_RETRIEVAL_MATCHES
+  2562:     ):
+  2563: 
+  2564:         level = "SPARSE"
+  2565: 
+  2566:     elif top_similarity >= 0.80:
+  2567: 
+  2568:         level = "STRONG_SIMILARITY"
+  2569: 
+  2570:     elif top_similarity >= 0.70:
+  2571: 
+  2572:         level = "MODERATE_STRONG"
+  2573: 
+  2574:     elif top_similarity >= 0.60:
+  2575: 
+  2576:         level = "MODERATE"
+  2577: 
+  2578:     else:
+  2579: 
+  2580:         level = "LOW_MODERATE"
+  2581: 
+  2582:     if (
+  2583:         len(selected_rows)
+  2584:         < MIN_RETRIEVAL_MATCHES
+  2585:     ):
+  2586: 
+  2587:         evidence = "LOW"
+  2588: 
+  2589:     elif top_similarity >= 0.70:
+  2590: 
+  2591:         evidence = "MODERATE"
+  2592: 
+  2593:     else:
+  2594: 
+  2595:         evidence = "LOW_TO_MODERATE"
+  2596: 
+  2597:     indices = [
+  2598:         record.index
+  2599:         for _, record
+  2600:         in selected_rows
+  2601:     ]
+  2602: 
+  2603:     representation = {
+  2604:         "structure": structure_agreement,
+  2605:         "sequence": mean_or_zero(
+  2606:             [
+  2607:                 match.sequence_similarity
+  2608:                 for match, _
+  2609:                 in selected_rows
+  2610:             ]
+  2611:         ),
+  2612:         "regime": regime_agreement,
+  2613:         "location": mean_or_zero(
+  2614:             [
+  2615:                 match.location_similarity
+  2616:                 for match, _
+  2617:                 in selected_rows
+  2618:             ]
+  2619:         ),
+  2620:         "momentum": mean_or_zero(
+  2621:             [
+  2622:                 match.momentum_similarity
+  2623:                 for match, _
+  2624:                 in selected_rows
+  2625:             ]
+  2626:         ),
+  2627:         "volatility": mean_or_zero(
+  2628:             [
+  2629:                 match.volatility_similarity
+  2630:                 for match, _
+  2631:                 in selected_rows
+  2632:             ]
+  2633:         ),
+  2634:         "candle": mean_or_zero(
+  2635:             [
+  2636:                 match.candle_similarity
+  2637:                 for match, _
+  2638:                 in selected_rows
+  2639:             ]
+  2640:         ),
+  2641:         "path": mean_or_zero(
+  2642:             [
+  2643:                 match.path_similarity
+  2644:                 for match, _
+  2645:                 in selected_rows
+  2646:             ]
+  2647:         ),
+  2648:         "total": mean_similarity,
+  2649:     }
+  2650: 
+  2651:     return RetrievalResult(
+  2652:         horizon=horizon,
+  2653:         query_index=query_index,
+  2654:         raw_candidates=raw_candidate_count,
+  2655:         deduplicated_matches=len(
+  2656:             selected_rows
+  2657:         ),
+  2658:         top_similarity=top_similarity,
+  2659:         mean_similarity=mean_similarity,
+  2660:         level=level,
+  2661:         evidence=evidence,
+  2662:         sparse_warning=(
+  2663:             len(selected_rows)
+  2664:             < MIN_RETRIEVAL_MATCHES
+  2665:         ),
+  2666:         regime_agreement=regime_agreement,
+  2667:         structure_agreement=structure_agreement,
+  2668:         context_agreement=context_agreement,
+  2669:         up_share=up_share,
+  2670:         down_share=down_share,
+  2671:         neutral_share=neutral_share,
+  2672:         mean_atr_return=mean_atr_return,
+  2673:         mean_mfe_atr=mean_mfe_atr,
+  2674:         mean_mae_atr=mean_mae_atr,
+  2675:         supporting_matches=supporting_matches,
+  2676:         conflicting_matches=conflicting_matches,
+  2677:         historical_min_index=(
+  2678:             min(indices)
+  2679:             if indices
+  2680:             else None
+  2681:         ),
+  2682:         historical_max_index=(
+  2683:             max(indices)
+  2684:             if indices
+  2685:             else None
+  2686:         ),
+  2687:         selected_match_indices=indices,
+  2688:         similarity_representation=representation,
+  2689:         discrimination=asdict(
+  2690:             discrimination
+  2691:         ),
+  2692:     )
+  2693: 
+  2694: 
+  2695: # =====================================================================
+  2696: # BASELINE
+  2697: # =====================================================================
+  2698: 
+  2699: def conditional_baseline(
+  2700:     current: MarketState,
+  2701:     records: Sequence[ExperienceRecord],
+  2871: 
+  2872:     return items
+  2873: 
+  2874: 
+  2875: def null_retrieval_sanity_test(
+  2876:     current: MarketState,
+  2877:     records: Sequence[ExperienceRecord],
+  2878:     query_index: int,
+  2879:     horizon: int,
+  2880: ) -> Dict[str, Any]:
+  2881: 
+  2882:     eligible = [
+  2883:         record
+  2884:         for record in records
+  2885:         if (
+  2886:             record.index < query_index
+  2887:             and
+  2888:             query_index - record.index
+  2889:             >= MIN_HISTORY_GAP
+  2890:         )
+  2891:     ]
+  2892: 
+  2893:     if (
+  2894:         len(eligible)
+  2895:         < MIN_RETRIEVAL_MATCHES
+  2896:     ):
+  2897: 
+  2898:         return {
+  2899:             "available": False,
+  2900:             "permutations": 0,
+  2901:             "real_max_share": None,
+  2902:             "null_max_share_mean": None,
+  2903:             "null_max_share_p95": None,
+  2904:             "real_minus_null_mean": None,
+  2905:         }
+  2906: 
+  2907:     real = retrieve_historical_experience(
+  2908:         current,
+  2909:         eligible,
+  2910:         horizon,
+  2911:         query_index,
+  2912:     )
+  2913: 
+  2914:     real_max_share = max(
+  2915:         real.up_share,
+  2916:         real.down_share,
+  2917:         real.neutral_share,
+  2918:     )
+  2919: 
+  2920:     outcomes = [
+  2921:         record.outcome.direction
+  2922:         for record in eligible
+  2923:     ]
+  2924: 
+  2925:     null_max = []
+  2926: 
+  2927:     for permutation in range(
+  2928:         NULL_PERMUTATIONS
+  2929:     ):
+  2930: 
+  2931:         shuffled = deterministic_permutation(
+  2932:             outcomes,
+  2933:             seed=1009
+  2934:             * (permutation + 1)
+  2935:             + query_index,
+  2936:         )
+  2937: 
+  2938:         permuted_records = []
+  2939: 
+  2940:         for record, direction in zip(
+  2941:             eligible,
+  2942:             shuffled,
+  2943:         ):
+  2944: 
+  2945:             permuted_records.append(
+  2946:                 ExperienceRecord(
+  2947:                     index=record.index,
+  2948:                     episode_id=record.episode_id,
+  2949:                     state_key=record.state_key,
+  2950:                     sequence_state=record.sequence_state,
+  2951:                     regime=record.regime,
+  2952:                     structure_event=record.structure_event,
+  2953:                     location=record.location,
+  2954:                     momentum_state=record.momentum_state,
+  2955:                     volatility_ratio=record.volatility_ratio,
+  2956:                     body_ratio=record.body_ratio,
+  2957:                     range_ratio=record.range_ratio,
+  2958:                     r1=record.r1,
+  2959:                     r3=record.r3,
+  2960:                     r8=record.r8,
+  2961:                     r16=record.r16,
+  2962:                     path_vector=record.path_vector,
+  2963:                     horizon=record.horizon,
+  2964:                     outcome=Outcome(
+  2965:                         direction=direction,
+  2966:                         raw_return=record.outcome.raw_return,
+  2967:                         atr_return=record.outcome.atr_return,
+  2968:                         mfe_atr=record.outcome.mfe_atr,
+  2969:                         mae_atr=record.outcome.mae_atr,
+  2970:                     ),
+  2971:                 )
+  2972:             )
+  2973: 
+  2974:         null_result = retrieve_historical_experience(
+  2975:             current,
+  2976:             permuted_records,
+  2977:             horizon,
+  2978:             query_index,
+  2979:         )
+  2980: 
+  2981:         null_max.append(
+  2982:             max(
+  2983:                 null_result.up_share,
+  2984:                 null_result.down_share,
+  2985:                 null_result.neutral_share,
+  2986:             )
+  2987:         )
+  2988: 
+  2989:     ordered = sorted(null_max)
+  2990: 
+  2991:     p95 = ordered[
+  2992:         min(
+  2993:             len(ordered) - 1,
+  2994:             int(
+  2995:                 0.95
+  2996:                 * (
+  2997:                     len(ordered) - 1
+  2998:                 )
+  2999:             ),
+  3000:         )
+  3001:     ]
+  3002: 
+  3003:     null_mean = mean_or_zero(
+  3004:         null_max
+  3005:     )
+  3006: 
+  3007:     return {
+  3008:         "available": True,
+  3009:         "permutations": len(null_max),
+  3010:         "real_max_share": real_max_share,
+  3011:         "null_max_share_mean": null_mean,
+  3012:         "null_max_share_p95": p95,
+  3013:         "real_minus_null_mean": (
+  3014:             real_max_share
+  3015:             - null_mean
+  3016:         ),
+  3017:     }
+  3018: 
+  3019: 
+  3020: # =====================================================================
+  3021: # BUCKET
+  3022: # =====================================================================
+  3023: 
+  3024: def bucket_name(
+  3025:     similarity: float,
+  3026: ) -> str:
+  3027: 
+  3028:     for low, high, name in SIMILARITY_BUCKETS:
+  3029: 
+  3030:         if (
+  3031:             low <= similarity
+  3032:             < high
+  3033:         ):
+  3034: 
+  3035:             return name
+  3036: 
+  3037:     return "UNKNOWN"
+  3038: 
+  3039: 
+  3040: # =====================================================================
+  3041: # V4.1.6 PREDICTIVE EVIDENCE
+  3042: # =====================================================================
+  3043: 
+  3044: def _outcome_direction(
+  3045:     record: ExperienceRecord,
+  3046: ) -> Optional[str]:
+  3047: 
+  3048:     outcome = getattr(
+  3049:         record,
+  3050:         "outcome",
+  3051:         record,
+  3052:     )
+  3053: 
+  3054:     value = getattr(
+  3055:         outcome,
+  3056:         "direction",
+  3057:         None,
+  3058:     )
+  3059: 
+  3060:     if value is None:
+  3061:         return None
+  3062: 
+  3063:     value = str(
+  3064:         value
+  3065:     ).upper().strip()
+  3066: 
+  3067:     if value in (
+  3068:         "UP",
+  3069:         "DOWN",
+  3070:         "NEUTRAL",
+  3071:     ):
+  3072:         return value
+  3073: 
+  3074:     return None
+  3075: 
+  3076: 
+  3077: def class_evidence(
+  3078:     current: MarketState,
+  3079:     records: Sequence[ExperienceRecord],
+  3080:     query_index: int,
+  3081:     temperature: float = 0.12,
+  3082: ) -> Dict[str, float]:
+  3083: 
+  3084:     buckets = {
+  3085:         "UP": [],
+  3086:         "DOWN": [],
+  3087:         "NEUTRAL": [],
+  3088:     }
+  3089: 
+  3090:     for record in records:
+  3091: 
+  3092:         if record.index >= query_index:
+  3093:             continue
+  3094: 
+  3095:         if (
+  3096:             query_index
+  3097:             - record.index
+  3098:             < MIN_HISTORY_GAP
+  3099:         ):
+  3100:             continue
+  3101: 
+  3102:         direction = _outcome_direction(
+  3103:             record
+  3104:         )
+  3105: 
+  3106:         if direction not in buckets:
+  3107:             continue
+  3108: 
+  3109:         representation = (
+  3110:             similarity_representation(
+  3111:                 current,
+  3112:                 record,
+  3113:             )
+  3114:         )
+  3115: 
+  3116:         score = representation.total
+  3117: 
+  3118:         distance = max(
+  3119:             0.0,
+  3120:             1.0 - score,
+  3121:         )
+  3122: 
+  3123:         weight = math.exp(
+  3124:             -distance
+  3125:             / max(
+  3126:                 temperature,
+  3127:                 1e-6,
+  3128:             )
+  3129:         )
+  3130: 
+  3131:         buckets[
+  3132:             direction
+  3133:         ].append(weight)
+  3134: 
+  3135:     if not any(
+  3136:         buckets.values()
+  3137:     ):
+  3138: 
+  3139:         return {
+  3140:             "UP": 1.0 / 3.0,
+  3141:             "DOWN": 1.0 / 3.0,
+  3142:             "NEUTRAL": 1.0 / 3.0,
+  3143:         }
+  3144: 
+  3145:     evidence = {}
+  3146: 
+  3147:     for cls, values in buckets.items():
+  3148: 
+  3149:         if not values:
+  3150: 
+  3151:             evidence[cls] = 0.0
+  3152:             continue
+  3153: 
+  3154:         support = len(values)
+  3155: 
+  3156:         mean_weight = (
+  3157:             sum(values)
+  3158:             / support
+  3159:         )
+  3160: 
+  3161:         support_factor = (
+  3162:             1.0
+  3163:             - math.exp(
+  3164:                 -support / 8.0
+  3165:             )
+  3166:         )
+  3167: 
+  3168:         evidence[cls] = (
+  3169:             mean_weight
+  3170:             * support_factor
+  3171:         )
+  3172: 
+  3173:     total = sum(
+  3174:         evidence.values()
+  3175:     )
+  3176: 
+  3177:     if total <= EPS:
+  3178: 
+  3179:         return {
+  3180:             "UP": 1.0 / 3.0,
+  3181:             "DOWN": 1.0 / 3.0,
+  3182:             "NEUTRAL": 1.0 / 3.0,
+  3183:         }
+  3184: 
+  3185:     return {
+  3186:         cls: evidence[cls] / total
+  3187:         for cls in (
+  3188:             "UP",
+  3189:             "DOWN",
+  3190:             "NEUTRAL",
+  3191:         )
+  3192:     }
+  3193: 
+  3194: 
+  3195: # =====================================================================
+  3196: # V4.1.6 CAPABILITY 7
+  3197: # PREDICTIVE DECISION INTEGRATION
+  3198: # =====================================================================
+  3199: 
+  3200: def predictive_decision(
+  3201:     current: MarketState,
+  3202:     records: Sequence[ExperienceRecord],
+  3203:     query_index: int,
+  3204: ) -> Dict[str, Any]:
+  3205: 
+  3206:     probabilities = class_evidence(
+  3207:         current,
+  3208:         records,
+  3209:         query_index,
+  3210:     )
+  3211: 
+  3212:     ranked = sorted(
+  3213:         probabilities.items(),
+  3214:         key=lambda x: x[1],
+  3215:         reverse=True,
+  3216:     )
+  3217: 
+  3218:     best_class = ranked[0][0]
+  3219: 
+  3220:     best_probability = ranked[0][1]
+  3221: 
+  3222:     second_probability = ranked[1][1]
+  3223: 
+  3224:     margin = (
+  3225:         best_probability
+  3226:         - second_probability
+  3227:     )
+  3228: 
+  3229:     if (
+  3230:         best_probability
+  3231:         < PREDICTION_MIN_PROBABILITY
+  3232:     ):
+  3233: 
+  3234:         prediction = "NEUTRAL"
+  3235: 
+  3236:     elif (
+  3237:         margin
+  3238:         < PREDICTION_MIN_MARGIN
+  3239:     ):
+  3240: 
+  3241:         prediction = "NEUTRAL"
+  3242: 
+  3243:     else:
+  3244: 
+  3245:         prediction = best_class
+  3246: 
+  3247:     return {
+  3248:         "prediction": prediction,
+  3249:         "probabilities": probabilities,
+  3250:         "margin": margin,
+  3251:         "best_probability": best_probability,
+  3252:         "best_class": best_class,
+  3253:     }
+  3254: 
+  3255: 
+  3256: # =====================================================================
+  3257: # V4.1.6 CAPABILITY 6
+  3258: # INCREMENTAL PREDICTIVE VALUE
+  3259: # =====================================================================
+  3260: 
+  3261: def calculate_incremental_value(
+  3262:     retrieval_evaluation: Dict[str, Any],
+  3263:     baseline_evaluation: Dict[str, Any],
+  3264:     predictive_evaluation: Dict[str, Any],
+  3265: ) -> Dict[str, Any]:
+  3266: 
+  3267:     retrieval_brier_lift = (
+  3268:         baseline_evaluation["brier"]
+  3269:         - retrieval_evaluation["brier"]
+  3270:     )
+  3271: 
+  3272:     predictive_brier_lift = (
+  3273:         baseline_evaluation["brier"]
+  3274:         - predictive_evaluation["brier"]
+  3275:     )
+  3276: 
+  3277:     retrieval_log_loss_lift = (
+  3278:         baseline_evaluation["log_loss"]
+  3279:         - retrieval_evaluation["log_loss"]
+  3280:     )
+  3281: 
+  3282:     predictive_log_loss_lift = (
+  3283:         baseline_evaluation["log_loss"]
+  3284:         - predictive_evaluation["log_loss"]
+  3285:     )
+  3286: 
+  3287:     retrieval_accuracy_delta = (
+  3288:         (
+  3289:             1.0
+  3290:             if retrieval_evaluation[
+  3291:                 "correct"
+  3292:             ]
+  3293:             else 0.0
+  3294:         )
+  3295:         -
+  3296:         (
+  3297:             1.0
+  3298:             if baseline_evaluation[
+  3299:                 "correct"
+  3300:             ]
+  3301:             else 0.0
+  3302:         )
+  3303:     )
+  3304: 
+  3305:     predictive_accuracy_delta = (
+  3306:         (
+  3307:             1.0
+  3308:             if predictive_evaluation[
+  3309:                 "correct"
+  3310:             ]
+  3311:             else 0.0
+  3312:         )
+  3313:         -
+  3314:         (
+  3315:             1.0
+  3316:             if baseline_evaluation[
+  3317:                 "correct"
+  3318:             ]
+  3319:             else 0.0
+  3320:         )
+  3321:     )
+  3322: 
+  3323:     return {
+  3324:         "retrieval_brier_lift": retrieval_brier_lift,
+  3325:         "predictive_brier_lift": predictive_brier_lift,
+  3326:         "retrieval_log_loss_lift": retrieval_log_loss_lift,
+  3327:         "predictive_log_loss_lift": predictive_log_loss_lift,
+  3328:         "retrieval_accuracy_delta": retrieval_accuracy_delta,
+  3329:         "predictive_accuracy_delta": predictive_accuracy_delta,
+  3330:         "predictive_improves_brier": (
+  3331:             predictive_brier_lift
+  3332:             > INCREMENTAL_VALUE_EPS
+  3333:         ),
+  3334:         "predictive_improves_log_loss": (
+  3335:             predictive_log_loss_lift
+  3336:             > INCREMENTAL_VALUE_EPS
+  3337:         ),
+  3338:         "predictive_improves_accuracy": (
+  3339:             predictive_accuracy_delta
+  3340:             > INCREMENTAL_VALUE_EPS
+  3341:         ),
+  3342:     }
+  3343: 
+  3344: 
+  3345: # =====================================================================

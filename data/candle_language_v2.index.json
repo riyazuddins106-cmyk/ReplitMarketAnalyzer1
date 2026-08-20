@@ -1,0 +1,12 @@
+{
+  "created_utc": "2026-08-20T12:42:41.620458+00:00",
+  "format": "MLAI_CANDLE_LANGUAGE_KB",
+  "index_type": "foundational_knowledge_audit",
+  "kb_file": "candle_language_v2.bin",
+  "kb_sha256": "d76039b86cec6940a345bd5977d345c58ad6a377ab67d0147c6e71975d4105c6",
+  "kb_size": 27382,
+  "read_only_reference": true,
+  "record_count": 179,
+  "schema_version": "2.0",
+  "version": "2.0"
+}

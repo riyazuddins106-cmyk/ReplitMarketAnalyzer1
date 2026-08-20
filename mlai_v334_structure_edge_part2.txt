@@ -1,0 +1,400 @@
+def classify_outcome(current_price, future_price):
+
+    if current_price <= 0:
+        return "neutral"
+
+    change = (
+        future_price - current_price
+    ) / current_price
+
+    if change >= THRESHOLD:
+        return "bullish"
+
+    if change <= -THRESHOLD:
+        return "bearish"
+
+    return "neutral"
+
+
+# ============================================================
+# RECORD CREATION
+# ============================================================
+
+def build_records(candles, horizon):
+
+    records = []
+
+    last_valid_index = (
+        len(candles) - horizon - 1
+    )
+
+    for i in range(WINDOW - 1, last_valid_index + 1):
+
+        features = build_features(
+            candles,
+            i
+        )
+
+        if features is None:
+            continue
+
+        current_price = get_close(
+            candles[i]
+        )
+
+        future_price = get_close(
+            candles[i + horizon]
+        )
+
+        outcome = classify_outcome(
+            current_price,
+            future_price
+        )
+
+        direction = directional_regime(
+            features
+        )
+
+        volatility = volatility_regime(
+            features
+        )
+
+        records.append({
+            "index": i,
+            "timestamp": get_timestamp(candles[i]),
+            "features": features,
+            "regime": direction,
+            "volatility_regime": volatility,
+            "outcome": outcome
+        })
+
+    return records
+
+
+# ============================================================
+# FEATURE VECTOR
+# ============================================================
+
+FEATURE_NAMES = [
+    "return_15",
+    "return_30",
+    "return_60",
+    "bullish_ratio",
+    "bearish_ratio",
+    "directional_imbalance",
+    "volatility",
+    "volatility_ratio",
+    "location_in_range",
+    "normalized_slope"
+]
+
+
+def vector(record):
+
+    return [
+        record["features"][x]
+        for x in FEATURE_NAMES
+    ]
+
+
+# ============================================================
+# SCALER
+# ============================================================
+
+def fit_scaler(records):
+
+    columns = list(
+        zip(*[
+            vector(x)
+            for x in records
+        ])
+    )
+
+    means = [
+        mean(column)
+        for column in columns
+    ]
+
+    stds = [
+        std(column)
+        for column in columns
+    ]
+
+    stds = [
+        x if x > 1e-12 else 1.0
+        for x in stds
+    ]
+
+    return means, stds
+
+
+def scale_vector(v, means, stds):
+
+    return [
+        (x - m) / s
+        for x, m, s in zip(
+            v,
+            means,
+            stds
+        )
+    ]
+
+
+# ============================================================
+# DISTANCE
+# ============================================================
+
+def distance(a, b):
+
+    return math.sqrt(
+        sum(
+            (x - y) ** 2
+            for x, y in zip(a, b)
+        )
+    )
+
+
+# ============================================================
+# FIND SIMILAR STRUCTURES
+# ============================================================
+
+def find_neighbors(
+    target,
+    calibration,
+    means,
+    stds,
+    k
+):
+
+    target_vector = scale_vector(
+        vector(target),
+        means,
+        stds
+    )
+
+    candidates = []
+
+    for record in calibration:
+
+        # Strong regime matching.
+        if (
+            record["regime"] != target["regime"]
+            or
+            record["volatility_regime"]
+            != target["volatility_regime"]
+        ):
+            continue
+
+        v = scale_vector(
+            vector(record),
+            means,
+            stds
+        )
+
+        d = distance(
+            target_vector,
+            v
+        )
+
+        candidates.append(
+            (d, record)
+        )
+
+    candidates.sort(
+        key=lambda x: x[0]
+    )
+
+    return candidates[:k]
+
+
+# ============================================================
+# NEIGHBOR PREDICTION
+# ============================================================
+
+def neighbor_prediction(neighbors):
+
+    if not neighbors:
+        return {
+            "prediction": "NO TRADE",
+            "confidence": 0.0,
+            "bull": 0,
+            "neutral": 0,
+            "bear": 0
+        }
+
+    bull = 0
+    neutral = 0
+    bear = 0
+
+    for _, record in neighbors:
+
+        if record["outcome"] == "bullish":
+            bull += 1
+
+        elif record["outcome"] == "bearish":
+            bear += 1
+
+        else:
+            neutral += 1
+
+    total = len(neighbors)
+
+    probabilities = {
+        "bullish": bull / total,
+        "neutral": neutral / total,
+        "bearish": bear / total
+    }
+
+    prediction = max(
+        probabilities,
+        key=probabilities.get
+    )
+
+    confidence = probabilities[
+        prediction
+    ]
+
+    if prediction == "bullish":
+        action = "BUY"
+
+    elif prediction == "bearish":
+        action = "SELL"
+
+    else:
+        action = "NO TRADE"
+
+    return {
+        "prediction": action,
+        "confidence": confidence,
+        "bull": bull,
+        "neutral": neutral,
+        "bear": bear
+    }
+
+
+# ============================================================
+# EVALUATION
+# ============================================================
+
+def evaluate_predictions(
+    predictions,
+    actuals
+):
+
+    total = len(actuals)
+
+    if total == 0:
+        return {}
+
+    correct = 0
+
+    directional_total = 0
+    directional_correct = 0
+
+    buy_predictions = []
+    sell_predictions = []
+
+    for prediction, actual in zip(
+        predictions,
+        actuals
+    ):
+
+        if (
+            prediction == actual
+        ):
+            correct += 1
+
+        if prediction in [
+            "BUY",
+            "SELL"
+        ]:
+
+            directional_total += 1
+
+            expected = (
+                "BUY"
+                if actual == "bullish"
+                else
+                "SELL"
+                if actual == "bearish"
+                else
+                "NO TRADE"
+            )
+
+            if prediction == expected:
+                directional_correct += 1
+
+        if prediction == "BUY":
+            buy_predictions.append(actual)
+
+        if prediction == "SELL":
+            sell_predictions.append(actual)
+
+    directional_accuracy = (
+        directional_correct /
+        directional_total
+        if directional_total
+        else 0.0
+    )
+
+    coverage = (
+        directional_total /
+        total
+    )
+
+    buy_precision = (
+        sum(
+            x == "bullish"
+            for x in buy_predictions
+        )
+        /
+        len(buy_predictions)
+        if buy_predictions
+        else 0.0
+    )
+
+    sell_precision = (
+        sum(
+            x == "bearish"
+            for x in sell_predictions
+        )
+        /
+        len(sell_predictions)
+        if sell_predictions
+        else 0.0
+    )
+
+    return {
+        "accuracy": correct / total,
+        "directional_accuracy":
+            directional_accuracy,
+        "coverage": coverage,
+        "buy_precision":
+            buy_precision,
+        "sell_precision":
+            sell_precision,
+        "buy_predictions":
+            len(buy_predictions),
+        "sell_predictions":
+            len(sell_predictions)
+    }
+
+
+# ============================================================
+# EDGE TABLE
+# ============================================================
+
+def print_edge_table(
+    calibration,
+    validation_results
+):
+
+    print()
+    print("=" * 70)
+    print("STRUCTURE EDGE DISCOVERY")
+    print("=" * 70)
+
+    groups = defaultdict(list)
+
+    for record in calibration:
+

@@ -1,0 +1,1851 @@
+  3401:     )
+  3402: 
+  3403:     retrieval_accuracy = mean_or_zero(
+  3404:         [
+  3405:             1.0
+  3406:             if row[
+  3407:                 "retrieval_evaluation"
+  3408:             ]["correct"]
+  3409:             else 0.0
+  3410:             for row in rows
+  3411:         ]
+  3412:     )
+  3413: 
+  3414:     baseline_accuracy = mean_or_zero(
+  3415:         [
+  3416:             1.0
+  3417:             if row[
+  3418:                 "baseline_evaluation"
+  3419:             ]["correct"]
+  3420:             else 0.0
+  3421:             for row in rows
+  3422:         ]
+  3423:     )
+  3424: 
+  3425:     return {
+  3426:         "queries": len(rows),
+  3427: 
+  3428:         "discriminative_queries": sum(
+  3429:             discrimination_flags
+  3430:         ),
+  3431: 
+  3432:         "discrimination_rate": (
+  3433:             mean_or_zero(
+  3434:                 [
+  3435:                     1.0 if x else 0.0
+  3436:                     for x
+  3437:                     in discrimination_flags
+  3438:                 ]
+  3439:             )
+  3440:         ),
+  3441: 
+  3442:         "mean_similarity_separation": (
+  3443:             mean_or_zero(
+  3444:                 [
+  3445:                     row["retrieval"][
+  3446:                         "discrimination"
+  3447:                     ]["similarity_separation"]
+  3448:                     for row in rows
+  3449:                 ]
+  3450:             )
+  3451:         ),
+  3452: 
+  3453:         "mean_ranking_concentration": (
+  3454:             mean_or_zero(
+  3455:                 [
+  3456:                     row["retrieval"][
+  3457:                         "discrimination"
+  3458:                     ]["ranking_concentration"]
+  3459:                     for row in rows
+  3460:                 ]
+  3461:             )
+  3462:         ),
+  3463: 
+  3464:         "mean_directional_discrimination": (
+  3465:             mean_or_zero(
+  3466:                 [
+  3467:                     row["retrieval"][
+  3468:                         "discrimination"
+  3469:                     ]["directional_discrimination"]
+  3470:                     for row in rows
+  3471:                 ]
+  3472:             )
+  3473:         ),
+  3474: 
+  3475:         "mean_class_entropy": (
+  3476:             mean_or_zero(
+  3477:                 [
+  3478:                     row["retrieval"][
+  3479:                         "discrimination"
+  3480:                     ]["class_entropy"]
+  3481:                     for row in rows
+  3482:                 ]
+  3483:             )
+  3484:         ),
+  3485: 
+  3486:         "mean_baseline_entropy": (
+  3487:             mean_or_zero(
+  3488:                 [
+  3489:                     row["retrieval"][
+  3490:                         "discrimination"
+  3491:                     ]["baseline_entropy"]
+  3492:                     for row in rows
+  3493:                 ]
+  3494:             )
+  3495:         ),
+  3496: 
+  3497:         "mean_predictive_margin": (
+  3498:             mean_or_zero(
+  3499:                 [
+  3500:                     row[
+  3501:                         "predictive"
+  3502:                     ]["margin"]
+  3503:                     for row in rows
+  3504:                 ]
+  3505:             )
+  3506:         ),
+  3507: 
+  3508:         "mean_predictive_best_probability": (
+  3509:             mean_or_zero(
+  3510:                 [
+  3511:                     row[
+  3512:                         "predictive"
+  3513:                     ]["best_probability"]
+  3514:                     for row in rows
+  3515:                 ]
+  3516:             )
+  3517:         ),
+  3518: 
+  3519:         "predictive_accuracy": predictive_accuracy,
+  3520: 
+  3521:         "retrieval_accuracy": retrieval_accuracy,
+  3522: 
+  3523:         "baseline_accuracy": baseline_accuracy,
+  3524: 
+  3525:         "incremental_brier_lift": (
+  3526:             mean_or_zero(
+  3527:                 [
+  3528:                     row[
+  3529:                         "incremental_value"
+  3530:                     ]["predictive_brier_lift"]
+  3531:                     for row in rows
+  3532:                 ]
+  3533:             )
+  3534:         ),
+  3535: 
+  3536:         "incremental_log_loss_lift": (
+  3537:             mean_or_zero(
+  3538:                 [
+  3539:                     row[
+  3540:                         "incremental_value"
+  3541:                     ]["predictive_log_loss_lift"]
+  3542:                     for row in rows
+  3543:                 ]
+  3544:             )
+  3545:         ),
+  3546: 
+  3547:         "incremental_accuracy_delta": (
+  3548:             mean_or_zero(
+  3549:                 [
+  3550:                     row[
+  3551:                         "incremental_value"
+  3552:                     ]["predictive_accuracy_delta"]
+  3553:                     for row in rows
+  3554:                 ]
+  3555:             )
+  3556:         ),
+  3557:     }
+  3558: 
+  3559: 
+  3560: # =====================================================================
+  3561: # MAIN
+  3562: # =====================================================================
+  3563: 
+  3564: def main() -> None:
+  3565: 
+  3566:     print("=" * 100)
+  3567:     print(
+  3568:         "MLAI v4.1.6 ROBUST CAUSAL HISTORICAL "
+  3569:         "EXPERIENCE RETRIEVAL"
+  3570:     )
+  3571:     print("=" * 100)
+  3572: 
+  3573:     print("RESEARCH / VALIDATION ONLY")
+  3574: 
+  3575:     print()
+  3576:     print("=" * 100)
+  3577:     print("V4.1.6 CAPABILITIES")
+  3578:     print("=" * 100)
+  3579: 
+  3580:     print("1. Similarity representation       : ENABLED")
+  3581:     print("2. Retrieval discrimination        : ENABLED")
+  3582:     print("3. H4 discrimination               : ENABLED")
+  3583:     print("4. H8 discrimination               : ENABLED")
+  3584:     print("5. H16 discrimination              : ENABLED")
+  3585:     print("6. Incremental predictive value    : ENABLED")
+  3586:     print("7. Predictive decision integration : ENABLED")
+  3587: 
+  3588:     print()
+  3589:     print("=" * 100)
+  3590:     print("PROTECTION CHECK")
+  3591:     print("=" * 100)
+  3592: 
+  3593:     print(
+  3594:         f"{MARKET_DATA_FILE:<28}: READ ONLY"
+  3595:     )
+  3596: 
+  3597:     print(
+  3598:         "Production MLAI              : NOT MODIFIED"
+  3599:     )
+  3600: 
+  3601:     print(
+  3602:         "Learning memory              : NOT MODIFIED"
+  3603:     )
+  3604: 
+  3605:     print(
+  3606:         "Trading                      : DISABLED"
+  3607:     )
+  3608: 
+  3609:     guard = ProtectionGuard(
+  3610:         MARKET_DATA_FILE
+  3611:     )
+  3612: 
+  3613:     protection_before = (
+  3614:         guard.before_hash
+  3615:     )
+  3616: 
+  3617:     candles, invalid = load_market_data(
+  3618:         MARKET_DATA_FILE
+  3619:     )
+  3620: 
+  3621:     chronology = audit_chronology(
+  3622:         candles
+  3623:     )
+  3624: 
+  3625:     if (
+  3626:         not chronology["ordered"]
+  3627:         or chronology["duplicates"]
+  3628:     ):
+  3629: 
+  3630:         raise RuntimeError(
+  3631:             "Chronology audit failed."
+  3632:         )
+  3633: 
+  3634:     if len(candles) < 500:
+  3635: 
+  3636:         raise RuntimeError(
+  3637:             "Insufficient candle history."
+  3638:         )
+  3639: 
+  3640:     windows = create_walk_forward_windows(
+  3641:         len(candles),
+  3642:         DEFAULT_TRAIN_WINDOWS,
+  3643:         DEFAULT_OOS_SIZE,
+  3644:     )
+  3645: 
+  3646:     atr = calculate_atr(
+  3647:         candles
+  3648:     )
+  3649: 
+  3650:     engine = CausalStructureEngine(
+  3651:         candles
+  3652:     )
+  3653: 
+  3654:     structure_states = engine.build()
+  3655: 
+  3656:     causality = audit_structure_causality(
+  3657:         candles,
+  3658:         engine.swings,
+  3659:         structure_states,
+  3660:         engine.events,
+  3661:     )
+  3662: 
+  3663:     if not causality["passed"]:
+  3664: 
+  3665:         raise RuntimeError(
+  3666:             "Causality audit failed."
+  3667:         )
+  3668: 
+  3669:     market_states = build_market_states(
+  3670:         candles,
+  3671:         structure_states,
+  3672:         atr,
+  3673:     )
+  3674: 
+  3675:     episode_ids = assign_episode_ids(
+  3676:         market_states
+  3677:     )
+  3678: 
+  3679:     print()
+  3680:     print("=" * 100)
+  3681:     print("FOUNDATION STATUS")
+  3682:     print("=" * 100)
+  3683: 
+  3684:     print(
+  3685:         f"Valid candles             : {len(candles)}"
+  3686:     )
+  3687: 
+  3688:     print(
+  3689:         f"Invalid candles           : {invalid}"
+  3690:     )
+  3691: 
+  3692:     print(
+  3693:         f"Confirmed swings          : {len(engine.swings)}"
+  3694:     )
+  3695: 
+  3696:     print(
+  3697:         "Structural events         : "
+  3698:         f"{sum(1 for e in engine.events.values() if e != 'NONE')}"
+  3699:     )
+  3700: 
+  3701:     print(
+  3702:         "Chronology                : PASS"
+  3703:     )
+  3704: 
+  3705:     print(
+  3706:         "Causal structure          : PASS"
+  3707:     )
+  3708: 
+  3709:     print(
+  3710:         f"Episodes                  : {len(set(episode_ids.values()))}"
+  3711:     )
+  3712: 
+  3713:     print()
+  3714:     print("Sequence states:")
+  3715: 
+  3716:     for name, count in Counter(
+  3717:         state.sequence_state
+  3718:         for state in market_states
+  3719:     ).most_common():
+  3720: 
+  3721:         print(
+  3722:             f"  {name:<36}: {count}"
+  3723:         )
+  3724: 
+  3725:     print()
+  3726:     print("Regimes:")
+  3727: 
+  3728:     for name, count in Counter(
+  3729:         state.regime
+  3730:         for state in market_states
+  3731:     ).most_common():
+  3732: 
+  3733:         print(
+  3734:             f"  {name:<36}: {count}"
+  3735:         )
+  3736: 
+  3737:     all_windows: List[
+  3738:         Dict[str, Any]
+  3739:     ] = []
+  3740: 
+  3741:     bucket_rows: List[
+  3742:         Dict[str, Any]
+  3743:     ] = []
+  3744: 
+  3745:     null_rows: List[
+  3746:         Dict[str, Any]
+  3747:     ] = []
+  3748: 
+  3749:     all_horizon_rows: Dict[
+  3750:         int,
+  3751:         List[Dict[str, Any]]
+  3752:     ] = {
+  3753:         horizon: []
+  3754:         for horizon in HORIZONS
+  3755:     }
+  3756: 
+  3757:     print()
+  3758:     print("=" * 100)
+  3759:     print(
+  3760:         "STRICT WALK-FORWARD HISTORICAL "
+  3761:         "RETRIEVAL + DISCRIMINATION"
+  3762:     )
+  3763:     print("=" * 100)
+  3764: 
+  3765:     for window in windows:
+  3766: 
+  3767:         window_result = {
+  3768:             "window": asdict(window),
+  3769:             "horizons": {},
+  3770:         }
+  3771: 
+  3772:         print()
+  3773:         print("-" * 100)
+  3774: 
+  3775:         print(
+  3776:             f"WINDOW {window.number} | "
+  3777:             f"TRAIN [{window.train_start}:{window.train_end}] | "
+  3778:             f"OOS [{window.oos_start}:{window.oos_end}]"
+  3779:         )
+  3780: 
+  3781:         for horizon in HORIZONS:
+  3782: 
+  3783:             records = build_experience_records(
+  3784:                 candles,
+  3785:                 atr,
+  3786:                 market_states,
+  3787:                 episode_ids,
+  3788:                 window.train_start,
+  3789:                 window.train_end,
+  3790:                 horizon,
+  3791:             )
+  3792: 
+  3793:             evaluations = []
+  3794: 
+  3795:             for query_index in range(
+  3796:                 window.oos_start,
+  3797:                 window.oos_end,
+  3798:             ):
+  3799: 
+  3800:                 if (
+  3801:                     query_index + horizon
+  3802:                     >= len(candles)
+  3803:                 ):
+  3804:                     continue
+  3805: 
+  3806:                 query_state = (
+  3807:                     market_states[
+  3808:                         query_index
+  3809:                     ]
+  3810:                 )
+  3811: 
+  3812:                 retrieval = (
+  3813:                     retrieve_historical_experience(
+  3814:                         query_state,
+  3815:                         records,
+  3816:                         horizon,
+  3817:                         query_index,
+  3818:                     )
+  3819:                 )
+  3820: 
+  3821:                 predictive = (
+  3822:                     predictive_decision(
+  3823:                         query_state,
+  3824:                         records,
+  3825:                         query_index,
+  3826:                     )
+  3827:                 )
+  3828: 
+  3829:                 outcome = make_outcome(
+  3830:                     candles,
+  3831:                     atr,
+  3832:                     query_index,
+  3833:                     horizon,
+  3834:                 )
+  3835: 
+  3836:                 if outcome is None:
+  3837:                     continue
+  3838: 
+  3839:                 retrieval_distribution = {
+  3840:                     "UP": retrieval.up_share,
+  3841:                     "DOWN": retrieval.down_share,
+  3842:                     "NEUTRAL": retrieval.neutral_share,
+  3843:                 }
+  3844: 
+  3845:                 retrieval_eval = (
+  3846:                     evaluate_distribution(
+  3847:                         retrieval_distribution,
+  3848:                         outcome.direction,
+  3849:                     )
+  3850:                 )
+  3851: 
+  3852:                 predictive_eval = (
+  3853:                     evaluate_distribution(
+  3854:                         predictive[
+  3855:                             "probabilities"
+  3856:                         ],
+  3857:                         outcome.direction,
+  3858:                     )
+  3859:                 )
+  3860: 
+  3861:                 baseline_level, baseline_distribution, baseline_samples = (
+  3862:                     conditional_baseline(
+  3863:                         query_state,
+  3864:                         records,
+  3865:                     )
+  3866:                 )
+  3867: 
+  3868:                 baseline_eval = (
+  3869:                     evaluate_distribution(
+  3870:                         baseline_distribution,
+  3871:                         outcome.direction,
+  3872:                     )
+  3873:                 )
+  3874: 
+  3875:                 incremental_value = (
+  3876:                     calculate_incremental_value(
+  3877:                         retrieval_eval,
+  3878:                         baseline_eval,
+  3879:                         predictive_eval,
+  3880:                     )
+  3881:                 )
+  3882: 
+  3883:                 row = {
+  3884:                     "query_index": query_index,
+  3885:                     "actual": outcome.direction,
+  3886: 
+  3887:                     "predictive": predictive,
+  3888: 
+  3889:                     "predictive_evaluation": predictive_eval,
+  3890: 
+  3891:                     "retrieval": asdict(
+  3892:                         retrieval
+  3893:                     ),
+  3894: 
+  3895:                     "retrieval_evaluation": retrieval_eval,
+  3896: 
+  3897:                     "baseline": baseline_distribution,
+  3898: 
+  3899:                     "baseline_level": baseline_level,
+  3900: 
+  3901:                     "baseline_samples": baseline_samples,
+  3902: 
+  3903:                     "baseline_evaluation": baseline_eval,
+  3904: 
+  3905:                     "incremental_value": incremental_value,
+  3906: 
+  3907:                     "similarity_bucket": bucket_name(
+  3908:                         retrieval.top_similarity
+  3909:                     ),
+  3910:                 }
+  3911: 
+  3912:                 null_result = (
+  3913:                     null_retrieval_sanity_test(
+  3914:                         query_state,
+  3915:                         records,
+  3916:                         query_index,
+  3917:                         horizon,
+  3918:                     )
+  3919:                 )
+  3920: 
+  3921:                 row["null_test"] = (
+  3922:                     null_result
+  3923:                 )
+  3924: 
+  3925:                 evaluations.append(
+  3926:                     row
+  3927:                 )
+  3928: 
+  3929:                 all_horizon_rows[
+  3930:                     horizon
+  3931:                 ].append(row)
+  3932: 
+  3933:                 bucket_rows.append(
+  3934:                     row
+  3935:                 )
+  3936: 
+  3937:                 if null_result[
+  3938:                     "available"
+  3939:                 ]:
+  3940: 
+  3941:                     null_rows.append(
+  3942:                         null_result
+  3943:                     )
+  3944: 
+  3945:             # ---------------------------------------------------------
+  3946:             # WINDOW METRICS
+  3947:             # ---------------------------------------------------------
+  3948: 
+  3949:             predictive_accuracy = (
+  3950:                 mean_or_zero(
+  3951:                     [
+  3952:                         1.0
+  3953:                         if row[
+  3954:                             "predictive_evaluation"
+  3955:                         ]["correct"]
+  3956:                         else 0.0
+  3957:                         for row in evaluations
+  3958:                     ]
+  3959:                 )
+  3960:                 if evaluations
+  3961:                 else None
+  3962:             )
+  3963: 
+  3964:             retrieval_accuracy = (
+  3965:                 mean_or_zero(
+  3966:                     [
+  3967:                         1.0
+  3968:                         if row[
+  3969:                             "retrieval_evaluation"
+  3970:                         ]["correct"]
+  3971:                         else 0.0
+  3972:                         for row in evaluations
+  3973:                     ]
+  3974:                 )
+  3975:                 if evaluations
+  3976:                 else None
+  3977:             )
+  3978: 
+  3979:             baseline_accuracy = (
+  3980:                 mean_or_zero(
+  3981:                     [
+  3982:                         1.0
+  3983:                         if row[
+  3984:                             "baseline_evaluation"
+  3985:                         ]["correct"]
+  3986:                         else 0.0
+  3987:                         for row in evaluations
+  3988:                     ]
+  3989:                 )
+  3990:                 if evaluations
+  3991:                 else None
+  3992:             )
+  3993: 
+  3994:             predictive_brier = (
+  3995:                 mean_or_zero(
+  3996:                     [
+  3997:                         row[
+  3998:                             "predictive_evaluation"
+  3999:                         ]["brier"]
+  4000:                         for row in evaluations
+  4001:                     ]
+  4002:                 )
+  4003:                 if evaluations
+  4004:                 else None
+  4005:             )
+  4006: 
+  4007:             retrieval_brier = (
+  4008:                 mean_or_zero(
+  4009:                     [
+  4010:                         row[
+  4011:                             "retrieval_evaluation"
+  4012:                         ]["brier"]
+  4013:                         for row in evaluations
+  4014:                     ]
+  4015:                 )
+  4016:                 if evaluations
+  4017:                 else None
+  4018:             )
+  4019: 
+  4020:             baseline_brier = (
+  4021:                 mean_or_zero(
+  4022:                     [
+  4023:                         row[
+  4024:                             "baseline_evaluation"
+  4025:                         ]["brier"]
+  4026:                         for row in evaluations
+  4027:                     ]
+  4028:                 )
+  4029:                 if evaluations
+  4030:                 else None
+  4031:             )
+  4032: 
+  4033:             predictive_log_loss = (
+  4034:                 mean_or_zero(
+  4035:                     [
+  4036:                         row[
+  4037:                             "predictive_evaluation"
+  4038:                         ]["log_loss"]
+  4039:                         for row in evaluations
+  4040:                     ]
+  4041:                 )
+  4042:                 if evaluations
+  4043:                 else None
+  4044:             )
+  4045: 
+  4046:             retrieval_log_loss = (
+  4047:                 mean_or_zero(
+  4048:                     [
+  4049:                         row[
+  4050:                             "retrieval_evaluation"
+  4051:                         ]["log_loss"]
+  4052:                         for row in evaluations
+  4053:                     ]
+  4054:                 )
+  4055:                 if evaluations
+  4056:                 else None
+  4057:             )
+  4058: 
+  4059:             baseline_log_loss = (
+  4060:                 mean_or_zero(
+  4061:                     [
+  4062:                         row[
+  4063:                             "baseline_evaluation"
+  4064:                         ]["log_loss"]
+  4065:                         for row in evaluations
+  4066:                     ]
+  4067:                 )
+  4068:                 if evaluations
+  4069:                 else None
+  4070:             )
+  4071: 
+  4072:             non_sparse = [
+  4073:                 row
+  4074:                 for row in evaluations
+  4075:                 if not row[
+  4076:                     "retrieval"
+  4077:                 ]["sparse_warning"]
+  4078:             ]
+  4079: 
+  4080:             discrimination_summary = (
+  4081:                 horizon_discrimination_summary(
+  4082:                     evaluations
+  4083:                 )
+  4084:             )
+  4085: 
+  4086:             result = {
+  4087:                 "training_records": len(
+  4088:                     records
+  4089:                 ),
+  4090: 
+  4091:                 "oos_queries": len(
+  4092:                     evaluations
+  4093:                 ),
+  4094: 
+  4095:                 # Original retrieval metrics
+  4096:                 "retrieval_accuracy":
+  4097:                     retrieval_accuracy,
+  4098: 
+  4099:                 "baseline_accuracy":
+  4100:                     baseline_accuracy,
+  4101: 
+  4102:                 "retrieval_brier":
+  4103:                     retrieval_brier,
+  4104: 
+  4105:                 "baseline_brier":
+  4106:                     baseline_brier,
+  4107: 
+  4108:                 "brier_lift":
+  4109:                     (
+  4110:                         baseline_brier
+  4111:                         - retrieval_brier
+  4112:                         if (
+  4113:                             retrieval_brier
+  4114:                             is not None
+  4115:                             and baseline_brier
+  4116:                             is not None
+  4117:                         )
+  4118:                         else None
+  4119:                     ),
+  4120: 
+  4121:                 "retrieval_log_loss":
+  4122:                     retrieval_log_loss,
+  4123: 
+  4124:                 "baseline_log_loss":
+  4125:                     baseline_log_loss,
+  4126: 
+  4127:                 "log_loss_lift":
+  4128:                     (
+  4129:                         baseline_log_loss
+  4130:                         - retrieval_log_loss
+  4131:                         if (
+  4132:                             retrieval_log_loss
+  4133:                             is not None
+  4134:                             and baseline_log_loss
+  4135:                             is not None
+  4136:                         )
+  4137:                         else None
+  4138:                     ),
+  4139: 
+  4140:                 # V4.1.6 predictive integration
+  4141:                 "predictive_accuracy":
+  4142:                     predictive_accuracy,
+  4143: 
+  4144:                 "predictive_brier":
+  4145:                     predictive_brier,
+  4146: 
+  4147:                 "predictive_log_loss":
+  4148:                     predictive_log_loss,
+  4149: 
+  4150:                 "predictive_brier_lift":
+  4151:                     (
+  4152:                         baseline_brier
+  4153:                         - predictive_brier
+  4154:                         if (
+  4155:                             baseline_brier
+  4156:                             is not None
+  4157:                             and predictive_brier
+  4158:                             is not None
+  4159:                         )
+  4160:                         else None
+  4161:                     ),
+  4162: 
+  4163:                 "predictive_log_loss_lift":
+  4164:                     (
+  4165:                         baseline_log_loss
+  4166:                         - predictive_log_loss
+  4167:                         if (
+  4168:                             baseline_log_loss
+  4169:                             is not None
+  4170:                             and predictive_log_loss
+  4171:                             is not None
+  4172:                         )
+  4173:                         else None
+  4174:                     ),
+  4175: 
+  4176:                 # V4.1.6 discrimination
+  4177:                 "discrimination":
+  4178:                     discrimination_summary,
+  4179: 
+  4180:                 "retrieval_coverage":
+  4181:                     safe_div(
+  4182:                         len(non_sparse),
+  4183:                         len(evaluations),
+  4184:                     ),
+  4185: 
+  4186:                 "sparse_rate":
+  4187:                     1.0
+  4188:                     - safe_div(
+  4189:                         len(non_sparse),
+  4190:                         len(evaluations),
+  4191:                     ),
+  4192: 
+  4193:                 "mean_top_similarity":
+  4194:                     mean_or_zero(
+  4195:                         [
+  4196:                             row[
+  4197:                                 "retrieval"
+  4198:                             ]["top_similarity"]
+  4199:                             for row in evaluations
+  4200:                         ]
+  4201:                     ),
+  4202: 
+  4203:                 "mean_matches":
+  4204:                     mean_or_zero(
+  4205:                         [
+  4206:                             row[
+  4207:                                 "retrieval"
+  4208:                             ]["deduplicated_matches"]
+  4209:                             for row in evaluations
+  4210:                         ]
+  4211:                     ),
+  4212: 
+  4213:                 "evaluations":
+  4214:                     evaluations,
+  4215:             }
+  4216: 
+  4217:             window_result[
+  4218:                 "horizons"
+  4219:             ][horizon] = result
+  4220: 
+  4221:             print()
+  4222:             print(
+  4223:                 f"H+{horizon}: "
+  4224:                 f"TrainRecords={len(records)} | "
+  4225:                 f"OOSQueries={len(evaluations)}"
+  4226:             )
+  4227: 
+  4228:             print(
+  4229:                 f"Retrieval Accuracy = "
+  4230:                 f"{fmt_pct(retrieval_accuracy)} | "
+  4231:                 f"Baseline = "
+  4232:                 f"{fmt_pct(baseline_accuracy)}"
+  4233:             )
+  4234: 
+  4235:             print(
+  4236:                 f"Predictive Accuracy = "
+  4237:                 f"{fmt_pct(predictive_accuracy)}"
+  4238:             )
+  4239: 
+  4240:             print(
+  4241:                 f"Retrieval Brier = "
+  4242:                 f"{fmt_num(retrieval_brier)} | "
+  4243:                 f"Predictive Brier = "
+  4244:                 f"{fmt_num(predictive_brier)} | "
+  4245:                 f"Baseline Brier = "
+  4246:                 f"{fmt_num(baseline_brier)}"
+  4247:             )
+  4248: 
+  4249:             print(
+  4250:                 f"Predictive Brier Lift = "
+  4251:                 f"{fmt_num(result['predictive_brier_lift'])}"
+  4252:             )
+  4253: 
+  4254:             print(
+  4255:                 f"Predictive LogLoss Lift = "
+  4256:                 f"{fmt_num(result['predictive_log_loss_lift'])}"
+  4257:             )
+  4258: 
+  4259:             print(
+  4260:                 f"Discrimination Rate = "
+  4261:                 f"{fmt_pct(discrimination_summary['discrimination_rate'])}"
+  4262:             )
+  4263: 
+  4264:             print(
+  4265:                 f"Similarity Separation = "
+  4266:                 f"{fmt_num(discrimination_summary['mean_similarity_separation'])}"
+  4267:             )
+  4268: 
+  4269:             print(
+  4270:                 f"Directional Discrimination = "
+  4271:                 f"{fmt_num(discrimination_summary['mean_directional_discrimination'])}"
+  4272:             )
+  4273: 
+  4274:             print(
+  4275:                 f"Predictive Margin = "
+  4276:                 f"{fmt_num(discrimination_summary['mean_predictive_margin'])}"
+  4277:             )
+  4278: 
+  4279:             print(
+  4280:                 f"Coverage = "
+  4281:                 f"{fmt_pct(result['retrieval_coverage'])} | "
+  4282:                 f"Sparse = "
+  4283:                 f"{fmt_pct(result['sparse_rate'])}"
+  4284:             )
+  4285: 
+  4286:         all_windows.append(
+  4287:             window_result
+  4288:         )
+  4289: 
+  4290:     # =================================================================
+  4291:     # AGGREGATION
+  4292:     # =================================================================
+  4293: 
+  4294:     aggregate: Dict[
+  4295:         int,
+  4296:         Dict[str, Any]
+  4297:     ] = {}
+  4298: 
+  4299:     for horizon in HORIZONS:
+  4300: 
+  4301:         rows = [
+  4302:             w["horizons"][horizon]
+  4303:             for w in all_windows
+  4304:         ]
+  4305: 
+  4306:         valid = lambda key: [
+  4307:             r[key]
+  4308:             for r in rows
+  4309:             if r.get(key) is not None
+  4310:         ]
+  4311: 
+  4312:         aggregate[horizon] = {
+  4313: 
+  4314:             "mean_retrieval_accuracy":
+  4315:                 mean_or_zero(
+  4316:                     valid(
+  4317:                         "retrieval_accuracy"
+  4318:                     )
+  4319:                 )
+  4320:                 if valid(
+  4321:                     "retrieval_accuracy"
+  4322:                 )
+  4323:                 else None,
+  4324: 
+  4325:             "mean_baseline_accuracy":
+  4326:                 mean_or_zero(
+  4327:                     valid(
+  4328:                         "baseline_accuracy"
+  4329:                     )
+  4330:                 )
+  4331:                 if valid(
+  4332:                     "baseline_accuracy"
+  4333:                 )
+  4334:                 else None,
+  4335: 
+  4336:             "mean_retrieval_brier":
+  4337:                 mean_or_zero(
+  4338:                     valid(
+  4339:                         "retrieval_brier"
+  4340:                     )
+  4341:                 )
+  4342:                 if valid(
+  4343:                     "retrieval_brier"
+  4344:                 )
+  4345:                 else None,
+  4346: 
+  4347:             "mean_baseline_brier":
+  4348:                 mean_or_zero(
+  4349:                     valid(
+  4350:                         "baseline_brier"
+  4351:                     )
+  4352:                 )
+  4353:                 if valid(
+  4354:                     "baseline_brier"
+  4355:                 )
+  4356:                 else None,
+  4357: 
+  4358:             "mean_brier_lift":
+  4359:                 mean_or_zero(
+  4360:                     valid(
+  4361:                         "brier_lift"
+  4362:                     )
+  4363:                 )
+  4364:                 if valid(
+  4365:                     "brier_lift"
+  4366:                 )
+  4367:                 else None,
+  4368: 
+  4369:             "mean_retrieval_log_loss":
+  4370:                 mean_or_zero(
+  4371:                     valid(
+  4372:                         "retrieval_log_loss"
+  4373:                     )
+  4374:                 )
+  4375:                 if valid(
+  4376:                     "retrieval_log_loss"
+  4377:                 )
+  4378:                 else None,
+  4379: 
+  4380:             "mean_baseline_log_loss":
+  4381:                 mean_or_zero(
+  4382:                     valid(
+  4383:                         "baseline_log_loss"
+  4384:                     )
+  4385:                 )
+  4386:                 if valid(
+  4387:                     "baseline_log_loss"
+  4388:                 )
+  4389:                 else None,
+  4390: 
+  4391:             "mean_log_loss_lift":
+  4392:                 mean_or_zero(
+  4393:                     valid(
+  4394:                         "log_loss_lift"
+  4395:                     )
+  4396:                 )
+  4397:                 if valid(
+  4398:                     "log_loss_lift"
+  4399:                 )
+  4400:                 else None,
+  4401: 
+  4402:             "mean_predictive_accuracy":
+  4403:                 mean_or_zero(
+  4404:                     valid(
+  4405:                         "predictive_accuracy"
+  4406:                     )
+  4407:                 )
+  4408:                 if valid(
+  4409:                     "predictive_accuracy"
+  4410:                 )
+  4411:                 else None,
+  4412: 
+  4413:             "mean_predictive_brier":
+  4414:                 mean_or_zero(
+  4415:                     valid(
+  4416:                         "predictive_brier"
+  4417:                     )
+  4418:                 )
+  4419:                 if valid(
+  4420:                     "predictive_brier"
+  4421:                 )
+  4422:                 else None,
+  4423: 
+  4424:             "mean_predictive_log_loss":
+  4425:                 mean_or_zero(
+  4426:                     valid(
+  4427:                         "predictive_log_loss"
+  4428:                     )
+  4429:                 )
+  4430:                 if valid(
+  4431:                     "predictive_log_loss"
+  4432:                 )
+  4433:                 else None,
+  4434: 
+  4435:             "mean_predictive_brier_lift":
+  4436:                 mean_or_zero(
+  4437:                     valid(
+  4438:                         "predictive_brier_lift"
+  4439:                     )
+  4440:                 )
+  4441:                 if valid(
+  4442:                     "predictive_brier_lift"
+  4443:                 )
+  4444:                 else None,
+  4445: 
+  4446:             "mean_predictive_log_loss_lift":
+  4447:                 mean_or_zero(
+  4448:                     valid(
+  4449:                         "predictive_log_loss_lift"
+  4450:                     )
+  4451:                 )
+  4452:                 if valid(
+  4453:                     "predictive_log_loss_lift"
+  4454:                 )
+  4455:                 else None,
+  4456: 
+  4457:             "mean_coverage":
+  4458:                 mean_or_zero(
+  4459:                     [
+  4460:                         r[
+  4461:                             "retrieval_coverage"
+  4462:                         ]
+  4463:                         for r in rows
+  4464:                     ]
+  4465:                 ),
+  4466: 
+  4467:             "mean_sparse_rate":
+  4468:                 mean_or_zero(
+  4469:                     [
+  4470:                         r[
+  4471:                             "sparse_rate"
+  4472:                         ]
+  4473:                         for r in rows
+  4474:                     ]
+  4475:                 ),
+  4476: 
+  4477:             "mean_top_similarity":
+  4478:                 mean_or_zero(
+  4479:                     [
+  4480:                         r[
+  4481:                             "mean_top_similarity"
+  4482:                         ]
+  4483:                         for r in rows
+  4484:                     ]
+  4485:                 ),
+  4486: 
+  4487:             "mean_matches":
+  4488:                 mean_or_zero(
+  4489:                     [
+  4490:                         r[
+  4491:                             "mean_matches"
+  4492:                         ]
+  4493:                         for r in rows
+  4494:                     ]
+  4495:                 ),
+  4496: 
+  4497:             "discrimination":
+  4498:                 horizon_discrimination_summary(
+  4499:                     [
+  4500:                         evaluation
+  4501:                         for window in all_windows
+  4502:                         for evaluation in window[
+  4503:                             "horizons"
+  4504:                         ][horizon][
+  4505:                             "evaluations"
+  4506:                         ]
+  4507:                     ]
+  4508:                 ),
+  4509:         }
+  4510: 
+  4511:     # =================================================================
+  4512:     # SIMILARITY BUCKETS
+  4513:     # =================================================================
+  4514: 
+  4515:     bucket_summary: Dict[
+  4516:         str,
+  4517:         Dict[str, Any]
+  4518:     ] = {}
+  4519: 
+  4520:     for bucket in [
+  4521:         name
+  4522:         for _, _, name
+  4523:         in SIMILARITY_BUCKETS
+  4524:     ]:
+  4525: 
+  4526:         rows = [
+  4527:             row
+  4528:             for row in bucket_rows
+  4529:             if row[
+  4530:                 "similarity_bucket"
+  4531:             ] == bucket
+  4532:         ]
+  4533: 
+  4534:         if not rows:
+  4535:             continue
+  4536: 
+  4537:         retrieval_brier = mean_or_zero(
+  4538:             [
+  4539:                 row[
+  4540:                     "retrieval_evaluation"
+  4541:                 ]["brier"]
+  4542:                 for row in rows
+  4543:             ]
+  4544:         )
+  4545: 
+  4546:         predictive_brier = mean_or_zero(
+  4547:             [
+  4548:                 row[
+  4549:                     "predictive_evaluation"
+  4550:                 ]["brier"]
+  4551:                 for row in rows
+  4552:             ]
+  4553:         )
+  4554: 
+  4555:         baseline_brier = mean_or_zero(
+  4556:             [
+  4557:                 row[
+  4558:                     "baseline_evaluation"
+  4559:                 ]["brier"]
+  4560:                 for row in rows
+  4561:             ]
+  4562:         )
+  4563: 
+  4564:         retrieval_accuracy = mean_or_zero(
+  4565:             [
+  4566:                 1.0
+  4567:                 if row[
+  4568:                     "retrieval_evaluation"
+  4569:                 ]["correct"]
+  4570:                 else 0.0
+  4571:                 for row in rows
+  4572:             ]
+  4573:         )
+  4574: 
+  4575:         predictive_accuracy = mean_or_zero(
+  4576:             [
+  4577:                 1.0
+  4578:                 if row[
+  4579:                     "predictive_evaluation"
+  4580:                 ]["correct"]
+  4581:                 else 0.0
+  4582:                 for row in rows
+  4583:             ]
+  4584:         )
+  4585: 
+  4586:         bucket_summary[bucket] = {
+  4587:             "samples": len(rows),
+  4588: 
+  4589:             "retrieval_accuracy":
+  4590:                 retrieval_accuracy,
+  4591: 
+  4592:             "predictive_accuracy":
+  4593:                 predictive_accuracy,
+  4594: 
+  4595:             "retrieval_brier":
+  4596:                 retrieval_brier,
+  4597: 
+  4598:             "predictive_brier":
+  4599:                 predictive_brier,
+  4600: 
+  4601:             "baseline_brier":
+  4602:                 baseline_brier,
+  4603: 
+  4604:             "retrieval_brier_lift":
+  4605:                 baseline_brier
+  4606:                 - retrieval_brier,
+  4607: 
+  4608:             "predictive_brier_lift":
+  4609:                 baseline_brier
+  4610:                 - predictive_brier,
+  4611: 
+  4612:             "mean_similarity_separation":
+  4613:                 mean_or_zero(
+  4614:                     [
+  4615:                         row[
+  4616:                             "retrieval"
+  4617:                         ][
+  4618:                             "discrimination"
+  4619:                         ][
+  4620:                             "similarity_separation"
+  4621:                         ]
+  4622:                         for row in rows
+  4623:                     ]
+  4624:                 ),
+  4625: 
+  4626:             "mean_directional_discrimination":
+  4627:                 mean_or_zero(
+  4628:                     [
+  4629:                         row[
+  4630:                             "retrieval"
+  4631:                         ][
+  4632:                             "discrimination"
+  4633:                         ][
+  4634:                             "directional_discrimination"
+  4635:                         ]
+  4636:                         for row in rows
+  4637:                     ]
+  4638:                 ),
+  4639:         }
+  4640: 
+  4641:     # =================================================================
+  4642:     # NULL SUMMARY
+  4643:     # =================================================================
+  4644: 
+  4645:     if null_rows:
+  4646: 
+  4647:         null_summary = {
+  4648: 
+  4649:             "queries":
+  4650:                 len(null_rows),
+  4651: 
+  4652:             "mean_real_max_share":
+  4653:                 mean_or_zero(
+  4654:                     [
+  4655:                         r[
+  4656:                             "real_max_share"
+  4657:                         ]
+  4658:                         for r in null_rows
+  4659:                     ]
+  4660:                 ),
+  4661: 
+  4662:             "mean_null_max_share":
+  4663:                 mean_or_zero(
+  4664:                     [
+  4665:                         r[
+  4666:                             "null_max_share_mean"
+  4667:                         ]
+  4668:                         for r in null_rows
+  4669:                     ]
+  4670:                 ),
+  4671: 
+  4672:             "mean_null_p95":
+  4673:                 mean_or_zero(
+  4674:                     [
+  4675:                         r[
+  4676:                             "null_max_share_p95"
+  4677:                         ]
+  4678:                         for r in null_rows
+  4679:                     ]
+  4680:                 ),
+  4681: 
+  4682:             "mean_real_minus_null":
+  4683:                 mean_or_zero(
+  4684:                     [
+  4685:                         r[
+  4686:                             "real_minus_null_mean"
+  4687:                         ]
+  4688:                         for r in null_rows
+  4689:                     ]
+  4690:                 ),
+  4691:         }
+  4692: 
+  4693:     else:
+  4694: 
+  4695:         null_summary = {
+  4696:             "queries": 0,
+  4697:             "mean_real_max_share": None,
+  4698:             "mean_null_max_share": None,
+  4699:             "mean_null_p95": None,
+  4700:             "mean_real_minus_null": None,
+  4701:         }
+  4702: 
+  4703:     # =================================================================
+  4704:     # FINAL PROTECTION
+  4705:     # =================================================================
+  4706: 
+  4707:     protection_after = sha256_file(
+  4708:         MARKET_DATA_FILE
+  4709:     )
+  4710: 
+  4711:     if (
+  4712:         protection_before
+  4713:         != protection_after
+  4714:     ):
+  4715: 
+  4716:         raise RuntimeError(
+  4717:             "market_data.bin changed."
+  4718:         )
+  4719: 
+  4720:     # =================================================================
+  4721:     # ARTIFACT
+  4722:     # =================================================================
+  4723: 
+  4724:     artifact = {
+  4725: 
+  4726:         "version": VERSION,
+  4727: 
+  4728:         "objective":
+  4729:             "ROBUST_CAUSAL_HISTORICAL_EXPERIENCE_RETRIEVAL_WITH_DISCRIMINATION",
+  4730: 
+  4731:         "candles":
+  4732:             len(candles),
+  4733: 
+  4734:         "invalid_candles":
+  4735:             invalid,
+  4736: 
+  4737:         "chronology":
+  4738:             chronology,
+  4739: 
+  4740:         "causality":
+  4741:             causality,
+  4742: 
+  4743:         "walk_forward":
+  4744:             all_windows,
+  4745: 
+  4746:         "aggregate":
+  4747:             aggregate,
+  4748: 
+  4749:         "similarity_buckets":
+  4750:             bucket_summary,
+  4751: 
+  4752:         "null_test":
+  4753:             null_summary,
+  4754: 
+  4755:         "v416_capabilities": {
+  4756: 
+  4757:             "similarity_representation":
+  4758:                 True,
+  4759: 
+  4760:             "retrieval_ranking_discrimination":
+  4761:                 True,
+  4762: 
+  4763:             "h4_discrimination":
+  4764:                 True,
+  4765: 
+  4766:             "h8_discrimination":
+  4767:                 True,
+  4768: 
+  4769:             "h16_discrimination":
+  4770:                 True,
+  4771: 
+  4772:             "incremental_predictive_value":
+  4773:                 True,
+  4774: 
+  4775:             "predictive_decision_integration":
+  4776:                 True,
+  4777:         },
+  4778: 
+  4779:         "retrieval_config": {
+  4780: 
+  4781:             "top_k":
+  4782:                 RETRIEVAL_TOP_K,
+  4783: 
+  4784:             "min_matches":
+  4785:                 MIN_RETRIEVAL_MATCHES,
+  4786: 
+  4787:             "min_history_gap":
+  4788:                 MIN_HISTORY_GAP,
+  4789: 
+  4790:             "episode_gap":
+  4791:                 EPISODE_GAP,
+  4792: 
+  4793:             "path_length":
+  4794:                 PATH_LENGTH,
+  4795: 
+  4796:             "null_permutations":
+  4797:                 NULL_PERMUTATIONS,
+  4798: 
+  4799:             "weights": {
+  4800: 
+  4801:                 "structure":
+  4802:                     WEIGHT_STRUCTURE,
+  4803: 
+  4804:                 "sequence":
+  4805:                     WEIGHT_SEQUENCE,
+  4806: 
+  4807:                 "regime":
+  4808:                     WEIGHT_REGIME,
+  4809: 
+  4810:                 "location":
+  4811:                     WEIGHT_LOCATION,
+  4812: 
+  4813:                 "momentum":
+  4814:                     WEIGHT_MOMENTUM,
+  4815: 
+  4816:                 "volatility":
+  4817:                     WEIGHT_VOLATILITY,
+  4818: 
+  4819:                 "candle":
+  4820:                     WEIGHT_CANDLE,
+  4821: 
+  4822:                 "path":
+  4823:                     WEIGHT_PATH,
+  4824:             },
+  4825:         },
+  4826: 
+  4827:         "discrimination_config": {
+  4828: 
+  4829:             "min_matches":
+  4830:                 DISCRIMINATION_MIN_MATCHES,
+  4831: 
+  4832:             "min_similarity_separation":
+  4833:                 MIN_SIMILARITY_SEPARATION,
+  4834: 
+  4835:             "prediction_min_probability":
+  4836:                 PREDICTION_MIN_PROBABILITY,
+  4837: 
+  4838:             "prediction_min_margin":
+  4839:                 PREDICTION_MIN_MARGIN,
+  4840:         },
+  4841: 
+  4842:         "market_language": {
+  4843: 
+  4844:             "sequence_counts":
+  4845:                 dict(
+  4846:                     Counter(
+  4847:                         state.sequence_state
+  4848:                         for state
+  4849:                         in market_states
+  4850:                     )
+  4851:                 ),
+  4852: 
+  4853:             "regime_counts":
+  4854:                 dict(
+  4855:                     Counter(
+  4856:                         state.regime
+  4857:                         for state
+  4858:                         in market_states
+  4859:                     )
+  4860:                 ),
+  4861: 
+  4862:             "episode_count":
+  4863:                 len(
+  4864:                     set(
+  4865:                         episode_ids.values()
+  4866:                     )
+  4867:                 ),
+  4868:         },
+  4869: 
+  4870:         "protection": {
+  4871: 
+  4872:             "sha256_before":
+  4873:                 protection_before,
+  4874: 
+  4875:             "sha256_after":
+  4876:                 protection_after,
+  4877: 
+  4878:             "market_data_modified":
+  4879:                 False,
+  4880: 
+  4881:             "production_modified":
+  4882:                 False,
+  4883: 
+  4884:             "learning_memory_modified":
+  4885:                 False,
+  4886: 
+  4887:             "trading":
+  4888:                 False,
+  4889:         },
+  4890:     }
+  4891: 
+  4892:     with open(
+  4893:         VALIDATION_BIN,
+  4894:         "wb",
+  4895:     ) as f:
+  4896: 
+  4897:         pickle.dump(
+  4898:             artifact,
+  4899:             f,
+  4900:             protocol=pickle.HIGHEST_PROTOCOL,
+  4901:         )
+  4902: 
+  4903:     # =================================================================
+  4904:     # REPORT
+  4905:     # =================================================================
+  4906: 
+  4907:     report: List[str] = []
+  4908: 
+  4909:     report.append(
+  4910:         "# MLAI v4.1.6 Robust Causal Historical Experience Retrieval"
+  4911:     )
+  4912: 
+  4913:     report.append("")
+  4914: 
+  4915:     report.append(
+  4916:         "## V4.1.6 seven capability status"
+  4917:     )
+  4918: 
+  4919:     report.append("")
+  4920: 
+  4921:     report.append(
+  4922:         "- Similarity representation: ENABLED"
+  4923:     )
+  4924: 
+  4925:     report.append(
+  4926:         "- Retrieval ranking/discrimination: ENABLED"
+  4927:     )
+  4928: 
+  4929:     report.append(
+  4930:         "- H4 discrimination: ENABLED"
+  4931:     )
+  4932: 
+  4933:     report.append(
+  4934:         "- H8 discrimination: ENABLED"
+  4935:     )
+  4936: 
+  4937:     report.append(
+  4938:         "- H16 discrimination: ENABLED"
+  4939:     )
+  4940: 
+  4941:     report.append(
+  4942:         "- Incremental predictive value: ENABLED"
+  4943:     )
+  4944: 
+  4945:     report.append(
+  4946:         "- Predictive decision integration: ENABLED"
+  4947:     )
+  4948: 
+  4949:     report.append("")
+  4950: 
+  4951:     report.append("## Phase scope")
+  4952:     report.append("")
+  4953: 
+  4954:     report.append(
+  4955:         "- Historical retrieval: ENABLED"
+  4956:     )
+  4957: 
+  4958:     report.append(
+  4959:         "- Explicit similarity representation: ENABLED"
+  4960:     )
+  4961: 
+  4962:     report.append(
+  4963:         "- Retrieval discrimination: ENABLED"
+  4964:     )
+  4965: 
+  4966:     report.append(
+  4967:         "- Predictive decision integration: ENABLED"
+  4968:     )
+  4969: 
+  4970:     report.append(
+  4971:         "- Incremental predictive value: ENABLED"
+  4972:     )
+  4973: 
+  4974:     report.append(
+  4975:         "- Probability calibration: NOT CLAIMED"
+  4976:     )
+  4977: 
+  4978:     report.append(
+  4979:         "- Scenario reasoning: NOT ADDED"
+  4980:     )
+  4981: 
+  4982:     report.append(
+  4983:         "- Human-language generation: NOT ADDED"
+  4984:     )
+  4985: 
+  4986:     report.append(
+  4987:         "- Multi-timeframe reasoning: NOT ADDED"
+  4988:     )
+  4989: 
+  4990:     report.append(
+  4991:         "- Continuous learning: NOT ADDED"
+  4992:     )
+  4993: 
+  4994:     report.append(
+  4995:         "- Live data: NOT ADDED"
+  4996:     )
+  4997: 
+  4998:     report.append("")
+  4999: 
+  5000:     report.append("## Architecture")
+  5001:     report.append("")
+  5002: 
+  5003:     report.append(
+  5004:         "- Canonical causal MarketState: ENABLED"
+  5005:     )
+  5006: 
+  5007:     report.append(
+  5008:         "- Causal structure / sequence / regime: ENABLED"
+  5009:     )
+  5010: 
+  5011:     report.append(
+  5012:         "- ATR-normalized outcomes: ENABLED"
+  5013:     )
+  5014: 
+  5015:     report.append(
+  5016:         "- Causal eligibility filter: ENABLED"
+  5017:     )
+  5018: 
+  5019:     report.append(
+  5020:         "- Coarse-to-fine retrieval: ENABLED"
+  5021:     )
+  5022: 
+  5023:     report.append(
+  5024:         "- Multi-layer similarity: ENABLED"
+  5025:     )
+  5026: 
+  5027:     report.append(
+  5028:         "- Explicit similarity representation: ENABLED"
+  5029:     )
+  5030: 
+  5031:     report.append(
+  5032:         "- Causal path similarity: ENABLED"
+  5033:     )
+  5034: 
+  5035:     report.append(
+  5036:         "- Temporal episode de-duplication: ENABLED"
+  5037:     )
+  5038: 
+  5039:     report.append(
+  5040:         "- Retrieval ranking/discrimination: ENABLED"
+  5041:     )
+  5042: 
+  5043:     report.append(
+  5044:         "- Supporting/conflicting evidence: ENABLED"
+  5045:     )
+  5046: 
+  5047:     report.append(
+  5048:         "- Sparse-evidence warning: ENABLED"
+  5049:     )
+  5050: 
+  5051:     report.append(
+  5052:         "- Retrieval-vs-baseline diagnostics: ENABLED"
+  5053:     )
+  5054: 
+  5055:     report.append(
+  5056:         "- Incremental predictive value: ENABLED"
+  5057:     )
+  5058: 
+  5059:     report.append(
+  5060:         "- Predictive decision integration: ENABLED"
+  5061:     )
+  5062: 
+  5063:     report.append(
+  5064:         "- H4 discrimination: ENABLED"
+  5065:     )
+  5066: 
+  5067:     report.append(
+  5068:         "- H8 discrimination: ENABLED"
+  5069:     )
+  5070: 
+  5071:     report.append(
+  5072:         "- H16 discrimination: ENABLED"
+  5073:     )
+  5074: 
+  5075:     report.append(
+  5076:         "- Similarity bucket analysis: ENABLED"
+  5077:     )
+  5078: 
+  5079:     report.append(
+  5080:         "- Training-only null retrieval sanity test: ENABLED"
+  5081:     )
+  5082: 
+  5083:     report.append(
+  5084:         "- OOS outcomes used for retrieval: NO"
+  5085:     )
+  5086: 
+  5087:     report.append("")
+  5088: 
+  5089:     report.append(
+  5090:         "## Dataset / causality"
+  5091:     )
+  5092: 
+  5093:     report.append("")
+  5094: 
+  5095:     report.append(
+  5096:         f"- Valid candles: {len(candles)}"
+  5097:     )
+  5098: 
+  5099:     report.append(
+  5100:         f"- Invalid candles: {invalid}"
+  5101:     )
+  5102: 
+  5103:     report.append(
+  5104:         f"- Confirmed swings: {len(engine.swings)}"
+  5105:     )
+  5106: 
+  5107:     report.append(
+  5108:         "- Chronology: PASS"
+  5109:     )
+  5110: 
+  5111:     report.append(
+  5112:         "- Duplicate timestamps: PASS"
+  5113:     )
+  5114: 
+  5115:     report.append(
+  5116:         "- Causal structure: PASS"
+  5117:     )
+  5118: 
+  5119:     report.append("")
+  5120: 
+  5121:     report.append(
+  5122:         "## H4 / H8 / H16 discrimination"
+  5123:     )
+  5124: 
+  5125:     report.append("")
+  5126: 
+  5127:     for horizon in HORIZONS:
+  5128: 
+  5129:         result = aggregate[horizon]
+  5130: 
+  5131:         d = result[
+  5132:             "discrimination"
+  5133:         ]
+  5134: 
+  5135:         report.append(
+  5136:             f"### H+{horizon}"
+  5137:         )
+  5138: 
+  5139:         report.append(
+  5140:             f"- OOS queries: {d['queries']}"
+  5141:         )
+  5142: 
+  5143:         report.append(
+  5144:             "- Discriminative queries: "
+  5145:             f"{d['discriminative_queries']}"
+  5146:         )
+  5147: 
+  5148:         report.append(
+  5149:             "- Discrimination rate: "
+  5150:             f"{fmt_pct(d['discrimination_rate'])}"
+  5151:         )
+  5152: 
+  5153:         report.append(
+  5154:             "- Mean similarity separation: "
+  5155:             f"{fmt_num(d['mean_similarity_separation'])}"
+  5156:         )
+  5157: 
+  5158:         report.append(
+  5159:             "- Mean ranking concentration: "
+  5160:             f"{fmt_num(d['mean_ranking_concentration'])}"
+  5161:         )
+  5162: 
+  5163:         report.append(
+  5164:             "- Mean directional discrimination: "
+  5165:             f"{fmt_num(d['mean_directional_discrimination'])}"
+  5166:         )
+  5167: 
+  5168:         report.append(
+  5169:             "- Mean class entropy: "
+  5170:             f"{fmt_num(d['mean_class_entropy'])}"
+  5171:         )
+  5172: 
+  5173:         report.append(
+  5174:             "- Mean baseline entropy: "
+  5175:             f"{fmt_num(d['mean_baseline_entropy'])}"
+  5176:         )
+  5177: 
+  5178:         report.append(
+  5179:             "- Predictive accuracy: "
+  5180:             f"{fmt_pct(d['predictive_accuracy'])}"
+  5181:         )
+  5182: 
+  5183:         report.append(
+  5184:             "- Retrieval accuracy: "
+  5185:             f"{fmt_pct(d['retrieval_accuracy'])}"
+  5186:         )
+  5187: 
+  5188:         report.append(
+  5189:             "- Baseline accuracy: "
+  5190:             f"{fmt_pct(d['baseline_accuracy'])}"
+  5191:         )
+  5192: 
+  5193:         report.append(
+  5194:             "- Incremental Brier lift: "
+  5195:             f"{fmt_num(d['incremental_brier_lift'])}"
+  5196:         )
+  5197: 
+  5198:         report.append(
+  5199:             "- Incremental log-loss lift: "
+  5200:             f"{fmt_num(d['incremental_log_loss_lift'])}"
+  5201:         )
+  5202: 
+  5203:         report.append(
+  5204:             "- Incremental accuracy delta: "
+  5205:             f"{fmt_num(d['incremental_accuracy_delta'])}"
+  5206:         )
+  5207: 
+  5208:         report.append("")
+  5209: 
+  5210:     report.append(
+  5211:         "## Walk-forward aggregate"
+  5212:     )
+  5213: 
+  5214:     report.append("")
+  5215: 
+  5216:     for horizon, result in aggregate.items():
+  5217: 
+  5218:         report.append(
+  5219:             f"### H+{horizon}"
+  5220:         )
+  5221: 
+  5222:         report.append(
+  5223:             "- Retrieval accuracy: "
+  5224:             f"{fmt_pct(result['mean_retrieval_accuracy'])}"
+  5225:         )
+  5226: 
+  5227:         report.append(
+  5228:             "- Baseline accuracy: "
+  5229:             f"{fmt_pct(result['mean_baseline_accuracy'])}"
+  5230:         )
+  5231: 
+  5232:         report.append(
+  5233:             "- Predictive accuracy: "
+  5234:             f"{fmt_pct(result['mean_predictive_accuracy'])}"
+  5235:         )
+  5236: 
+  5237:         report.append(
+  5238:             "- Retrieval Brier: "
+  5239:             f"{fmt_num(result['mean_retrieval_brier'])}"
+  5240:         )
+  5241: 
+  5242:         report.append(
+  5243:             "- Baseline Brier: "
+  5244:             f"{fmt_num(result['mean_baseline_brier'])}"
+  5245:         )
+  5246: 
+  5247:         report.append(
+  5248:             "- Retrieval Brier lift: "
+  5249:             f"{fmt_num(result['mean_brier_lift'])}"
+  5250:         )
+  5251: 

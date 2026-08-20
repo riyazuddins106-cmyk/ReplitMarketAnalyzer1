@@ -1,0 +1,436 @@
+﻿
+  mlai_market_structure_v416backup.py:424:                        
+last_low.pivot_index if last_low else None
+  mlai_market_structure_v416backup.py:425:                    ),
+  mlai_market_structure_v416backup.py:426:                    
+high_label=high_label,
+  mlai_market_structure_v416backup.py:427:                    
+low_label=low_label,
+  mlai_market_structure_v416backup.py:428:                    
+event=event,
+  mlai_market_structure_v416backup.py:429:                    
+event_level=event_level,
+  mlai_market_structure_v416backup.py:430:                    
+event_index=event_index,
+  mlai_market_structure_v416backup.py:431:                    
+event_age=event_age,
+  mlai_market_structure_v416backup.py:432:                    
+event_direction=event_direction,
+  mlai_market_structure_v416backup.py:433:                    
+break_distance_atr=break_distance_atr,
+  mlai_market_structure_v416backup.py:434:                    
+break_strength=break_strength,
+  mlai_market_structure_v416backup.py:435:                    
+acceptance_state=acceptance,
+  mlai_market_structure_v416backup.py:436:                    
+retest_state=retest,
+  mlai_market_structure_v416backup.py:437:                    
+structure_phase=phase,
+  mlai_market_structure_v416backup.py:438:                )
+  mlai_market_structure_v416backup.py:439:            )
+  mlai_market_structure_v416backup.py:440:
+  mlai_market_structure_v416backup.py:441:        return self.states
+  mlai_market_structure_v416backup.py:442:
+  mlai_market_structure_v416backup.py:443:
+> mlai_market_structure_v416backup.py:444:def 
+build_candle_anatomy(candles, atr):
+  mlai_market_structure_v416backup.py:445:    output = []
+  mlai_market_structure_v416backup.py:446:
+  mlai_market_structure_v416backup.py:447:    for i, candle in 
+enumerate(candles):
+  mlai_market_structure_v416backup.py:448:        current_atr = max(
+  mlai_market_structure_v416backup.py:449:            atr[i] or 
+candle.high - candle.low,
+  mlai_market_structure_v416backup.py:450:            EPS,
+  mlai_market_structure_v416backup.py:451:        )
+  mlai_market_structure_v416backup.py:452:
+  mlai_market_structure_v416backup.py:453:        candle_range = 
+max(candle.high - candle.low, EPS)
+  mlai_market_structure_v416backup.py:454:        body = 
+abs(candle.close - candle.open)
+  mlai_market_structure_v416backup.py:455:
+  mlai_market_structure_v416backup.py:456:        upper_wick = max(
+  mlai_market_structure_v416backup.py:457:            candle.high - 
+max(candle.open, candle.close),
+  mlai_market_structure_v416backup.py:458:            0.0,
+  mlai_market_structure_v416backup.py:459:        )
+  mlai_market_structure_v416backup.py:460:
+  mlai_market_structure_v416backup.py:461:        lower_wick = max(
+  mlai_market_structure_v416backup.py:462:            
+min(candle.open, candle.close) - candle.low,
+  mlai_market_structure_v416backup.py:463:            0.0,
+  mlai_market_structure_v416backup.py:464:        )
+  mlai_market_structure_v416backup.py:465:
+  mlai_market_structure_v416backup.py:466:        close_location = (
+  mlai_market_structure_v416backup.py:467:            candle.close - 
+candle.low
+  mlai_market_structure_v416backup.py:468:        ) / candle_range
+  mlai_market_structure_v416backup.py:469:
+  mlai_market_structure_v416backup.py:470:        body_position = (
+  mlai_market_structure_v416backup.py:471:            ((candle.open 
++ candle.close) / 2.0)
+  mlai_market_structure_v416backup.py:472:            - candle.low
+  mlai_market_structure_v416backup.py:473:        ) / candle_range
+  mlai_market_structure_v416backup.py:474:
+  mlai_market_structure_v416backup.py:475:        previous_close = (
+  mlai_market_structure_v416backup.py:476:            candles[i - 
+1].close
+  mlai_market_structure_v416backup.py:477:            if i > 0
+  mlai_market_structure_v416backup.py:478:            else 
+candle.close
+  mlai_market_structure_v416backup.py:479:        )
+  mlai_market_structure_v416backup.py:480:
+  mlai_market_structure_v416backup.py:481:        
+directional_efficiency = abs(
+  mlai_market_structure_v416backup.py:482:            candle.close - 
+previous_close
+  mlai_market_structure_v416backup.py:483:        ) / candle_range
+  mlai_market_structure_v416backup.py:484:
+  mlai_market_structure_v416backup.py:502:        direction = (
+  mlai_market_structure_v416backup.py:503:            "UP"
+  mlai_market_structure_v416backup.py:504:            if 
+candle.close > candle.open
+  mlai_market_structure_v416backup.py:505:            else "DOWN"
+  mlai_market_structure_v416backup.py:506:            if 
+candle.close < candle.open
+  mlai_market_structure_v416backup.py:507:            else "FLAT"
+  mlai_market_structure_v416backup.py:508:        )
+  mlai_market_structure_v416backup.py:509:
+  mlai_market_structure_v416backup.py:510:        body_to_range = 
+body / candle_range
+  mlai_market_structure_v416backup.py:511:        upper_wick_ratio = 
+upper_wick / candle_range
+  mlai_market_structure_v416backup.py:512:        lower_wick_ratio = 
+lower_wick / candle_range
+  mlai_market_structure_v416backup.py:513:        body_atr = body / 
+current_atr
+  mlai_market_structure_v416backup.py:514:        range_atr = 
+candle_range / current_atr
+  mlai_market_structure_v416backup.py:515:
+  mlai_market_structure_v416backup.py:516:        if body_to_range 
+<= 0.15:
+  mlai_market_structure_v416backup.py:517:            candle_type = 
+"DOJI"
+  mlai_market_structure_v416backup.py:518:        elif (
+  mlai_market_structure_v416backup.py:519:            body_to_range 
+>= 0.70
+  mlai_market_structure_v416backup.py:520:            and direction 
+== "UP"
+  mlai_market_structure_v416backup.py:521:        ):
+> mlai_market_structure_v416backup.py:522:            candle_type = 
+"STRONG_BODY_UP"
+  mlai_market_structure_v416backup.py:523:        elif (
+  mlai_market_structure_v416backup.py:524:            body_to_range 
+>= 0.70
+  mlai_market_structure_v416backup.py:525:            and direction 
+== "DOWN"
+  mlai_market_structure_v416backup.py:526:        ):
+  mlai_market_structure_v416backup.py:527:            candle_type = 
+"STRONG_BODY_DOWN"
+  mlai_market_structure_v416backup.py:528:        elif (
+  mlai_market_structure_v416backup.py:529:            lower_wick >= 
+body * 1.8
+  mlai_market_structure_v416backup.py:530:            and 
+close_location >= 0.60
+  mlai_market_structure_v416backup.py:531:        ):
+  mlai_market_structure_v416backup.py:532:            candle_type = 
+"BULLISH_REJECTION"
+  mlai_market_structure_v416backup.py:533:        elif (
+  mlai_market_structure_v416backup.py:534:            upper_wick >= 
+body * 1.8
+  mlai_market_structure_v416backup.py:535:            and 
+close_location <= 0.40
+  mlai_market_structure_v416backup.py:536:        ):
+  mlai_market_structure_v416backup.py:537:            candle_type = 
+"BEARISH_REJECTION"
+  mlai_market_structure_v416backup.py:538:        elif (
+  mlai_market_structure_v416backup.py:539:            
+range_expansion >= 1.8
+  mlai_market_structure_v416backup.py:540:            and direction 
+== "UP"
+  mlai_market_structure_v416backup.py:541:        ):
+  mlai_market_structure_v416backup.py:542:            candle_type = 
+"WIDE_RANGE_UP"
+  mlai_market_structure_v416backup.py:543:        elif (
+  mlai_market_structure_v416backup.py:544:            
+range_expansion >= 1.8
+  mlai_market_structure_v416backup.py:545:            and direction 
+== "DOWN"
+  mlai_market_structure_v416backup.py:546:        ):
+  mlai_market_structure_v416backup.py:547:            candle_type = 
+"WIDE_RANGE_DOWN"
+  mlai_market_structure_v416backup.py:548:        elif 
+range_expansion <= 0.65:
+  mlai_market_structure_v416backup.py:549:            candle_type = 
+"COMPRESSION"
+  mlai_market_structure_v416backup.py:550:        else:
+  mlai_market_structure_v416backup.py:551:            candle_type = 
+"NORMAL"
+  mlai_market_structure_v416backup.py:552:
+  mlai_market_structure_v416backup.py:553:        if (
+  mlai_market_structure_v416backup.py:554:            lower_wick >= 
+max(body * 1.5, candle_range * 0.45)
+  mlai_market_structure_v416backup.py:555:            and 
+close_location > 0.55
+  mlai_market_structure_v416backup.py:556:        ):
+  mlai_market_structure_v416backup.py:557:            rejection = 
+"BULLISH"
+  mlai_market_structure_v416backup.py:558:        elif (
+  mlai_market_structure_v416backup.py:559:            upper_wick >= 
+max(body * 1.5, candle_range * 0.45)
+  mlai_market_structure_v416backup.py:560:            and 
+close_location < 0.45
+  mlai_market_structure_v416backup.py:561:        ):
+  mlai_market_structure_v416backup.py:562:            rejection = 
+"BEARISH"
+  mlai_market_structure_v416backup.py:717:                
+transition=transition,
+  mlai_market_structure_v416backup.py:718:                
+impulse_count=impulse_count,
+  mlai_market_structure_v416backup.py:719:                
+pullback_count=pullback_count,
+  mlai_market_structure_v416backup.py:720:                
+compression_count=compression_count,
+  mlai_market_structure_v416backup.py:721:                
+expansion=expansion,
+  mlai_market_structure_v416backup.py:722:            )
+  mlai_market_structure_v416backup.py:723:        )
+  mlai_market_structure_v416backup.py:724:
+  mlai_market_structure_v416backup.py:725:    return output
+  mlai_market_structure_v416backup.py:726:
+  mlai_market_structure_v416backup.py:727:
+  mlai_market_structure_v416backup.py:728:def build_all(candles):
+  mlai_market_structure_v416backup.py:729:    atr = 
+calculate_atr(candles)
+  mlai_market_structure_v416backup.py:730:
+  mlai_market_structure_v416backup.py:731:    structure_engine = 
+CausalStructureEngine(
+  mlai_market_structure_v416backup.py:732:        candles,
+  mlai_market_structure_v416backup.py:733:        atr,
+  mlai_market_structure_v416backup.py:734:    )
+  mlai_market_structure_v416backup.py:735:
+  mlai_market_structure_v416backup.py:736:    structure = 
+structure_engine.build()
+> mlai_market_structure_v416backup.py:737:    candle = 
+build_candle_anatomy(
+  mlai_market_structure_v416backup.py:738:        candles,
+  mlai_market_structure_v416backup.py:739:        atr,
+  mlai_market_structure_v416backup.py:740:    )
+  mlai_market_structure_v416backup.py:741:
+  mlai_market_structure_v416backup.py:742:    sequence = 
+build_sequence_states(
+  mlai_market_structure_v416backup.py:743:        candles,
+  mlai_market_structure_v416backup.py:744:        candle,
+  mlai_market_structure_v416backup.py:745:        structure,
+  mlai_market_structure_v416backup.py:746:    )
+  mlai_market_structure_v416backup.py:747:
+  mlai_market_structure_v416backup.py:748:    return (
+  mlai_market_structure_v416backup.py:749:        atr,
+  mlai_market_structure_v416backup.py:750:        structure_engine,
+  mlai_market_structure_v416backup.py:751:        structure,
+  mlai_market_structure_v416backup.py:752:        candle,
+  mlai_market_structure_v416backup.py:753:        sequence,
+  mlai_market_structure_v416backup.py:754:    )
+  mlai_market_structure_v416backup.py:755:
+  mlai_market_structure_v416backup.py:756:
+  mlai_market_structure_v416backup.py:757:def 
+causal_prefix_audit(candles, indices):
+  mlai_market_structure_v416backup.py:758:    """
+  mlai_market_structure_v416backup.py:759:    Rebuild each selected 
+prefix independently.
+  mlai_market_structure_v416backup.py:760:
+  mlai_market_structure_v416backup.py:761:    A P2 state at index i 
+must be identical when calculated from:
+  mlai_market_structure_v416backup.py:762:      1. the complete 
+dataset, and
+  mlai_market_structure_v416backup.py:763:      2. only candles 0..i.
+  mlai_market_structure_v416backup.py:764:
+  mlai_market_structure_v416backup.py:765:    This directly checks 
+for accidental future-information dependence.
+  mlai_market_structure_v416backup.py:766:    """
+  mlai_market_structure_v416backup.py:767:
+  mlai_market_structure_v416backup.py:768:    full = 
+build_all(candles)
+  mlai_market_structure_v416backup.py:769:    full_structure = 
+full[2]
+  mlai_market_structure_v416backup.py:770:    full_candle = full[3]
+  mlai_market_structure_v416backup.py:771:    full_sequence = full[4]
+  mlai_market_structure_v416backup.py:772:
+  mlai_market_structure_v416backup.py:773:    failures = []
+  mlai_market_structure_v416backup.py:774:
+  mlai_market_structure_v416backup.py:775:    for i in indices:
+  mlai_market_structure_v416backup.py:776:        if i < 50 or i >= 
+len(candles):
+  mlai_market_structure_v416backup.py:777:            continue
+  mlai_market_structure_v416backup.py:854:                    0.0,
+  mlai_market_structure_v416backup.py:855:                )
+  mlai_market_structure_v416backup.py:856:            )
+  mlai_market_structure_v416backup.py:857:
+  mlai_market_structure_v416backup.py:858:        return result
+  mlai_market_structure_v416backup.py:859:
+  mlai_market_structure_v416backup.py:860:    # Strong bullish body 
+/ expansion.
+  mlai_market_structure_v416backup.py:861:    candles = make_candles(
+  mlai_market_structure_v416backup.py:862:        [
+  mlai_market_structure_v416backup.py:863:            (100, 2, 1, 
+1.8),
+  mlai_market_structure_v416backup.py:864:            (101.8, 2.5, 
+1, 2.4),
+  mlai_market_structure_v416backup.py:865:            (104.2, 3, 1, 
+2.8),
+  mlai_market_structure_v416backup.py:866:            (107, 2.8, 1, 
+2.2),
+  mlai_market_structure_v416backup.py:867:        ]
+  mlai_market_structure_v416backup.py:868:    )
+  mlai_market_structure_v416backup.py:869:
+  mlai_market_structure_v416backup.py:870:    _, _, _, candle, _ = 
+build_all(candles)
+  mlai_market_structure_v416backup.py:871:
+  mlai_market_structure_v416backup.py:872:    tests.append(
+  mlai_market_structure_v416backup.py:873:        (
+> mlai_market_structure_v416backup.py:874:            
+"strong_body_up",
+  mlai_market_structure_v416backup.py:875:            
+candle[-1].candle_type
+  mlai_market_structure_v416backup.py:876:            in (
+> mlai_market_structure_v416backup.py:877:                
+"STRONG_BODY_UP",
+  mlai_market_structure_v416backup.py:878:                
+"WIDE_RANGE_UP",
+  mlai_market_structure_v416backup.py:879:            ),
+  mlai_market_structure_v416backup.py:880:        )
+  mlai_market_structure_v416backup.py:881:    )
+  mlai_market_structure_v416backup.py:882:
+  mlai_market_structure_v416backup.py:883:    # Bullish rejection.
+  mlai_market_structure_v416backup.py:884:    candles = make_candles(
+  mlai_market_structure_v416backup.py:885:        [
+  mlai_market_structure_v416backup.py:886:            (100, 2, 1, 
+0.2),
+  mlai_market_structure_v416backup.py:887:            (100.2, 1, 3, 
+0.9),
+  mlai_market_structure_v416backup.py:888:            (101.1, 1, 
+0.8, 0.7),
+  mlai_market_structure_v416backup.py:889:        ]
+  mlai_market_structure_v416backup.py:890:    )
+  mlai_market_structure_v416backup.py:891:
+  mlai_market_structure_v416backup.py:892:    _, _, _, candle, _ = 
+build_all(candles)
+  mlai_market_structure_v416backup.py:893:
+  mlai_market_structure_v416backup.py:894:    tests.append(
+  mlai_market_structure_v416backup.py:895:        (
+  mlai_market_structure_v416backup.py:896:            
+"bullish_rejection",
+  mlai_market_structure_v416backup.py:897:            any(
+  mlai_market_structure_v416backup.py:898:                
+x.rejection == "BULLISH"
+  mlai_market_structure_v416backup.py:899:                for x in 
+candle
+  mlai_market_structure_v416backup.py:900:            ),
+  mlai_market_structure_v416backup.py:901:        )
+  mlai_market_structure_v416backup.py:902:    )
+  mlai_market_structure_v416backup.py:903:
+  mlai_market_structure_v416backup.py:904:    # Compression followed 
+by expansion.
+  mlai_market_structure_v416backup.py:905:    candles = make_candles(
+  mlai_market_structure_v416backup.py:906:        [
+  mlai_market_structure_v416backup.py:907:            (100, 0.3, 
+0.3, 0.1),
+  mlai_market_structure_v416backup.py:908:            (100.1, 0.25, 
+0.25, 0.05),
+  mlai_market_structure_v416backup.py:909:            (100.15, 0.2, 
+0.2, 0.03),
+  mlai_market_structure_v416backup.py:910:            (100.18, 2.5, 
+0.2, 2.2),
+  mlai_market_structure_v416backup.py:911:        ]
+  mlai_market_structure_v416backup.py:912:    )
+  mlai_market_structure_v416backup.py:913:
+  mlai_market_structure_v416backup.py:914:    _, _, _, candle, 
+sequence = build_all(candles)
+  mlai_market_structure_v416backup.py:915:
+  mlai_market_structure_v416backup.py:916:    tests.append(
+  mlai_market_structure_v416backup.py:917:        (
+  mlai_market_structure_v416backup.py:1086:        1000,
+  mlai_market_structure_v416backup.py:1087:        min(len(candles) 
+- 1, 1200),
+  mlai_market_structure_v416backup.py:1088:    ]
+  mlai_market_structure_v416backup.py:1089:
+  mlai_market_structure_v416backup.py:1090:    failures, _ = 
+causal_prefix_audit(
+  mlai_market_structure_v416backup.py:1091:        candles,
+  mlai_market_structure_v416backup.py:1092:        sample_indices,
+  mlai_market_structure_v416backup.py:1093:    )
+  mlai_market_structure_v416backup.py:1094:
+  mlai_market_structure_v416backup.py:1095:    if failures:
+  mlai_market_structure_v416backup.py:1096:        print(
+  mlai_market_structure_v416backup.py:1097:            f"FAIL — 
+{len(failures)} mismatches"
+  mlai_market_structure_v416backup.py:1098:        )
+  mlai_market_structure_v416backup.py:1099:
+  mlai_market_structure_v416backup.py:1100:        for failure in 
+failures[:20]:
+  mlai_market_structure_v416backup.py:1101:            print(" ", 
+failure)
+  mlai_market_structure_v416backup.py:1102:    else:
+  mlai_market_structure_v416backup.py:1103:        print("PASS — no 
+causal prefix mismatches.")
+  mlai_market_structure_v416backup.py:1104:
+  mlai_market_structure_v416backup.py:1105:    print()
+> mlai_market_structure_v416backup.py:1106:    print("SYNTHETIC P2 
+TESTS")
+  mlai_market_structure_v416backup.py:1107:    print("-" * 90)
+  mlai_market_structure_v416backup.py:1108:
+  mlai_market_structure_v416backup.py:1109:    synthetic = 
+synthetic_tests()
+  mlai_market_structure_v416backup.py:1110:
+  mlai_market_structure_v416backup.py:1111:    for name, passed in 
+synthetic:
+  mlai_market_structure_v416backup.py:1112:        print(
+  mlai_market_structure_v416backup.py:1113:            f"  {'PASS' 
+if passed else 'FAIL':<6} {name}"
+  mlai_market_structure_v416backup.py:1114:        )
+  mlai_market_structure_v416backup.py:1115:
+  mlai_market_structure_v416backup.py:1116:    with open(
+  mlai_market_structure_v416backup.py:1117:        MARKET_DATA_FILE,
+  mlai_market_structure_v416backup.py:1118:        "rb",
+  mlai_market_structure_v416backup.py:1119:    ) as f:
+  mlai_market_structure_v416backup.py:1120:        protection_after 
+= hashlib.sha256(
+  mlai_market_structure_v416backup.py:1121:            f.read()
+  mlai_market_structure_v416backup.py:1122:        ).hexdigest()
+  mlai_market_structure_v416backup.py:1123:
+  mlai_market_structure_v416backup.py:1124:    data_unchanged = (
+  mlai_market_structure_v416backup.py:1125:        protection_before
+  mlai_market_structure_v416backup.py:1126:        == 
+protection_after
+  mlai_market_structure_v416backup.py:1127:    )
+  mlai_market_structure_v416backup.py:1128:
+  mlai_market_structure_v416backup.py:1129:    print()
+  mlai_market_structure_v416backup.py:1130:    print(
+  mlai_market_structure_v416backup.py:1131:        "market_data.bin 
+protection:",
+  mlai_market_structure_v416backup.py:1132:        "PASS" if 
+data_unchanged else "FAIL",
+  mlai_market_structure_v416backup.py:1133:    )
+  mlai_market_structure_v416backup.py:1134:
+  mlai_market_structure_v416backup.py:1135:    summary = {
+  mlai_market_structure_v416backup.py:1136:        "version": 
+VERSION,
+  mlai_market_structure_v416backup.py:1137:        "candles": 
+len(candles),
+  mlai_market_structure_v416backup.py:1138:        "invalid": 
+invalid,
+  mlai_market_structure_v416backup.py:1139:        
+"causal_prefix_failures": len(
+  mlai_market_structure_v416backup.py:1140:            failures
+  mlai_market_structure_v416backup.py:1141:        ),
+  mlai_market_structure_v416backup.py:1142:        
+"synthetic_tests": dict(synthetic),
+  mlai_market_structure_v416backup.py:1143:        "candle_counts": 
+dict(
+  mlai_market_structure_v416backup.py:1144:            Counter(
+  mlai_market_structure_v416backup.py:1145:                
+x.candle_type
+  mlai_market_structure_v416backup.py:1146:                for x in 
+candle
+
+

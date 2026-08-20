@@ -1,0 +1,48 @@
+MLAI v4.1.8 STRONGENING AUDIT
+======================================================================
+
+OBJECTIVE
+Determine whether historical market states add predictive information beyond the causal conditional baseline.
+
+IMPORTANT
+Research thresholds are evaluation thresholds.
+They are NOT used to tune retrieval weights.
+No performance target is artificially enforced.
+
+KEY ARCHITECTURAL CHANGE
+Predictive evidence is now derived from the actual selected historical retrieval set.
+The predictive layer no longer independently scans the complete historical record population.
+
+RESEARCH THRESHOLDS
+discrimination_rate: weak=0.4 | good=0.55 | strong=0.7
+similarity_separation: weak=0.1 | good=0.2 | strong=0.35
+directional_discrimination: weak=0.01 | good=0.03 | strong=0.08
+predictive_margin: weak=0.02 | good=0.03 | strong=0.07
+coverage: weak=0.8 | good=0.9 | strong=0.99
+sparse_rate: weak=0.2 | good=0.1 | strong=0.01
+
+PROTECTION
+market_data.bin: READ ONLY
+Production MLAI: NOT MODIFIED
+Learning memory: NOT MODIFIED
+Trading: DISABLED
+
+Original SHA256: a5f963c50cba26aaf8118a9322557fc444aa5451685087758c4de6c520e34623
+Original unchanged: True
+Strengthened SHA256: 0cb599c30c2d077c4d0ca19a5f75f34a6b962f93c7b0eaa8810eb3ef0a7c06ed
+
+SEMANTIC AUDIT
+syntax: True
+required_functions: True
+actual_retrieval_to_prediction: True
+selected_match_indices_used: True
+causal_index_filter: True
+history_gap_filter: True
+horizon_loop: True
+null_test: True
+baseline: True
+incremental_value: True
+missing_functions: []
+
+OUTPUT
+C:\Users\HomePC\mlai-test\mlai_market_structure_v418_strong.py

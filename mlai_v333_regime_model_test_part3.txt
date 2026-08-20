@@ -1,0 +1,400 @@
+# ============================================================
+
+def predict_from_neighbors(
+    neighbors
+):
+
+    if not neighbors:
+
+        return {
+
+            "prediction": "NO TRADE",
+
+            "confidence": 0.0,
+
+            "bull_probability": 0.0,
+
+            "bear_probability": 0.0,
+
+            "neutral_probability": 0.0,
+
+            "neighbor_count": 0,
+
+            "average_distance": None,
+        }
+
+    # --------------------------------------------------------
+    # Distance-weighted voting
+    # --------------------------------------------------------
+
+    bull_score = 0.0
+
+    bear_score = 0.0
+
+    neutral_score = 0.0
+
+    total_weight = 0.0
+
+    for distance, record in neighbors:
+
+        weight = 1.0 / (
+            1.0 + distance
+        )
+
+        total_weight += weight
+
+        if record["outcome"] == "bullish":
+
+            bull_score += weight
+
+        elif record["outcome"] == "bearish":
+
+            bear_score += weight
+
+        else:
+
+            neutral_score += weight
+
+    if total_weight == 0:
+
+        return {
+
+            "prediction": "NO TRADE",
+
+            "confidence": 0.0,
+
+            "bull_probability": 0.0,
+
+            "bear_probability": 0.0,
+
+            "neutral_probability": 0.0,
+
+            "neighbor_count":
+                len(neighbors),
+
+            "average_distance":
+                average(
+                    [x[0] for x in neighbors]
+                ),
+        }
+
+    bull_probability = (
+        bull_score
+        / total_weight
+    )
+
+    bear_probability = (
+        bear_score
+        / total_weight
+    )
+
+    neutral_probability = (
+        neutral_score
+        / total_weight
+    )
+
+    probabilities = {
+
+        "BUY":
+            bull_probability,
+
+        "SELL":
+            bear_probability,
+
+        "NO TRADE":
+            neutral_probability,
+    }
+
+    prediction = max(
+        probabilities,
+        key=probabilities.get
+    )
+
+    confidence = probabilities[
+        prediction
+    ]
+
+    # --------------------------------------------------------
+    # Directional margin protection
+    # --------------------------------------------------------
+
+    if prediction == "BUY":
+
+        directional_margin = (
+            bull_probability
+            - max(
+                bear_probability,
+                neutral_probability
+            )
+        )
+
+    elif prediction == "SELL":
+
+        directional_margin = (
+            bear_probability
+            - max(
+                bull_probability,
+                neutral_probability
+            )
+        )
+
+    else:
+
+        directional_margin = 0.0
+
+    if prediction in ("BUY", "SELL"):
+
+        if (
+            confidence < MIN_CONFIDENCE
+            or directional_margin
+            < DIRECTION_MARGIN
+        ):
+
+            prediction = "NO TRADE"
+
+            confidence = neutral_probability
+
+    average_distance = average(
+        [x[0] for x in neighbors]
+    )
+
+    return {
+
+        "prediction": prediction,
+
+        "confidence": confidence,
+
+        "bull_probability":
+            bull_probability,
+
+        "bear_probability":
+            bear_probability,
+
+        "neutral_probability":
+            neutral_probability,
+
+        "neighbor_count":
+            len(neighbors),
+
+        "average_distance":
+            average_distance,
+    }
+
+
+# ============================================================
+# METRICS
+# ============================================================
+
+def calculate_metrics(
+    predictions,
+    actuals
+):
+
+    total = len(actuals)
+
+    if total == 0:
+
+        return {}
+
+    exact_correct = sum(
+        1
+        for p, a in zip(
+            predictions,
+            actuals
+        )
+        if p == a
+    )
+
+    directional_indices = [
+
+        i
+
+        for i, p in enumerate(
+            predictions
+        )
+
+        if p in ("BUY", "SELL")
+    ]
+
+    directional_correct = 0
+
+    for i in directional_indices:
+
+        prediction = predictions[i]
+
+        actual = actuals[i]
+
+        if (
+            prediction == "BUY"
+            and actual == "bullish"
+        ):
+
+            directional_correct += 1
+
+        elif (
+            prediction == "SELL"
+            and actual == "bearish"
+        ):
+
+            directional_correct += 1
+
+    coverage = (
+        len(directional_indices)
+        / total
+        * 100.0
+    )
+
+    if directional_indices:
+
+        directional_accuracy = (
+            directional_correct
+            / len(directional_indices)
+            * 100.0
+        )
+
+    else:
+
+        directional_accuracy = 0.0
+
+    buy_indices = [
+        i
+        for i, p in enumerate(predictions)
+        if p == "BUY"
+    ]
+
+    sell_indices = [
+        i
+        for i, p in enumerate(predictions)
+        if p == "SELL"
+    ]
+
+    actual_bullish = sum(
+        1
+        for a in actuals
+        if a == "bullish"
+    )
+
+    actual_bearish = sum(
+        1
+        for a in actuals
+        if a == "bearish"
+    )
+
+    buy_correct = sum(
+        1
+        for i in buy_indices
+        if actuals[i] == "bullish"
+    )
+
+    sell_correct = sum(
+        1
+        for i in sell_indices
+        if actuals[i] == "bearish"
+    )
+
+    buy_precision = (
+        buy_correct
+        / len(buy_indices)
+        * 100.0
+        if buy_indices
+        else 0.0
+    )
+
+    sell_precision = (
+        sell_correct
+        / len(sell_indices)
+        * 100.0
+        if sell_indices
+        else 0.0
+    )
+
+    buy_recall = (
+        buy_correct
+        / actual_bullish
+        * 100.0
+        if actual_bullish
+        else 0.0
+    )
+
+    sell_recall = (
+        sell_correct
+        / actual_bearish
+        * 100.0
+        if actual_bearish
+        else 0.0
+    )
+
+    return {
+
+        "accuracy":
+            exact_correct / total * 100.0,
+
+        "directional_accuracy":
+            directional_accuracy,
+
+        "coverage":
+            coverage,
+
+        "buy_precision":
+            buy_precision,
+
+        "sell_precision":
+            sell_precision,
+
+        "buy_recall":
+            buy_recall,
+
+        "sell_recall":
+            sell_recall,
+
+        "buy_count":
+            len(buy_indices),
+
+        "sell_count":
+            len(sell_indices),
+
+        "no_trade_count":
+            predictions.count("NO TRADE"),
+    }
+
+
+# ============================================================
+# PRINT METRICS
+# ============================================================
+
+def print_metrics(metrics):
+
+    print(
+        f"Accuracy:             "
+        f"{metrics['accuracy']:.2f}%"
+    )
+
+    print(
+        f"Directional accuracy: "
+        f"{metrics['directional_accuracy']:.2f}%"
+    )
+
+    print(
+        f"Directional coverage: "
+        f"{metrics['coverage']:.2f}%"
+    )
+
+    print(
+        f"BUY precision:        "
+        f"{metrics['buy_precision']:.2f}%"
+    )
+
+    print(
+        f"SELL precision:       "
+        f"{metrics['sell_precision']:.2f}%"
+    )
+
+    print(
+        f"BUY recall:           "
+        f"{metrics['buy_recall']:.2f}%"
+    )
+
+    print(
+        f"SELL recall:          "
+        f"{metrics['sell_recall']:.2f}%"
+    )

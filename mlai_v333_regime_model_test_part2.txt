@@ -1,0 +1,400 @@
+
+    elif slope < -0.25 and imbalance < -0.05:
+
+        direction = "bearish"
+
+    elif slope > 0.10 or imbalance > 0.03:
+
+        direction = "bullish_bias"
+
+    elif slope < -0.10 or imbalance < -0.03:
+
+        direction = "bearish_bias"
+
+    else:
+
+        direction = "neutral"
+
+    # --------------------------------------------------------
+    # Volatility regime
+    # --------------------------------------------------------
+
+    if volatility_ratio > 1.15:
+
+        volatility = "expanding"
+
+    elif volatility_ratio < 0.85:
+
+        volatility = "contracting"
+
+    else:
+
+        volatility = "stable"
+
+    return direction, volatility
+
+
+# ============================================================
+# FEATURE VECTOR
+# ============================================================
+
+FEATURE_NAMES = [
+    "return_5",
+    "return_10",
+    "return_15",
+    "return_30",
+    "return_60",
+
+    "bullish_ratio",
+    "bearish_ratio",
+    "neutral_ratio",
+
+    "directional_imbalance",
+
+    "strong_body_ratio",
+    "average_body_ratio",
+
+    "rejection_imbalance",
+
+    "volatility",
+    "volatility_ratio",
+
+    "location_in_range",
+
+    "distance_from_high",
+    "distance_from_low",
+
+    "normalized_slope",
+
+    "momentum_acceleration",
+]
+
+
+def vector_from_features(features):
+
+    return [
+        float(features[name])
+        for name in FEATURE_NAMES
+    ]
+
+
+# ============================================================
+# HISTORICAL OUTCOME
+# ============================================================
+
+def classify_outcome(current_close, future_close):
+
+    move = percentage_change(
+        current_close,
+        future_close
+    )
+
+    if move >= THRESHOLD:
+
+        return "bullish"
+
+    if move <= -THRESHOLD:
+
+        return "bearish"
+
+    return "neutral"
+
+
+# ============================================================
+# BUILD HISTORICAL RECORDS
+# ============================================================
+
+def build_records(candles, horizon):
+
+    records = []
+
+    start_index = WINDOW - 1
+
+    end_index = (
+        len(candles)
+        - horizon
+    )
+
+    for index in range(
+        start_index,
+        end_index
+    ):
+
+        context = candles[
+            index - WINDOW + 1:
+            index + 1
+        ]
+
+        features = extract_features(
+            context
+        )
+
+        regime_direction, regime_volatility = (
+            determine_regime(features)
+        )
+
+        current_close = float(
+            candles[index]["close"]
+        )
+
+        future_close = float(
+            candles[index + horizon]["close"]
+        )
+
+        outcome = classify_outcome(
+            current_close,
+            future_close
+        )
+
+        future_return = percentage_change(
+            current_close,
+            future_close
+        )
+
+        records.append({
+
+            "index": index,
+
+            "features": features,
+
+            "vector":
+                vector_from_features(features),
+
+            "regime_direction":
+                regime_direction,
+
+            "regime_volatility":
+                regime_volatility,
+
+            "outcome":
+                outcome,
+
+            "future_return":
+                future_return,
+        })
+
+    return records
+
+
+# ============================================================
+# STANDARDIZATION
+# ============================================================
+
+def calculate_scaler(records):
+
+    scaler = {}
+
+    for i, name in enumerate(
+        FEATURE_NAMES
+    ):
+
+        values = [
+            r["vector"][i]
+            for r in records
+        ]
+
+        mean_value = average(values)
+
+        if len(values) >= 2:
+
+            std_value = statistics.pstdev(
+                values
+            )
+
+        else:
+
+            std_value = 1.0
+
+        if std_value == 0:
+
+            std_value = 1.0
+
+        scaler[name] = (
+            mean_value,
+            std_value
+        )
+
+    return scaler
+
+
+def standardize_vector(vector, scaler):
+
+    result = []
+
+    for i, name in enumerate(
+        FEATURE_NAMES
+    ):
+
+        mean_value, std_value = (
+            scaler[name]
+        )
+
+        result.append(
+            (
+                vector[i]
+                - mean_value
+            )
+            / std_value
+        )
+
+    return result
+
+
+# ============================================================
+# REGIME COMPATIBILITY
+# ============================================================
+
+def regime_distance(
+    current,
+    historical
+):
+
+    distance = 0.0
+
+    if (
+        current["direction"]
+        != historical["direction"]
+    ):
+
+        distance += 1.5
+
+    if (
+        current["volatility"]
+        != historical["volatility"]
+    ):
+
+        distance += 1.0
+
+    return distance
+
+
+# ============================================================
+# SIMILARITY DISTANCE
+# ============================================================
+
+def euclidean_distance(a, b):
+
+    total = 0.0
+
+    for x, y in zip(a, b):
+
+        difference = x - y
+
+        total += (
+            difference
+            * difference
+        )
+
+    return math.sqrt(total)
+
+
+def calculate_similarity_distance(
+    current_vector,
+    historical_vector,
+    current_regime,
+    historical_regime
+):
+
+    base_distance = euclidean_distance(
+        current_vector,
+        historical_vector
+    )
+
+    regime_penalty = regime_distance(
+        current_regime,
+        historical_regime
+    )
+
+    return (
+        base_distance
+        + regime_penalty
+    )
+
+
+# ============================================================
+# FIND SIMILAR STRUCTURES
+# ============================================================
+
+def find_neighbors(
+    target,
+    calibration_records,
+    scaler,
+    neighbor_count
+):
+
+    target_vector = standardize_vector(
+        target["vector"],
+        scaler
+    )
+
+    current_regime = {
+        "direction":
+            target["regime_direction"],
+
+        "volatility":
+            target["regime_volatility"],
+    }
+
+    scored = []
+
+    for record in calibration_records:
+
+        historical_vector = (
+            standardize_vector(
+                record["vector"],
+                scaler
+            )
+        )
+
+        distance = (
+            calculate_similarity_distance(
+                target_vector,
+                historical_vector,
+                current_regime,
+                {
+                    "direction":
+                        record[
+                            "regime_direction"
+                        ],
+
+                    "volatility":
+                        record[
+                            "regime_volatility"
+                        ],
+                }
+            )
+        )
+
+        scored.append(
+            (
+                distance,
+                record
+            )
+        )
+
+    scored.sort(
+        key=lambda x: x[0]
+    )
+
+    neighbors = []
+
+    for distance, record in scored:
+
+        if distance <= MAX_DISTANCE:
+
+            neighbors.append(
+                (
+                    distance,
+                    record
+                )
+            )
+
+        if len(neighbors) >= neighbor_count:
+
+            break
+
+    return neighbors
+
+
+# ============================================================
+# PREDICT BUY / SELL / NO TRADE
