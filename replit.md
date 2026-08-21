@@ -10,7 +10,8 @@ Deterministic, evidence-traceable market-state analysis from completed OHLCV can
 - Add `--persist` to the walk-forward command to write `data/market_experience.bin`
 - Add `--resume` to use previously persisted experience as historical evidence
 - `python MLAI_V420_PRICE_INTERPRETER.py` — translate the latest causal market state into English with exact OHLC, support/resistance price zones, test counts, evidence, scenarios, and confirmation/invalidation prices
-- Use `--index N` to explain a specific candle, `--horizon 4|8|16` for historical outcome evidence, and `--json` for structured output
+- `python download_market_data.py` — download a separate 50-day, 5-minute `GC=F` snapshot for a 40-day reference / 10-day holdout experiment
+- Use `--index N` to explain a specific candle, `--horizon 4|8|16` for historical outcome evidence, `--data PATH` for another pickle, and `--json` for structured output
 - The console does not require a database, UI, or external service.
 
 ## Stack

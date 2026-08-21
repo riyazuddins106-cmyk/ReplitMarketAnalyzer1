@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import pickle
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,7 +34,7 @@ import mlai_market_structure_v420 as v420
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_FILE = ROOT / "data" / Path(v420.MARKET_DATA_FILE).name
+DATA_FILE = ROOT / "data" / "market_data_50d.bin"
 REPORT_FILE = ROOT / "MLAI_V420_PRICE_INTERPRETATION.md"
 CLASSES = ("UP", "DOWN", "NEUTRAL")
 EPS = 1e-12
@@ -339,6 +340,19 @@ def build_interpretation(
     }
 
 
+def source_metadata(data_file: Path) -> Dict[str, Any]:
+    try:
+        with data_file.open("rb") as file:
+            package = pickle.load(file)
+        source = package.get("source", {}) if isinstance(package, dict) else {}
+        return {
+            "instrument": source.get("symbol") or "UNKNOWN",
+            "timeframe": source.get("interval") or "UNKNOWN",
+        }
+    except Exception:
+        return {"instrument": "UNKNOWN", "timeframe": "UNKNOWN"}
+
+
 def render_report(result: Dict[str, Any]) -> str:
     candle = result["current_candle"]
     state = result["state"]
@@ -364,7 +378,7 @@ def render_report(result: Dict[str, Any]) -> str:
         "",
         f"- Chart / asset: **{result['instrument']}**",
         f"- Timeframe: **{result['timeframe']}** "
-        "(the imported dataset does not identify its candle interval)",
+        "(reported by the downloaded data source)",
         f"- Price-data coverage: **{result['data_start']}** to **{result['data_end']}**",
         f"- First recorded close: **{price(result['data_start_close'])}**",
         f"- Latest available candle time: **{result['timestamp_display']}**",
@@ -566,6 +580,11 @@ def main() -> None:
     parser.add_argument("--horizon", type=int, choices=v420.HORIZONS, default=8)
     parser.add_argument("--lookback", type=int, default=240)
     parser.add_argument(
+        "--data",
+        default=str(DATA_FILE),
+        help="Market-data pickle to interpret (default: data/market_data.bin).",
+    )
+    parser.add_argument(
         "--timezone",
         default="Asia/Kolkata",
         help="Timezone for displayed dates and times (default: Asia/Kolkata).",
@@ -577,7 +596,9 @@ def main() -> None:
     except Exception as exc:
         raise ValueError(f"Unknown timezone: {args.timezone}") from exc
 
-    candles, invalid = v420.load_market_data(str(DATA_FILE))
+    data_file = Path(args.data)
+    candles, invalid = v420.load_market_data(str(data_file))
+    metadata = source_metadata(data_file)
     chronology = v420.audit_chronology(candles)
     if not chronology["ordered"] or chronology["duplicates"]:
         raise RuntimeError("Market chronology audit failed.")
@@ -611,12 +632,14 @@ def main() -> None:
         ),
     )
     result["dataset"] = {
-        "file": str(DATA_FILE),
+        "file": str(data_file),
         "candles": len(candles),
         "invalid": invalid,
         "chronology": chronology,
         "causality": causality,
     }
+    result["instrument"] = metadata["instrument"]
+    result["timeframe"] = metadata["timeframe"]
 
     if args.json:
         print(json.dumps(result, indent=2, default=str))

@@ -4,67 +4,67 @@ This is a causal, research-only interpretation. It does not place trades.
 
 ## Chart identity and time
 
-- Chart / asset: **XAUUSD**
-- Timeframe: **UNKNOWN** (the imported dataset does not identify its candle interval)
-- Price-data coverage: **Monday, 10 August 2026 at 09:30:00 AM IST** to **Saturday, 15 August 2026 at 02:30:00 AM IST**
-- First recorded close: **$4,386.40**
-- Latest available candle time: **Saturday, 15 August 2026 at 02:30:00 AM IST**
-- Latest recorded close: **$4,437.30**
-- Report generated: **Friday, 21 August 2026 at 04:47:05 PM IST**
+- Chart / asset: **GC=F**
+- Timeframe: **5m** (the imported dataset does not identify its candle interval)
+- Price-data coverage: **Wednesday, 24 June 2026 at 09:30:00 AM IST** to **Friday, 21 August 2026 at 06:01:16 PM IST**
+- First recorded close: **$4,076.20**
+- Latest available candle time: **Friday, 21 August 2026 at 06:01:16 PM IST**
+- Latest recorded close: **$4,638.80**
+- Report generated: **Friday, 21 August 2026 at 06:16:21 PM IST**
 
 This is the latest candle in the imported historical dataset, not a live exchange quote. The source file does not include a live connection or a confirmed timeframe, so the report cannot claim that the price is the live price right now.
 
 ## Current price
 
-- Candle index: `1308`
-- Candle date and time: **Saturday, 15 August 2026 at 02:30:00 AM IST**
-- Current close: **$4,437.30**
-- Open: $4,432.00; high: $4,437.30; low: $4,432.00; close: $4,437.30
-- Candle reading: bullish (closed higher)
+- Candle index: `11473`
+- Candle date and time: **Friday, 21 August 2026 at 06:01:16 PM IST**
+- Current close: **$4,638.80**
+- Open: $4,638.80; high: $4,638.80; low: $4,638.80; close: $4,638.80
+- Candle reading: flat (closed at its open)
 
 ## Price levels
 
-- Nearest confirmed support: **$4,425.79–$4,429.71, centered at $4,427.57; tested 25 times and rejected 24 times.**
-- Nearest confirmed resistance: **$4,437.69–$4,439.91, centered at $4,438.80; tested 27 times and rejected 13 times.**
+- Nearest confirmed support: **$4,633.34–$4,638.76, centered at $4,636.05; tested 18 times and rejected 16 times.**
+- Nearest confirmed resistance: **$4,644.84–$4,647.16, centered at $4,646.00; tested 15 times and rejected 7 times.**
 
 A zone is reported instead of a magical single price because nearby candles can react across a range.
 
 ## What the candles and structure are saying
 
-- The confirmed structure is bullish, with latest labels LH on highs and LL on lows.
-- The sequence is **BULLISH_BREAK** and the regime is **VOL_CONTRACTION**.
-- Momentum classification: **BULLISH_ACCELERATION**.
-- One-candle return: +0.12%; three-candle return: +0.15%; eight-candle return: +0.17%.
+- The confirmed structure is bearish, with latest labels LH on highs and HL on lows.
+- The sequence is **COMPRESSION** and the regime is **TRENDING_DOWN**.
+- Momentum classification: **BEARISH_ACCELERATION**.
+- One-candle return: -0.04%; three-candle return: -0.09%; eight-candle return: -0.34%.
 
 ## Price evidence
 
-- OHLC: open $4,432.00, high $4,437.30, low $4,432.00, close $4,437.30.
-- The candle range is $5.30 (2.41 ATR) and the body is $5.30.
+- OHLC: open $4,638.80, high $4,638.80, low $4,638.80, close $4,638.80.
+- The candle range is $0.00 (0.00 ATR) and the body is $0.00.
 
 ## Historical probability evidence
 
 - Horizon tested: H+8
-- Historical records available: 1287
-- Comparable matches: 16 of 16 candidates
-- Similarity evidence: MODERATE_STRONG (top similarity 0.738)
-- UP probability: 50.3%
-- DOWN probability: 31.7%
-- NEUTRAL probability: 18.0%
+- Historical records available: 11452
+- Comparable matches: 16 of 763 candidates
+- Similarity evidence: STRONG_SIMILARITY (top similarity 0.915)
+- UP probability: 37.4%
+- DOWN probability: 43.8%
+- NEUTRAL probability: 18.8%
 - Evidence warning: not sparse, but still not a guarantee
 
 ## Plain-English interpretation
 
-At $4,437.30, the chart is showing a bullish structure. The nearest confirmed support is $4,425.79–$4,429.71, where price has been tested 25 times. The nearest confirmed resistance is $4,437.69–$4,439.91, where price has been tested 27 times and rejected 13 times. The current candle is bullish (closed higher). This is an evidence-based reading of the prices available through candle 1308, not a certainty about the next move.
+At $4,638.80, the chart is showing a bearish structure. The nearest confirmed support is $4,633.34–$4,638.76, where price has been tested 18 times. The nearest confirmed resistance is $4,644.84–$4,647.16, where price has been tested 15 times and rejected 7 times. The current candle is flat (closed at its open). This is an evidence-based reading of the prices available through candle 11473, not a certainty about the next move.
 
 ## Professional market reading
 
-At $4,437.30, on the candle dated Saturday, 15 August 2026 at 02:30:00 AM IST, the market structure is BULLISH and the sequence is BULLISH_BREAK. Support is $4,425.79–$4,429.71. It has 25 observed tests and 24 closes rejecting below the zone. Resistance is $4,437.69–$4,439.91. It has 27 observed tests and 13 rejection tests. The latest candle was bullish (closed higher); its close was $4,437.30 after trading between $4,432.00 and $4,437.30. Historical H+8 comparisons currently show 50.3% UP, 31.7% DOWN, and 18.0% NEUTRAL across 16 comparable cases. That evidence describes what happened in the past; it does not guarantee the next candle.
+At $4,638.80, on the candle dated Friday, 21 August 2026 at 06:01:16 PM IST, the market structure is BEARISH and the sequence is COMPRESSION. Support is $4,633.34–$4,638.76. It has 18 observed tests and 16 closes rejecting below the zone. Resistance is $4,644.84–$4,647.16. It has 15 observed tests and 7 rejection tests. The latest candle was flat (closed at its open); its close was $4,638.80 after trading between $4,638.80 and $4,638.80. Historical H+8 comparisons currently show 37.4% UP, 43.8% DOWN, and 18.8% NEUTRAL across 16 comparable cases. That evidence describes what happened in the past; it does not guarantee the next candle.
 
 ## Confirmation and invalidation
 
-Continuation would receive confirmation from a candle close above $4,439.91, followed by another candle holding above that price area.
+Continuation would receive confirmation from a candle close above $4,647.16, followed by another candle holding above that price area.
 
-The current support-based interpretation would weaken after a candle close below $4,425.79.
+The current support-based interpretation would weaken after a candle close below $4,633.34.
 
 ## Important limitation
 
