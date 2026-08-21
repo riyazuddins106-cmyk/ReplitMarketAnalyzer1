@@ -24,8 +24,10 @@ import argparse
 import json
 import math
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+from zoneinfo import ZoneInfo
 
 import mlai_market_structure_v420 as v420
 
@@ -52,6 +54,21 @@ def pct(value: float) -> str:
 def signed_pct(value: float) -> str:
     sign = "+" if value >= 0 else ""
     return f"{sign}{100.0 * value:.2f}%"
+
+
+def format_timestamp(value: Any, timezone_name: str) -> str:
+    """Format a source timestamp without pretending it is a live quote time."""
+    try:
+        number = float(value)
+        # Unix milliseconds are common in imported market data.
+        if number > 100_000_000_000:
+            number /= 1000.0
+        dt = datetime.fromtimestamp(number, tz=timezone.utc)
+        return dt.astimezone(ZoneInfo(timezone_name)).strftime(
+            "%A, %d %B %Y at %I:%M:%S %p %Z"
+        )
+    except (TypeError, ValueError, OSError):
+        return str(value)
 
 
 def candle_direction(candle: Any) -> str:
@@ -247,6 +264,8 @@ def build_interpretation(
     query_index: int,
     horizon: int,
     lookback: int,
+    timezone_name: str,
+    generated_at: str,
 ) -> Dict[str, Any]:
     candle = candles[query_index]
     state = states[query_index]
@@ -276,8 +295,15 @@ def build_interpretation(
     return {
         "query_index": query_index,
         "timestamp": str(candle.timestamp),
+        "timestamp_display": format_timestamp(candle.timestamp, timezone_name),
         "instrument": state.instrument,
         "timeframe": state.timeframe,
+        "timezone": timezone_name,
+        "generated_at": generated_at,
+        "data_start": format_timestamp(candles[0].timestamp, timezone_name),
+        "data_end": format_timestamp(candles[-1].timestamp, timezone_name),
+        "data_start_close": candles[0].close,
+        "data_end_close": candles[-1].close,
         "current_candle": {
             "open": candle.open,
             "high": candle.high,
@@ -334,10 +360,26 @@ def render_report(result: Dict[str, Any]) -> str:
         "",
         "This is a causal, research-only interpretation. It does not place trades.",
         "",
+        "## Chart identity and time",
+        "",
+        f"- Chart / asset: **{result['instrument']}**",
+        f"- Timeframe: **{result['timeframe']}** "
+        "(the imported dataset does not identify its candle interval)",
+        f"- Price-data coverage: **{result['data_start']}** to **{result['data_end']}**",
+        f"- First recorded close: **{price(result['data_start_close'])}**",
+        f"- Latest available candle time: **{result['timestamp_display']}**",
+        f"- Latest recorded close: **{price(result['data_end_close'])}**",
+        f"- Report generated: **{result['generated_at']}**",
+        "",
+        "This is the latest candle in the imported historical dataset, not a "
+        "live exchange quote. The source file does not include a live connection "
+        "or a confirmed timeframe, so the report cannot claim that the price is "
+        "the live price right now.",
+        "",
         "## Current price",
         "",
         f"- Candle index: `{result['query_index']}`",
-        f"- Timestamp: `{result['timestamp']}`",
+        f"- Candle date and time: **{result['timestamp_display']}**",
         f"- Current close: **{price(candle['close'])}**",
         f"- Open: {price(candle['open'])}; high: {price(candle['high'])}; "
         f"low: {price(candle['low'])}; close: {price(candle['close'])}",
@@ -384,6 +426,10 @@ def render_report(result: Dict[str, Any]) -> str:
             "## Plain-English interpretation",
             "",
             plain_story(result),
+            "",
+            "## Professional market reading",
+            "",
+            professional_reading(result),
             "",
             "## Confirmation and invalidation",
             "",
@@ -451,6 +497,48 @@ def plain_story(result: Dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def professional_reading(result: Dict[str, Any]) -> str:
+    """A concise trader-style read that remains tied to observable evidence."""
+    candle = result["current_candle"]
+    state = result["state"]
+    support = result["levels"]["support"]
+    resistance = result["levels"]["resistance"]
+    retrieval = result["historical"]["retrieval"]
+
+    if support:
+        support_text = (
+            f"Support is {price(support['low'])}–{price(support['high'])}. "
+            f"It has {support['tests']} observed tests and "
+            f"{support['rejection_tests']} closes rejecting below the zone."
+        )
+    else:
+        support_text = "No confirmed support zone was found in the selected lookback."
+
+    if resistance:
+        resistance_text = (
+            f"Resistance is {price(resistance['low'])}–{price(resistance['high'])}. "
+            f"It has {resistance['tests']} observed tests and "
+            f"{resistance['rejection_tests']} rejection tests."
+        )
+    else:
+        resistance_text = "No confirmed resistance zone was found in the selected lookback."
+
+    return (
+        f"At {price(candle['close'])}, on the candle dated "
+        f"{result['timestamp_display']}, the market structure is {state['trend']} "
+        f"and the sequence is {state['sequence']}. {support_text} "
+        f"{resistance_text} The latest candle was {candle['direction']}; "
+        f"its close was {price(candle['close'])} after trading between "
+        f"{price(candle['low'])} and {price(candle['high'])}. "
+        f"Historical H+{retrieval['horizon']} comparisons currently show "
+        f"{pct(retrieval['up_share'])} UP, {pct(retrieval['down_share'])} DOWN, "
+        f"and {pct(retrieval['neutral_share'])} NEUTRAL across "
+        f"{retrieval['deduplicated_matches']} comparable cases. "
+        "That evidence describes what happened in the past; it does not "
+        "guarantee the next candle."
+    )
+
+
 def confirmation_text(result: Dict[str, Any]) -> str:
     resistance = result["levels"]["resistance"]
     if resistance:
@@ -477,8 +565,17 @@ def main() -> None:
     parser.add_argument("--index", type=int, default=None, help="Candle index; default is latest.")
     parser.add_argument("--horizon", type=int, choices=v420.HORIZONS, default=8)
     parser.add_argument("--lookback", type=int, default=240)
+    parser.add_argument(
+        "--timezone",
+        default="Asia/Kolkata",
+        help="Timezone for displayed dates and times (default: Asia/Kolkata).",
+    )
     parser.add_argument("--json", action="store_true", help="Print structured JSON instead of English.")
     args = parser.parse_args()
+    try:
+        ZoneInfo(args.timezone)
+    except Exception as exc:
+        raise ValueError(f"Unknown timezone: {args.timezone}") from exc
 
     candles, invalid = v420.load_market_data(str(DATA_FILE))
     chronology = v420.audit_chronology(candles)
@@ -500,7 +597,18 @@ def main() -> None:
 
     states = v420.build_market_states(candles, structure_states, atr)
     result = build_interpretation(
-        candles, states, engine, atr, query_index, args.horizon, args.lookback
+        candles,
+        states,
+        engine,
+        atr,
+        query_index,
+        args.horizon,
+        args.lookback,
+        args.timezone,
+        format_timestamp(
+            datetime.now(tz=ZoneInfo(args.timezone)).timestamp(),
+            args.timezone,
+        ),
     )
     result["dataset"] = {
         "file": str(DATA_FILE),

@@ -2,10 +2,22 @@
 
 This is a causal, research-only interpretation. It does not place trades.
 
+## Chart identity and time
+
+- Chart / asset: **XAUUSD**
+- Timeframe: **UNKNOWN** (the imported dataset does not identify its candle interval)
+- Price-data coverage: **Monday, 10 August 2026 at 09:30:00 AM IST** to **Saturday, 15 August 2026 at 02:30:00 AM IST**
+- First recorded close: **$4,386.40**
+- Latest available candle time: **Saturday, 15 August 2026 at 02:30:00 AM IST**
+- Latest recorded close: **$4,437.30**
+- Report generated: **Friday, 21 August 2026 at 04:45:17 PM IST**
+
+This is the latest candle in the imported historical dataset, not a live exchange quote. The source file does not include a live connection or a confirmed timeframe, so the report cannot claim that the price is the live price right now.
+
 ## Current price
 
 - Candle index: `1308`
-- Timestamp: `1786741200`
+- Candle date and time: **Saturday, 15 August 2026 at 02:30:00 AM IST**
 - Current close: **$4,437.30**
 - Open: $4,432.00; high: $4,437.30; low: $4,432.00; close: $4,437.30
 - Candle reading: bullish (closed higher)
@@ -43,6 +55,10 @@ A zone is reported instead of a magical single price because nearby candles can 
 ## Plain-English interpretation
 
 At $4,437.30, the chart is showing a bullish structure. The nearest confirmed support is $4,425.79–$4,429.71, where price has been tested 25 times. The nearest confirmed resistance is $4,437.69–$4,439.91, where price has been tested 27 times and rejected 13 times. The current candle is bullish (closed higher). This is an evidence-based reading of the prices available through candle 1308, not a certainty about the next move.
+
+## Professional market reading
+
+At $4,437.30, on the candle dated Saturday, 15 August 2026 at 02:30:00 AM IST, the market structure is BULLISH and the sequence is BULLISH_BREAK. Support is $4,425.79–$4,429.71. It has 25 observed tests and 24 closes rejecting below the zone. Resistance is $4,437.69–$4,439.91. It has 27 observed tests and 13 rejection tests. The latest candle was bullish (closed higher); its close was $4,437.30 after trading between $4,432.00 and $4,437.30. Historical H+8 comparisons currently show 50.3% UP, 31.7% DOWN, and 18.0% NEUTRAL across 16 comparable cases. That evidence describes what happened in the past; it does not guarantee the next candle.
 
 ## Confirmation and invalidation
 
