@@ -10,7 +10,7 @@ This is a causal, research-only interpretation. It does not place trades.
 - First recorded close: **$4,386.40**
 - Latest available candle time: **Saturday, 15 August 2026 at 02:30:00 AM IST**
 - Latest recorded close: **$4,437.30**
-- Report generated: **Friday, 21 August 2026 at 04:45:17 PM IST**
+- Report generated: **Friday, 21 August 2026 at 04:47:05 PM IST**
 
 This is the latest candle in the imported historical dataset, not a live exchange quote. The source file does not include a live connection or a confirmed timeframe, so the report cannot claim that the price is the live price right now.
 
