@@ -1,0 +1,1859 @@
+# MLAI MARKET LANGUAGE BRAIN
+
+## MASTER DEVELOPMENT PROMPT FOR REPLIT AI
+
+You are the principal software architect and research engineer responsible for developing **MLAI — Market Language Brain**.
+
+Your job is NOT to build a conventional BUY/SELL trading predictor.
+
+Your job is to evolve the existing MLAI project into a scientifically controlled system that can **read market price behavior as a language, understand its current meaning, compare it with historical experience, reason about competing scenarios, quantify uncertainty, and explain the market state in clear human language.**
+
+The final system must behave more like an experienced market analyst reading a chart than a simple classification model.
+
+---
+
+# 1. CORE OBJECTIVE
+
+MLAI must eventually accept:
+
+* OHLCV market data
+* Instrument
+* Timeframe
+* Historical context
+* Any other legitimately available market information
+
+and produce an evidence-based explanation of the current market state.
+
+The desired output is NOT:
+
+```text
+BUY
+SELL
+BUY = 72%
+```
+
+The desired reasoning chain is:
+
+```text
+Observation
+→ sequence interpretation
+→ market structure
+→ location
+→ context and regime
+→ volatility and momentum
+→ comparable historical situations
+→ historical outcome distribution
+→ probability and uncertainty
+→ conflicting evidence
+→ alternative scenarios
+→ confirmation conditions
+→ invalidation conditions
+→ human-language explanation
+```
+
+The system must describe what the available data supports.
+
+It must never invent:
+
+* hidden orders
+* institutional intentions
+* exact trader intentions
+* exact stop locations
+* unavailable market-depth information
+* certainty that does not exist in the data
+
+---
+
+# 2. MOST IMPORTANT DESIGN PRINCIPLE
+
+MLAI is a **Market Language Brain**, not a prediction-only engine.
+
+A candle is not automatically a signal.
+
+For example:
+
+```text
+Hammer ≠ BUY
+Engulfing ≠ BUY
+BOS ≠ BUY
+CHoCH ≠ BUY
+Bullish candle ≠ BUY
+```
+
+Instead, MLAI must ask:
+
+```text
+What happened before this candle?
+Where did it happen?
+What structure exists?
+What is the current regime?
+What is volatility doing?
+What is momentum doing?
+What sequence is developing?
+Has price confirmed the interpretation?
+What historical situations are comparable?
+What happened in those historical situations?
+How strong is that evidence?
+What evidence disagrees?
+What would confirm the interpretation?
+What would invalidate it?
+```
+
+Patterns are descriptions, not automatic trading commands.
+
+---
+
+# 3. NON-NEGOTIABLE SCIENTIFIC RULES
+
+These rules must be enforced throughout the entire codebase.
+
+## Rule 1 — Evidence is not certainty
+
+Historical repetition increases or decreases evidence.
+
+It never guarantees repetition.
+
+Never output certainty merely because historical frequency is high.
+
+---
+
+## Rule 2 — No pattern-to-signal shortcut
+
+Never implement:
+
+```text
+hammer → BUY
+engulfing → BUY
+BOS → BUY
+CHoCH → SELL
+```
+
+Every observation must be interpreted using context.
+
+---
+
+## Rule 3 — No invisible facts
+
+From OHLCV alone, MLAI cannot claim:
+
+```text
+institutions are buying
+institutions are selling
+smart money entered here
+exact stop-loss locations
+hidden liquidity exists at an exact price
+buyers are definitely defending this level
+```
+
+Allowed language:
+
+```text
+Price behavior suggests rejection of lower prices.
+
+Price repeatedly reacted near this area.
+
+The movement is consistent with a failed downside break.
+
+```
+
+---
+
+## Rule 4 — Explicit causality
+
+Every feature must have a known availability timestamp.
+
+A feature may only be used after all information required to calculate it would actually have been available.
+
+Examples:
+
+```text
+Current candle anatomy
+→ available after candle close
+
+ATR
+→ available after required candles close
+
+Confirmed swing
+→ available only after confirmation candles close
+
+Future return
+→ target only
+
+Future high/low
+→ target/evaluation only
+```
+
+Never allow future information into the evaluated market state.
+
+---
+
+## Rule 5 — Future outcomes are targets only
+
+Never use:
+
+* future return
+* future high
+* future low
+* future MFE
+* future MAE
+* future structural event
+* future confirmation
+
+as input features for the state being evaluated.
+
+---
+
+## Rule 6 — Locked test must remain untouched
+
+A locked unseen period must NEVER be used for:
+
+* feature selection
+* representation design
+* threshold tuning
+* model selection
+* retrieval configuration selection
+* memory construction
+* explanation tuning
+* acceptance decisions
+
+---
+
+## Rule 7 — Accuracy is not the main success criterion
+
+Prioritize:
+
+1. Calibration
+2. Generalization
+3. Stability
+4. Uncertainty quality
+5. Evidence traceability
+6. Scenario quality
+7. Robustness across regimes
+8. Baseline comparison
+
+Accuracy is only one metric.
+
+---
+
+# 4. DO NOT DESTROY THE EXISTING PROJECT
+
+The existing MLAI project contains valuable research.
+
+Do NOT replace everything blindly.
+
+Before changing code:
+
+1. Inventory the repository.
+2. Identify all Python files.
+3. Identify all data files.
+4. Identify all memory files.
+5. Identify all validation reports.
+6. Identify legacy engines.
+7. Identify current active engines.
+8. Identify scripts that write data.
+9. Identify scripts that write memory.
+10. Identify scripts that modify production-sensitive artifacts.
+11. Identify duplicate implementations.
+12. Identify contradictions between versions.
+
+Preserve useful historical versions.
+
+Do not silently delete experiments.
+
+Create a clear canonical architecture around the valid components.
+
+---
+
+# 5. FIRST TASK — FULL PROJECT AUDIT
+
+Before implementing major functionality, perform a complete audit.
+
+Create a report containing:
+
+```text
+PROJECT INVENTORY
+DATA FILE INVENTORY
+MEMORY FILE INVENTORY
+PYTHON SCRIPT INVENTORY
+ACTIVE ENGINE CANDIDATES
+LEGACY ENGINES
+VALIDATION SCRIPTS
+DATA GENERATORS
+RETRIEVAL ENGINES
+STRUCTURE ENGINES
+SEQUENCE ENGINES
+PROBABILITY ENGINES
+EXPLANATION ENGINES
+READ/WRITE MAP
+EXTERNAL API MAP
+DEPENDENCY MAP
+PROTECTED FILES
+DUPLICATE IMPLEMENTATIONS
+CONTRADICTIONS
+RECOMMENDED CANONICAL COMPONENTS
+```
+
+Do not guess.
+
+Inspect actual source code.
+
+---
+
+# 6. PROTECT EXISTING DATA
+
+Raw market data must be treated as immutable.
+
+Before changing anything:
+
+* calculate hashes
+* record file sizes
+* record candle counts
+* record first timestamp
+* record last timestamp
+* record instrument
+* record timeframe
+
+Never modify raw market data during experiments.
+
+Any derived data must be stored separately.
+
+---
+
+# 7. CANONICAL DATA FOUNDATION
+
+Create a canonical normalized candle representation:
+
+```text
+instrument
+timeframe
+timestamp
+open
+high
+low
+close
+volume
+volume_type
+source
+```
+
+Validate:
+
+* missing fields
+* invalid OHLC relationships
+* duplicate timestamps
+* out-of-order timestamps
+* gaps
+* timezone
+* timestamp conversion
+* volume availability
+* rejected records
+
+The system must be able to reproduce the same normalized dataset from the same raw source.
+
+---
+
+# 8. DATA LAYERS
+
+Keep these layers separate:
+
+```text
+RAW DATA
+    ↓
+NORMALIZED CANDLES
+    ↓
+DERIVED FEATURES
+    ↓
+MARKET STATES
+    ↓
+HISTORICAL EXPERIENCE
+    ↓
+VALIDATED KNOWLEDGE
+```
+
+Never mix raw data with learned knowledge.
+
+Never modify raw data because of model learning.
+
+---
+
+# 9. FEATURE CAUSALITY REGISTRY
+
+Create a formal causality registry.
+
+Every feature should document:
+
+```text
+feature_name
+required_information
+calculation_method
+first_available_timestamp
+causality_class
+```
+
+Causality classes:
+
+```text
+CAUSAL_INPUT
+DELAYED_CAUSAL_INPUT
+FUTURE_TARGET
+EVALUATION_ONLY
+PROHIBITED_INPUT
+```
+
+The system must be able to answer:
+
+```text
+Which candles created this feature?
+When did the feature become available?
+Was any future data used?
+```
+
+---
+
+# 10. MARKET LANGUAGE REPRESENTATION
+
+Create a unified machine-readable market-state representation.
+
+## Candle anatomy
+
+Represent:
+
+* open
+* high
+* low
+* close
+* body
+* absolute body
+* upper wick
+* lower wick
+* range
+* body/range ratio
+* wick/body ratios
+* direction
+* relative candle size
+* relative body size
+* expansion
+* compression
+* candle location
+
+## Relative movement
+
+Represent:
+
+* multi-lookback returns
+* ATR-normalized movement
+* distance from recent high
+* distance from recent low
+* position within recent range
+* distance from reaction areas
+* rate of movement
+* acceleration
+* deceleration
+
+---
+
+# 11. SEQUENCE ENGINE
+
+Do not analyze candles only individually.
+
+Represent sequences such as:
+
+```text
+selling
+→ more selling
+→ selling slows
+→ lower rejection
+→ bullish response
+→ follow-through
+→ resistance test
+```
+
+Detect states such as:
+
+```text
+IMPULSE
+CORRECTION
+PULLBACK
+RETRACEMENT
+REJECTION
+RECOVERY
+MOMENTUM_LOSS
+EXHAUSTION
+CONSOLIDATION
+COMPRESSION
+EXPANSION
+BREAKOUT
+FAILED_BREAKOUT
+RETEST
+CONTINUATION
+REVERSAL_CANDIDATE
+TRANSITION
+```
+
+Every sequence state must have:
+
+```text
+machine-readable representation
++
+human-readable interpretation
+```
+
+---
+
+# 12. MARKET STRUCTURE ENGINE
+
+Preserve and improve the causal structural engine.
+
+Represent:
+
+```text
+Swing High
+Swing Low
+HH
+HL
+LH
+LL
+Trend
+Range
+BOS
+CHoCH
+Structural Failure
+Structural Transition
+Continuation
+Reversal Candidate
+```
+
+IMPORTANT:
+
+A swing requiring future confirmation cannot be used before its confirmation timestamp.
+
+---
+
+# 13. SUPPORT / RESISTANCE
+
+Represent areas rather than magical exact prices.
+
+Possible areas:
+
+```text
+Prior swing area
+Repeated reaction area
+Previous high
+Previous low
+Breakout area
+Retest area
+Failed support
+Failed resistance
+Role reversal area
+```
+
+Each area should include:
+
+```text
+price range
+creation reason
+number of tests
+reaction strength
+freshness
+break status
+retest status
+failure status
+```
+
+---
+
+# 14. SUPPLY / DEMAND
+
+Only represent observable price behavior.
+
+Allowed:
+
+```text
+strong movement away
+repeated reaction
+freshness
+retesting
+weakening reaction
+zone failure
+return to prior reaction area
+```
+
+Do not claim invisible institutional supply/demand.
+
+---
+
+# 15. LIQUIDITY REPRESENTATION
+
+Without order-book data, use only observable price-derived behavior:
+
+```text
+equal highs
+equal lows
+prior highs
+prior lows
+sweep-like movement
+rejection after level break
+false break
+```
+
+Never claim hidden liquidity as a fact.
+
+---
+
+# 16. MOMENTUM ENGINE
+
+Represent:
+
+```text
+momentum increase
+momentum decrease
+acceleration
+exhaustion
+directional strength
+follow-through
+failed push
+momentum disagreement
+```
+
+Distinguish:
+
+```text
+Price is moving higher.
+```
+
+from:
+
+```text
+Price is moving higher with increasing strength.
+```
+
+---
+
+# 17. CONTEXT AND REGIME ENGINE
+
+The same candle pattern must be interpreted differently depending on context.
+
+Track:
+
+```text
+instrument
+timeframe
+session
+trend
+range state
+location
+previous movement
+structure
+volatility
+momentum
+volume if available
+recent reactions
+higher-timeframe context
+```
+
+Regimes:
+
+```text
+TRENDING
+RANGING
+HIGH_VOLATILITY
+LOW_VOLATILITY
+VOLATILITY_EXPANSION
+VOLATILITY_CONTRACTION
+TRANSITIONING
+STRONG_DIRECTIONAL
+WEAK_DIRECTIONAL
+```
+
+Example:
+
+```text
+Hammer after decline near support
+```
+
+must not necessarily mean the same thing as:
+
+```text
+Hammer inside a strong higher-timeframe bearish trend
+```
+
+---
+
+# 18. OUTCOME SYSTEM
+
+Define historical outcomes before experimentation.
+
+Support:
+
+```text
+Higher
+Lower
+Neutral
+
+Future percentage return
+ATR-normalized return
+Outcome distribution
+
+Immediate continuation
+Adverse move followed by recovery
+Breakout followed by failure
+Range persistence
+Recovery followed by rejection
+
+MFE
+MAE
+Time to MFE
+Time to MAE
+
+Support broken
+Resistance broken
+Swing reached
+Retest confirmed
+Structural invalidation
+```
+
+Required horizons initially:
+
+```text
+H+4
+H+8
+H+16
+```
+
+Labels must be generated chronologically and never become inputs.
+
+Handle overlapping outcomes using appropriate purging/dependency-aware reporting.
+
+---
+
+# 19. BASELINE SYSTEM
+
+Before claiming that MLAI adds value, establish simple baselines.
+
+Examples:
+
+```text
+majority class
+recent-direction baseline
+simple momentum baseline
+simple structure baseline
+historical unconditional frequency
+```
+
+The complex MLAI system must demonstrate incremental value against appropriate baselines.
+
+---
+
+# 20. WALK-FORWARD VALIDATION
+
+Implement strict chronological validation.
+
+Example:
+
+```text
+TRAIN
+    ↓
+VALIDATION
+    ↓
+TEST
+```
+
+Never shuffle time-series observations randomly.
+
+Support expanding and/or rolling windows with fixed recorded boundaries.
+
+Implement:
+
+* purging
+* embargo where required
+* fixed folds
+* recorded boundaries
+* reproducible experiments
+
+---
+
+# 21. HISTORICAL EXPERIENCE MEMORY
+
+Create an experience record containing:
+
+```text
+instrument
+timeframe
+timestamp
+market_state
+sequence_state
+structure_state
+context_state
+regime
+observed_events
+future_outcome_distribution
+sample_count
+success_count
+failure_count
+confidence_interval
+validation_status
+source_dataset_version
+feature_version
+last_verification_date
+```
+
+Memory categories:
+
+```text
+RAW_OBSERVATIONS
+HISTORICAL_AGGREGATES
+VALIDATED_KNOWLEDGE
+FAILED_KNOWLEDGE
+MODEL_ARTIFACTS
+```
+
+Every knowledge item must have a status:
+
+```text
+CANDIDATE
+UNDER_EVALUATION
+VALIDATED
+WEAK_EVIDENCE
+FAILED
+DEPRECATED
+```
+
+The system must be able to answer:
+
+```text
+What situation was observed?
+Under what context?
+How many comparable examples exist?
+What happened?
+How stable was the relationship?
+When was it last verified?
+```
+
+---
+
+# 22. HISTORICAL SIMILARITY RETRIEVAL
+
+Build a proper historical experience retrieval engine.
+
+Similarity should consider:
+
+```text
+candle anatomy
+relative movement
+sequence
+structure
+location
+momentum
+volatility
+regime
+timeframe
+session
+instrument
+recent reaction history
+```
+
+Pipeline:
+
+```text
+CURRENT STATE
+    ↓
+CANDIDATE HISTORICAL STATES
+    ↓
+REMOVE INVALID COMPARISONS
+    ↓
+SIMILARITY WEIGHTING
+    ↓
+CONTEXT / REGIME ADJUSTMENT
+    ↓
+OUTCOME AGGREGATION
+    ↓
+UNCERTAINTY
+    ↓
+CONFLICT ANALYSIS
+```
+
+Retrieval output must include:
+
+```text
+number of matches
+similarity strength
+closest distance
+regime agreement
+timeframe agreement
+outcome distribution
+conflicting evidence
+sparse-data warning
+historical period represented
+```
+
+If only a few comparable examples exist:
+
+```text
+REDUCE CONFIDENCE
+```
+
+or:
+
+```text
+REFUSE STRONG PROBABILITY
+```
+
+Never turn three similar examples into a confident rule.
+
+---
+
+# 23. IMPORTANT RETRIEVAL PERFORMANCE REQUIREMENT
+
+The current project contains a large XAU/USD 5-minute corpus.
+
+Do NOT solve retrieval slowness by weakening the scientific test.
+
+Do NOT replace all 5-minute holdout observations with hourly sampling as the definitive validation.
+
+Instead optimize the retrieval implementation.
+
+Possible engineering approaches include:
+
+```text
+precomputed representations
+vectorized feature arrays
+candidate filtering
+coarse-to-fine retrieval
+efficient indexing
+cached historical states
+NumPy-based distance calculation
+batch processing
+memory-efficient storage
+parallel processing where safe
+```
+
+But optimization must preserve causality.
+
+The optimized engine must return the same logically valid historical candidate population that the unoptimized engine would have been allowed to inspect.
+
+Do not introduce future leakage in the name of optimization.
+
+---
+
+# 24. PROBABILITY ENGINE
+
+Do not treat raw historical percentages as reliable probabilities.
+
+For every probability provide:
+
+```text
+probability
+sample count
+historical period
+regime
+similarity strength
+confidence interval
+calibration status
+baseline
+conflicting evidence
+data-sparsity warning
+```
+
+Example:
+
+```text
+Higher: 56%
+Lower: 31%
+Neutral: 13%
+
+Evidence strength: Moderate
+Comparable examples: 1240
+Regime agreement: Partial
+Calibration: Acceptable
+```
+
+Required metrics:
+
+```text
+Brier score
+Log loss
+reliability curve
+calibration slope
+calibration intercept
+ECE
+probability sharpness
+coverage
+performance by regime
+performance by horizon
+performance by instrument
+performance by timeframe
+```
+
+Use appropriate smoothing/statistical treatment for small samples.
+
+---
+
+# 25. SCENARIO REASONING ENGINE
+
+MLAI must not force one interpretation.
+
+Generate competing scenarios.
+
+Each scenario contains:
+
+```text
+scenario_name
+direction_or_behavior
+supporting_evidence
+contradicting_evidence
+historical_probability
+confidence
+confirmation_conditions
+invalidation_conditions
+expected_path
+time_horizon
+missing_evidence
+```
+
+Example:
+
+```text
+SCENARIO A — Recovery continuation
+
+Supporting:
+- lower-price rejection
+- improving short-term momentum
+- support holding
+
+Confirmation:
+- sustained break above recent swing high
+
+Invalidation:
+- close below recent support
+```
+
+Another scenario might be:
+
+```text
+SCENARIO B — Bearish continuation
+
+Supporting:
+- larger bearish structure
+- recovery has not broken resistance
+- weak bullish follow-through
+
+Confirmation:
+- rejection at resistance
+- break below recent support
+
+Invalidation:
+- strong close above structural resistance
+```
+
+The system must explain competing evidence.
+
+---
+
+# 26. HUMAN-LANGUAGE EXPLANATION ENGINE
+
+The explanation engine must NOT invent reasoning.
+
+Pipeline:
+
+```text
+STRUCTURED STATE
+    ↓
+EVIDENCE SELECTION
+    ↓
+SCENARIO CONSTRUCTION
+    ↓
+PROBABILITY SUMMARY
+    ↓
+CONFIRMATION / INVALIDATION
+    ↓
+HUMAN LANGUAGE
+```
+
+Every sentence must be traceable to structured evidence.
+
+Final explanation should cover:
+
+```text
+Current observation
+Recent change
+Market structure
+Current context
+Historical evidence
+Evidence strength
+Conflicting evidence
+Leading scenarios
+Confirmation conditions
+Invalidation conditions
+Unknown information
+Probability
+Uncertainty
+```
+
+---
+
+# 27. MULTI-TIMEFRAME REASONING
+
+Eventually support independent timeframe states.
+
+Example:
+
+```text
+Weekly: bearish
+4H: bearish-to-neutral
+1H: recovery
+5M: bullish impulse
+```
+
+Never collapse these into one simplistic direction.
+
+MLAI must understand:
+
+```text
+5M recovery ≠ higher-timeframe reversal
+```
+
+Synchronize timestamps correctly.
+
+Never use incomplete higher-timeframe candles.
+
+Each timeframe must have independent causal validation.
+
+---
+
+# 28. THE CRITICAL 8-DAY / 2-DAY UNSEEN TEST
+
+Implement the unseen-chart validation exactly as follows.
+
+Take the latest 10 available calendar dates.
+
+Use:
+
+```text
+Days 1–8 = historical/training period
+Days 9–10 = completely untouched holdout
+```
+
+The word "day" means:
+
+**all available 5-minute candles belonging to that calendar date.**
+
+Do NOT reinterpret day as one daily candle.
+
+Do NOT synthesize candles.
+
+Do NOT replace the final scientific experiment with hourly sampling.
+
+At the end of Day 8:
+
+```text
+FREEZE
+```
+
+Then process Day 9 and Day 10 sequentially.
+
+For every holdout candle:
+
+```text
+1. Build current state using only information available at that moment.
+2. Retrieve historical experience available without violating causality.
+3. Generate probabilities.
+4. Generate scenarios.
+5. Generate confirmation conditions.
+6. Generate invalidation conditions.
+7. Generate human-language interpretation.
+8. RECORD THE PREDICTION.
+9. ONLY AFTERWARD reveal the future outcome.
+10. Score the prediction.
+```
+
+Never reveal future outcome information before the prediction is recorded.
+
+---
+
+# 29. HOLDOUT PROTECTION
+
+Days 9–10 must NOT influence:
+
+```text
+feature selection
+representation design
+thresholds
+model selection
+retrieval configuration
+memory construction
+calibration parameters
+explanation templates
+acceptance criteria
+```
+
+Any configuration selection must happen using Days 1–8 only.
+
+The final holdout must remain scientifically untouched.
+
+---
+
+# 30. 8/2 HOLDOUT METRICS
+
+At minimum evaluate:
+
+```text
+H+4
+H+8
+H+16
+```
+
+For each:
+
+```text
+accuracy
+Brier score
+log loss
+calibration
+coverage
+probability distribution
+baseline comparison
+scenario ranking
+structural-event timing
+invalidation quality
+stability
+```
+
+Also report:
+
+```text
+number of holdout candles
+number of scored predictions
+number excluded and why
+sampling frequency
+first holdout timestamp
+last holdout timestamp
+training boundary
+holdout boundary
+configuration hash
+dataset hash
+feature version
+code version
+```
+
+Do not report a result unless the complete intended experiment has actually completed.
+
+---
+
+# 31. NO FALSE SUCCESS
+
+If an experiment times out:
+
+DO NOT say:
+
+```text
+PASS
+FAIL
+SUCCESS
+MODEL WORKS
+MODEL DOES NOT WORK
+```
+
+Instead report:
+
+```text
+EXPERIMENT INCOMPLETE
+```
+
+and identify:
+
+```text
+exact bottleneck
+last completed stage
+data processed
+remaining work
+```
+
+Never manufacture metrics.
+
+Never estimate missing metrics.
+
+Never convert partial execution into a scientific conclusion.
+
+---
+
+# 32. NULL / PERMUTATION TESTING
+
+Where model selection or rule discovery is involved, implement scientifically valid null testing.
+
+The null test must:
+
+* keep feature representation fixed
+* shuffle only valid target labels
+* preserve fold boundaries
+* preserve selection procedure
+* compare equivalent statistics
+* report number of candidate rules
+* report maximum-null distribution
+* account for multiple testing
+
+Investigate any unusually strong null result before trusting later discoveries.
+
+---
+
+# 33. EXPERIMENT REGISTRY
+
+Every research experiment must record:
+
+```text
+experiment_id
+hypothesis
+dataset_version
+dataset_hash
+feature_version
+target_definition
+horizons
+candidate_rules
+candidate_models
+primary_metric
+secondary_metrics
+acceptance_threshold
+random_seed
+code_version
+configuration
+timestamp
+result
+status
+```
+
+Possible status:
+
+```text
+PLANNED
+RUNNING
+COMPLETED
+INCOMPLETE
+FAILED
+SUPERSEDED
+VALIDATED
+REJECTED
+```
+
+---
+
+# 34. REPRODUCIBILITY
+
+Every important result must be reproducible.
+
+Record:
+
+```text
+dataset hash
+source
+feature version
+configuration
+random seed
+code version
+training boundaries
+validation boundaries
+test boundaries
+model artifact hash
+memory version
+```
+
+A report must identify exactly what produced it.
+
+---
+
+# 35. ARCHITECTURE SEPARATION
+
+Maintain these boundaries:
+
+```text
+DATA COLLECTION
+≠
+LEARNING
+
+LEARNING
+≠
+VALIDATION
+
+VALIDATION
+≠
+INFERENCE
+
+INFERENCE
+≠
+KNOWLEDGE PROMOTION
+```
+
+Live inference must not silently modify validated knowledge.
+
+---
+
+# 36. CONTROLLED CONTINUOUS LEARNING
+
+Eventually implement:
+
+```text
+New data arrives
+→ current interpretation recorded
+→ outcome horizon completes
+→ interpretation scored
+→ success/failure recorded
+→ research aggregates updated
+→ existing knowledge re-tested
+→ challenger knowledge compared
+→ promotion only after validation
+```
+
+Never implement unrestricted online learning.
+
+Never update knowledge from incomplete outcomes.
+
+Never promote a relationship from one successful observation.
+
+Support:
+
+```text
+failure tracking
+drift detection
+regime change detection
+performance decay
+scheduled revalidation
+champion/challenger
+versioned knowledge
+rollback
+promotion criteria
+```
+
+---
+
+# 37. LIVE DATA MUST COME LAST
+
+Do NOT start by building the live trading/data system.
+
+First establish:
+
+```text
+data correctness
+causality
+representation
+validation
+historical memory
+retrieval
+probability
+scenario reasoning
+human explanation
+unseen-chart generalization
+```
+
+Only after those pass should live ingestion be developed.
+
+---
+
+# 38. FINAL USER-FACING OUTPUT
+
+When MLAI analyzes a chart, the final output should resemble:
+
+```text
+CURRENT MARKET STATE
+
+Observation:
+...
+
+Recent change:
+...
+
+Candle sequence:
+...
+
+Market structure:
+...
+
+Location:
+...
+
+Volatility:
+...
+
+Momentum:
+...
+
+Regime:
+...
+
+Historical comparison:
+...
+
+Comparable cases:
+...
+
+Historical outcome distribution:
+...
+
+Evidence strength:
+...
+
+Conflicting evidence:
+...
+
+SCENARIO 1
+...
+Confirmation:
+...
+Invalidation:
+...
+
+SCENARIO 2
+...
+Confirmation:
+...
+Invalidation:
+...
+
+Probability:
+...
+
+Uncertainty:
+...
+
+Unavailable information:
+...
+
+Human interpretation:
+...
+```
+
+It may optionally provide directional probabilities, but those probabilities must never replace the explanation.
+
+---
+
+# 39. SUCCESS DEFINITION
+
+MLAI is successful when it can receive a new, unseen chart and explain:
+
+```text
+What is visibly happening
+What recently changed
+What the candle sequence communicates
+What market structure communicates
+Where price is located
+What volatility is doing
+What momentum is doing
+What higher timeframes show
+Which historical situations are comparable
+How many comparable situations exist
+What happened in those situations
+How reliable that evidence is
+What evidence conflicts
+Which scenarios are plausible
+What confirms each scenario
+What invalidates each scenario
+What information is unavailable
+What the probability is
+How uncertain that probability is
+```
+
+The final output must be:
+
+```text
+EVIDENCE-BASED
+PROBABILISTIC
+TRACEABLE
+CAUSAL
+UNCERTAINTY-AWARE
+HUMAN-READABLE
+```
+
+It must NOT be:
+
+```text
+A rigid BUY/SELL command
+```
+
+---
+
+# 40. DEVELOPMENT ORDER
+
+Implement in this order.
+
+```text
+1. Full project audit
+
+2. File and data protection
+
+3. Canonical data contract
+
+4. Raw / normalized / derived data separation
+
+5. Causality registry
+
+6. Validation methodology repair
+
+7. Unified market-state representation
+
+8. Sequence and event representation
+
+9. Context and regime representation
+
+10. Formal target definitions
+
+11. Baseline models
+
+12. Walk-forward validation
+
+13. Historical experience memory
+
+14. Similarity retrieval
+
+15. Probability calibration
+
+16. Scenario reasoning
+
+17. Human-language explanation
+
+18. Unseen-chart testing
+
+19. Cross-regime testing
+
+20. Cross-instrument testing
+
+21. Multi-timeframe reasoning
+
+22. Live data pipeline
+
+23. Controlled continuous learning
+
+24. Paper operation
+
+25. Production consideration
+```
+
+Do NOT skip ahead simply because a later component appears easier.
+
+---
+
+# 41. ENGINEERING REQUIREMENTS
+
+Write production-quality Python.
+
+Requirements:
+
+* modular architecture
+* type hints
+* dataclasses or equivalent structured models
+* explicit interfaces
+* deterministic behavior where possible
+* configuration files rather than hard-coded experiment settings
+* structured logging
+* error handling
+* unit tests
+* validation tests
+* causal tests
+* regression tests
+* performance benchmarks
+* documentation
+
+Avoid giant monolithic scripts.
+
+Do not duplicate logic between versions.
+
+Create reusable modules.
+
+---
+
+# 42. PERFORMANCE REQUIREMENT
+
+The current XAU/USD 5-minute dataset can contain tens of thousands of candles.
+
+Design the architecture to scale.
+
+Do not repeatedly perform expensive Python nested loops over the entire historical corpus for every query if an equivalent vectorized/indexed approach can be used.
+
+Benchmark:
+
+```text
+10,000 candles
+25,000 candles
+50,000 candles
+100,000 candles
+```
+
+Measure:
+
+```text
+state construction time
+retrieval time
+probability calculation time
+full inference time
+memory usage
+```
+
+Optimization must never compromise causality.
+
+---
+
+# 43. TESTING REQUIREMENTS
+
+Create tests for:
+
+### Data
+
+```text
+chronology
+duplicates
+gaps
+OHLC validity
+timezone
+immutability
+```
+
+### Causality
+
+```text
+future feature access
+swing confirmation
+label boundary
+training boundary
+higher timeframe synchronization
+```
+
+### Retrieval
+
+```text
+causal candidate filtering
+similarity ranking
+sparse evidence handling
+regime filtering
+```
+
+### Probability
+
+```text
+sample-size handling
+calibration
+baseline comparison
+```
+
+### Explanation
+
+Verify that every generated claim corresponds to an actual structured field.
+
+### Holdout
+
+Verify mechanically that:
+
+```text
+holdout timestamps > training boundary
+```
+
+and that no holdout outcome is available during prediction.
+
+---
+
+# 44. IMPORTANT: DO NOT MAKE UNAUTHORIZED SCIENTIFIC CHANGES
+
+If a computational problem occurs, do NOT silently change the experiment.
+
+For example, do not silently change:
+
+```text
+5-minute → hourly
+8 days → 5 days
+2 days → 1 day
+all candles → sampled candles
+holdout → validation
+```
+
+Instead:
+
+1. Identify the bottleneck.
+2. Optimize implementation.
+3. Preserve the original experiment.
+4. If an experimental reduction is useful, label it explicitly as a diagnostic experiment.
+5. Never present a diagnostic as the definitive validation.
+
+---
+
+# 45. WHEN YOU START
+
+Your FIRST response/action should NOT be to rewrite the entire application.
+
+First inspect the repository.
+
+Determine:
+
+```text
+What already exists?
+What works?
+What is duplicated?
+What is broken?
+What data exists?
+Which implementation is strongest?
+Which components can be reused?
+Which components must be replaced?
+```
+
+Then produce:
+
+```text
+MLAI_ARCHITECTURE_AUDIT.md
+```
+
+containing:
+
+1. Current architecture
+2. File inventory
+3. Data inventory
+4. Current capabilities
+5. Missing capabilities
+6. Causality risks
+7. Validation risks
+8. Retrieval bottlenecks
+9. Reusable components
+10. Components requiring replacement
+11. Proposed canonical architecture
+12. Implementation phases
+13. Test gates
+14. Protected files
+15. Immediate next action
+
+Do not implement major architectural changes until this audit is complete.
+
+---
+
+# 46. IMPORTANT FINAL INSTRUCTION
+
+Do not optimize MLAI merely to obtain impressive historical numbers.
+
+Do not tune repeatedly until a desired result appears.
+
+Do not manufacture evidence.
+
+Do not hide failures.
+
+Do not call an incomplete experiment successful.
+
+Do not treat a stored model, pickle, memory file, or high historical percentage as proof of intelligence.
+
+The goal is not:
+
+```text
+MAKE THE NUMBERS LOOK GOOD
+```
+
+The goal is:
+
+```text
+BUILD A SYSTEM THAT CAN LOOK AT MARKET BEHAVIOR,
+UNDERSTAND WHAT THE PRICE ACTION IS COMMUNICATING,
+COMPARE IT WITH VALID HISTORICAL EXPERIENCE,
+REASON ABOUT COMPETING POSSIBILITIES,
+QUANTIFY UNCERTAINTY,
+AND EXPLAIN ITS INTERPRETATION HONESTLY.
+```
+
+Every implementation decision must serve that objective.
+
+Start with the repository audit.
+Do not guess.
+Do not rewrite blindly.
+Do not destroy existing research.
+Preserve evidence.
+Build incrementally.
+Pass each scientific gate before moving to the next layer.
