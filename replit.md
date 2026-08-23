@@ -11,6 +11,9 @@ Deterministic, evidence-traceable market-state analysis from completed OHLCV can
 - Add `--resume` to use previously persisted experience as historical evidence
 - `python MLAI_V420_PRICE_INTERPRETER.py` — translate the latest causal market state into English with exact OHLC, support/resistance price zones, test counts, evidence, scenarios, and confirmation/invalidation prices
 - `python download_market_data.py` — download a separate 50-day, 5-minute `GC=F` snapshot for a 40-day reference / 10-day holdout experiment
+- `python generate_xauusd_market_data.py` — reproduce the real XAU/USD 5-minute corpus at `data/market_data_50d.bin`
+- `python MLAI_V420_UNSEEN_8_2_VALIDATION.py --report MLAI_V420_UNSEEN_8_2_VALIDATION_REPORT.md` — run every available 5-minute candle in the locked 8-day/2-day test
+- Add `--horizon 4`, `--horizon 8`, or `--horizon 16` to run one horizon independently when memory is constrained
 - Use `--index N` to explain a specific candle, `--horizon 4|8|16` for historical outcome evidence, `--data PATH` for another pickle, and `--json` for structured output
 - The console does not require a database, UI, or external service.
 

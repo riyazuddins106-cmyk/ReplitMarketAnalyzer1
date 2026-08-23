@@ -1,0 +1,936 @@
+Yes. Copy and paste the prompt below in the next session. It contains the current status, what is already complete, what remains, and the exact completion requirements.
+
+`# MLAI MARKET LANGUAGE BRAIN — CONTINUATION AND COMPLETION PROMPT`
+
+`You are continuing work on the existing MLAI Market Language Brain project.`
+
+`Do not start over. Do not delete, replace, or blindly rewrite the existing project. Begin by inspecting the current repository and reading:`
+
+`1. MLAI_ARCHITECTURE_AUDIT.md`
+
+`2. replit.md`
+
+`3. MLAI_V420_PRICE_INTERPRETER.py`
+
+`4. MLAI_V420_PRICE_INTERPRETER_FORENSIC.py`
+
+`5. MLAI_V420_RETRIEVAL_FORENSIC_REPAIR.py`
+
+`6. mlai_market_structure_v420.py`
+
+`7. mlai_unified.py`
+
+`8. MLAI_V420_UNSEEN_8_2_VALIDATION.py`
+
+`9. data/market_data_50d.bin`
+
+`10. the project memory files under .agents/memory/`
+
+`The project is not complete until every required item below is implemented, tested, and documented.`
+
+`==================================================`
+
+`CURRENT PROJECT STATUS`
+
+`==================================================`
+
+`Already completed:`
+
+`- Existing MLAI research files were preserved.`
+
+`- The original price interpreter was preserved.`
+
+`- A backup of the original price interpreter exists.`
+
+`- The supplied XAU/USD 5-minute dataset was imported.`
+
+`- The imported dataset is stored at:`
+
+`  data/market_data_50d.bin`
+
+`- The dataset contains approximately 35,403 candles.`
+
+`- The dataset has passed basic OHLC, duplicate, and chronology validation.`
+
+`- The data is real market data; do not create synthetic candles.`
+
+`- The v4.20 causal structure engine exists.`
+
+`- The v4.20 price interpreter exists.`
+
+`- The v4.20 forensic retrieval engine exists.`
+
+`- The interpreter can produce:`
+
+`  - current OHLC information`
+
+`  - candle sequence`
+
+`  - market structure`
+
+`  - support/resistance zones`
+
+`  - observed rejection evidence`
+
+`  - historical comparable cases`
+
+`  - historical outcome probabilities`
+
+`  - competing scenarios`
+
+`  - confirmation levels`
+
+`  - invalidation levels`
+
+`  - human-readable explanation`
+
+`- The repository audit exists at:`
+
+`  MLAI_ARCHITECTURE_AUDIT.md`
+
+`- The current project uses separate canonical and legacy/v4.x paths.`
+
+`- Existing v3.x through v4.20 research files must remain preserved.`
+
+`- The raw market data must remain immutable.`
+
+`Important current limitation:`
+
+`The definitive 8-day-training / 2-day-hidden holdout validation has not completed. The existing retrieval implementation is too slow on the 35,403-candle dataset and timed out.`
+
+`The project is currently:`
+
+`- Architecture audit: COMPLETE`
+
+`- Causal price interpretation: COMPLETE`
+
+`- Data import and basic validation: COMPLETE`
+
+`- Human-language interpretation: COMPLETE`
+
+`- Definitive unseen 5-minute validation: INCOMPLETE`
+
+`- Overall project: NOT COMPLETE`
+
+`==================================================`
+
+`PRIMARY REMAINING OBJECTIVE`
+
+`==================================================`
+
+`Complete the definitive unseen-chart validation without weakening or changing the scientific experiment.`
+
+`Use the latest 10 available UTC calendar dates in:`
+
+`data/market_data_50d.bin`
+
+`The current latest 10 dates are:`
+
+`- 2026-07-21`
+
+`- 2026-07-22`
+
+`- 2026-07-23`
+
+`- 2026-07-24`
+
+`- 2026-07-26`
+
+`- 2026-07-27`
+
+`- 2026-07-28`
+
+`- 2026-07-29`
+
+`- 2026-07-30`
+
+`- 2026-07-31`
+
+`Use:`
+
+`- Days 1–8 as historical/training data`
+
+`- Days 9–10 as a completely untouched holdout`
+
+`The word “day” means every available 5-minute candle belonging to that UTC calendar date.`
+
+`Do not:`
+
+`- convert the experiment into daily candles`
+
+`- replace the final test with hourly sampling`
+
+`- reduce the holdout to a few selected candles`
+
+`- use holdout data for tuning`
+
+`- use holdout outcomes before recording predictions`
+
+`- synthesize candles`
+
+`- shuffle time-series observations`
+
+`- modify the raw market-data file`
+
+`- silently change the experiment because it is slow`
+
+`==================================================`
+
+`RETRIEVAL PERFORMANCE REQUIREMENT`
+
+`==================================================`
+
+`The current bottleneck is the v4.20 retrieval implementation.`
+
+`Optimize the implementation while preserving the exact scientific meaning of the test.`
+
+`Possible safe optimizations:`
+
+`- precompute state representations`
+
+`- use vectorized numeric arrays`
+
+`- use NumPy if appropriate`
+
+`- cache historical state vectors`
+
+`- cache causal candidate boundaries`
+
+`- use coarse-to-fine candidate filtering`
+
+`- batch similarity calculations`
+
+`- reduce repeated object creation`
+
+`- use efficient memory layouts`
+
+`- parallelize only where causality remains safe`
+
+`- benchmark each optimization against the unoptimized logic`
+
+`The optimized engine must not:`
+
+`- introduce future leakage`
+
+`- use future outcomes as features`
+
+`- include holdout outcomes in historical memory`
+
+`- change the causal candidate population`
+
+`- change the target definitions`
+
+`- change the 5-minute sampling frequency`
+
+`- change the Days 1–8 / Days 9–10 boundaries`
+
+`Verify that the optimized implementation returns the same logically valid candidates as the original implementation for test cases that can be compared directly.`
+
+`The hourly option in the current validator may remain as a diagnostic experiment, but it must never be reported as the definitive result.`
+
+`==================================================`
+
+`EXACT HOLDOUT PROCEDURE`
+
+`==================================================`
+
+`At the end of Day 8:`
+
+`1. Freeze all configuration and training state.`
+
+`2. Do not use Days 9–10 for:`
+
+`   - feature selection`
+
+`   - model selection`
+
+`   - retrieval configuration selection`
+
+`   - threshold tuning`
+
+`   - calibration`
+
+`   - explanation tuning`
+
+`   - memory construction`
+
+`   - acceptance decisions`
+
+`Then process every available holdout candle sequentially.`
+
+`For every Day 9 and Day 10 candle:`
+
+`1. Build the current market state using only information available at that candle.`
+
+`2. Retrieve only historical experience allowed by the causal boundary.`
+
+`3. Generate probabilities for H+4, H+8, and H+16.`
+
+`4. Generate competing scenarios.`
+
+`5. Generate confirmation conditions.`
+
+`6. Generate invalidation conditions.`
+
+`7. Generate the human-language interpretation.`
+
+`8. Record the prediction.`
+
+`9. Only after the prediction is recorded, reveal the actual future outcome.`
+
+`10. Score the prediction.`
+
+`11. Do not add the holdout result to the training memory during the locked test.`
+
+`The validator must mechanically prove:`
+
+`- every holdout timestamp is after the training boundary`
+
+`- the prediction is recorded before outcome calculation`
+
+`- no holdout outcome is available during prediction`
+
+`- no holdout result is used for calibration or retrieval`
+
+`- all available 5-minute holdout candles are processed`
+
+`- excluded predictions are reported with an exact reason`
+
+`==================================================`
+
+`REQUIRED VALIDATION METRICS`
+
+`==================================================`
+
+`For each horizon:`
+
+`- H+4`
+
+`- H+8`
+
+`- H+16`
+
+`Report:`
+
+`- number of holdout candles`
+
+`- number of scored predictions`
+
+`- number excluded`
+
+`- reason for every exclusion`
+
+`- UP/DOWN/NEUTRAL accuracy`
+
+`- baseline accuracy`
+
+`- accuracy difference from baseline`
+
+`- Brier score`
+
+`- baseline Brier score`
+
+`- Brier score difference`
+
+`- LogLoss`
+
+`- baseline LogLoss`
+
+`- LogLoss difference`
+
+`- probability distribution`
+
+`- calibration metrics`
+
+`- calibration slope`
+
+`- calibration intercept`
+
+`- expected calibration error`
+
+`- probability sharpness`
+
+`- coverage`
+
+`- performance by holdout day`
+
+`- performance by regime where available`
+
+`- performance by instrument`
+
+`- performance by timeframe`
+
+`- match counts`
+
+`- similarity strength`
+
+`- sparse-evidence warnings`
+
+`- scenario ranking`
+
+`- confirmation quality`
+
+`- invalidation quality`
+
+`- structural-event timing where available`
+
+`- stability across the two holdout dates`
+
+`Use appropriate smoothing and uncertainty treatment for small samples.`
+
+`Always compare against simple baselines, including at minimum:`
+
+`- majority class`
+
+`- recent-direction baseline`
+
+`- unconditional historical frequency`
+
+`- simple momentum or structure baseline where available`
+
+`Do not claim that the model works merely because accuracy is above 50%. Prioritize calibration, generalization, stability, uncertainty quality, traceability, scenario quality, robustness, and baseline comparison.`
+
+`==================================================`
+
+`REQUIRED REPRODUCIBILITY INFORMATION`
+
+`==================================================`
+
+`The completed report must record:`
+
+`- dataset path`
+
+`- dataset SHA-256 hash`
+
+`- dataset size`
+
+`- candle count`
+
+`- instrument`
+
+`- symbol`
+
+`- timeframe`
+
+`- first timestamp`
+
+`- last timestamp`
+
+`- available UTC dates`
+
+`- training dates`
+
+`- holdout dates`
+
+`- training boundary`
+
+`- holdout boundary`
+
+`- first holdout timestamp`
+
+`- last holdout timestamp`
+
+`- number of available holdout candles`
+
+`- number of processed holdout candles`
+
+`- sampling frequency`
+
+`- configuration`
+
+`- configuration hash`
+
+`- feature version`
+
+`- code version or source-file hashes`
+
+`- random seed if any`
+
+`- target definitions`
+
+`- horizons`
+
+`- calibration method`
+
+`- retrieval method`
+
+`- runtime and performance measurements`
+
+`- memory usage if measurable`
+
+`==================================================`
+
+`REQUIRED OUTPUT FILES`
+
+`==================================================`
+
+`Create or update separate derived files only.`
+
+`Do not overwrite raw data or protected research files.`
+
+`At minimum create:`
+
+`1. A definitive validation script, for example:`
+
+`   MLAI_V420_UNSEEN_8_2_VALIDATION_DEFINITIVE.py`
+
+`2. A completed validation report:`
+
+`   MLAI_V420_UNSEEN_8_2_VALIDATION_DEFINITIVE_REPORT.md`
+
+`3. A machine-readable result:`
+
+`   MLAI_V420_UNSEEN_8_2_VALIDATION_DEFINITIVE_REPORT.json`
+
+`4. A performance benchmark report documenting:`
+
+`   - original retrieval runtime`
+
+`   - optimized retrieval runtime`
+
+`   - state construction runtime`
+
+`   - probability calculation runtime`
+
+`   - full inference runtime`
+
+`   - memory usage where possible`
+
+`5. Tests covering:`
+
+`   - data immutability`
+
+`   - data chronology`
+
+`   - duplicate detection`
+
+`   - OHLC validity`
+
+`   - gap reporting`
+
+`   - causal feature availability`
+
+`   - confirmed swing timing`
+
+`   - target boundary protection`
+
+`   - training/holdout separation`
+
+`   - candidate filtering`
+
+`   - no holdout outcome access`
+
+`   - probability calibration`
+
+`   - baseline comparison`
+
+`   - sparse-data handling`
+
+`   - explanation traceability`
+
+`==================================================`
+
+`ARCHITECTURE REQUIREMENTS STILL TO COMPLETE`
+
+`==================================================`
+
+`After the definitive holdout is complete, implement or verify the following missing architectural capabilities:`
+
+`1. Canonical normalized candle contract containing:`
+
+`   - instrument`
+
+`   - timeframe`
+
+`   - timestamp`
+
+`   - open`
+
+`   - high`
+
+`   - low`
+
+`   - close`
+
+`   - volume`
+
+`   - volume_type`
+
+`   - source`
+
+`2. Explicit separation between:`
+
+`   - raw data`
+
+`   - normalized candles`
+
+`   - derived features`
+
+`   - market states`
+
+`   - historical experience`
+
+`   - validated knowledge`
+
+`3. Formal causality registry.`
+
+`Each feature must document:`
+
+`- feature name`
+
+`- required information`
+
+`- calculation method`
+
+`- first available timestamp`
+
+`- causality class`
+
+`Causality classes:`
+
+`- CAUSAL_INPUT`
+
+`- DELAYED_CAUSAL_INPUT`
+
+`- FUTURE_TARGET`
+
+`- EVALUATION_ONLY`
+
+`- PROHIBITED_INPUT`
+
+`4. Unified market-state representation covering:`
+
+`- candle anatomy`
+
+`- relative movement`
+
+`- volatility`
+
+`- momentum`
+
+`- sequence`
+
+`- structure`
+
+`- location`
+
+`- support/resistance`
+
+`- regime`
+
+`- context`
+
+`- recent reactions`
+
+`5. Formal historical experience records containing:`
+
+`- instrument`
+
+`- timeframe`
+
+`- timestamp`
+
+`- market state`
+
+`- sequence state`
+
+`- structure state`
+
+`- context state`
+
+`- regime`
+
+`- observed events`
+
+`- future outcome distribution`
+
+`- sample count`
+
+`- success count`
+
+`- failure count`
+
+`- confidence interval`
+
+`- validation status`
+
+`- dataset version`
+
+`- feature version`
+
+`- verification date`
+
+`6. Knowledge statuses:`
+
+`- CANDIDATE`
+
+`- UNDER_EVALUATION`
+
+`- VALIDATED`
+
+`- WEAK_EVIDENCE`
+
+`- FAILED`
+
+`- DEPRECATED`
+
+`7. Human-language traceability.`
+
+`Every sentence in the final interpretation must map to an actual structured field or recorded evidence item.`
+
+`The explanation must include:`
+
+`- current observation`
+
+`- recent change`
+
+`- candle sequence`
+
+`- market structure`
+
+`- location`
+
+`- volatility`
+
+`- momentum`
+
+`- regime`
+
+`- historical comparison`
+
+`- comparable count`
+
+`- historical outcome distribution`
+
+`- evidence strength`
+
+`- conflicting evidence`
+
+`- scenarios`
+
+`- confirmation conditions`
+
+`- invalidation conditions`
+
+`- unknown or unavailable information`
+
+`- probability`
+
+`- uncertainty`
+
+`Never claim:`
+
+`- hidden orders`
+
+`- institutional intentions`
+
+`- smart-money activity as a fact`
+
+`- exact stop locations`
+
+`- hidden liquidity`
+
+`- certain trader intent`
+
+`- certainty not supported by OHLCV data`
+
+`Use observable language such as:`
+
+`- price behavior suggests rejection`
+
+`- price repeatedly reacted near this area`
+
+`- movement is consistent with a failed downside break`
+
+`- evidence is limited because only a small number of comparable cases exist`
+
+`8. Support and resistance zones must contain:`
+
+`- price range`
+
+`- creation reason`
+
+`- number of tests`
+
+`- reaction strength`
+
+`- freshness`
+
+`- break status`
+
+`- retest status`
+
+`- failure status`
+
+`9. Scenario engine.`
+
+`Every scenario must include:`
+
+`- scenario name`
+
+`- direction or behavior`
+
+`- supporting evidence`
+
+`- contradicting evidence`
+
+`- historical probability`
+
+`- confidence`
+
+`- confirmation conditions`
+
+`- invalidation conditions`
+
+`- expected path`
+
+`- time horizon`
+
+`- missing evidence`
+
+`10. Controlled experience persistence.`
+
+`Live inference must not silently modify validated knowledge.`
+
+`Any learning must follow:`
+
+` ```text `
+
+`new data`
+
+`→ interpretation recorded`
+
+`→ outcome horizon completed`
+
+`→ prediction scored`
+
+`→ research aggregate updated`
+
+`→ existing knowledge retested`
+
+`→ challenger compared`
+
+`→ promotion only after validation`
+
+svg
+
+Do not implement unrestricted online learning.
+
+# ================================================== PROTECTED FILE POLICY
+
+Do not modify or delete these without explicit justification and a separate backup:
+
+- data/market\_data.bin
+- data/market\_data\_50d.bin
+- data/candle\_language\_v2.bin
+- data/candle\_language\_v2.pre\_correction\_backup.bin
+- MLAI\_V420\_PRICE\_INTERPRETER.py
+- MLAI\_V420\_PRICE\_INTERPRETER\_BACKUP.py
+- MLAI\_V420\_RETRIEVAL\_FORENSIC\_REPAIR.py
+- existing v3.x through v4.x research implementations
+- existing validation reports
+- attached source snapshots
+
+Prefer new modules, adapters, tests, and derived reports.
+
+# ================================================== SCIENTIFIC INTEGRITY RULES
+
+Do not manufacture metrics.
+
+Do not estimate missing metrics.
+
+Do not label an incomplete experiment as PASS, FAIL, SUCCESS, or MODEL WORKS.
+
+If execution fails or times out, report:
+
+- EXPERIMENT INCOMPLETE
+- exact bottleneck
+- last completed stage
+- data processed
+- remaining work
+- what was not measured
+
+Do not silently change:
+
+- 5-minute candles to hourly candles
+- 8 training days to fewer days
+- 2 holdout days to fewer days
+- all candles to sampled candles
+- holdout to validation
+- causal rules
+- target definitions
+- configuration boundaries
+
+If a diagnostic reduction is useful, label it clearly as diagnostic and never present it as the definitive validation.
+
+# ================================================== FINAL COMPLETION CRITERIA
+
+Do not say the project is complete until:
+
+- the full available 5-minute Days 9–10 holdout finishes
+- all three required horizons are evaluated
+- all required metrics are reported
+- baselines are included
+- calibration and uncertainty are reported
+- causality checks pass
+- no holdout leakage is detected
+- performance is acceptable and benchmarked
+- tests pass
+- reports are reproducible
+- explanations are traceable to structured evidence
+- raw data remains unchanged
+- incomplete experiments are clearly separated from completed results
+
+When finished, provide a concise final summary containing:
+
+1. What was implemented
+2. What files were added or changed
+3. What tests passed
+4. The exact definitive validation boundaries
+5. The exact holdout metrics
+6. Whether the result beats the baselines
+7. Any remaining limitations
+8. Confirmation that raw data and preserved research files were not overwritten
+
+Start immediately by reading the existing audit and inspecting the current implementation. Do not ask me to restate the project history. Do not restart from scratch.
+
+`The most important remaining item is the **full 5-minute holdout validation**. The prompt also tells the next session not to replace it with hourly sampling, because that would violate the scientific requirements.`==================================================
+IMPORTANT: VERIFY THE CLAIMED CURRENT STATUS
+==================================================
+
+The "CURRENT PROJECT STATUS" section below is a continuation summary supplied from previous work.
+
+Treat it as CONTEXT, not as unquestionable fact.
+
+Before making architectural decisions or declaring anything COMPLETE, independently verify each important claim by inspecting the actual repository, source code, generated reports, data files, hashes, and test results.
+
+For every claimed COMPLETE item, classify it as:
+
+- VERIFIED COMPLETE
+- PARTIALLY VERIFIED
+- NOT VERIFIED
+- CONTRADICTED BY CURRENT REPOSITORY
+
+Do not assume that a file existing means its functionality is correct.
+
+Do not assume that a previous report means the experiment completed successfully.
+
+Do not assume that a previous model output proves predictive/generalization capability.
+
+If the repository contradicts the continuation summary, trust the actual repository evidence and document the discrepancy.
+
+Do not silently "fix" the historical status description.
+
+Create a short section in the audit/report:
+
+STATUS VERIFICATION
+
+For each major item:
+
+Claimed status:
+Evidence inspected:
+Actual status:
+Evidence:
+Required action:
+
+Only after this verification should implementation continue.

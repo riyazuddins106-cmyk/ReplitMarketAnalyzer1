@@ -1,0 +1,1053 @@
+import csv
+import io
+import json
+import pickle
+import requests
+
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+# ============================================================
+# MLAI XAU/USD SPOT HISTORICAL DATA GENERATOR
+#
+# SOURCE:
+#   Public XAUUSD 5-minute historical dataset
+#
+# INSTRUMENT:
+#   XAU/USD SPOT
+#
+# TIMEFRAME:
+#   5 minutes
+#
+# OUTPUT:
+#   xauusd_market_data.bin
+#
+# IMPORTANT:
+#   NO GC=F
+#   NO SYNTHETIC CANDLES
+#   NO FABRICATION
+#   NO NODE
+#   NO NPM
+#   NO NPX
+# ============================================================
+
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+OUTPUT_FILE = Path(
+    "xauusd_market_data.bin"
+)
+
+CSV_FILE = Path(
+    "XAUUSD_5m.csv"
+)
+
+DOWNLOAD_URL = (
+    "https://raw.githubusercontent.com/"
+    "getdata-finance/"
+    "xauusd-5m-ohlcv-metals-historical-data/"
+    "main/"
+    "XAUUSD_5m.csv"
+)
+
+INSTRUMENT = "XAU/USD"
+
+SYMBOL = "XAUUSD"
+
+TIMEFRAME = "5m"
+
+
+# ============================================================
+# HTTP
+# ============================================================
+
+SESSION = requests.Session()
+
+SESSION.headers.update(
+    {
+        "User-Agent":
+            "MLAI-XAUUSD-Data-Generator/1.0",
+
+        "Accept":
+            "text/csv,text/plain,*/*",
+    }
+)
+
+
+# ============================================================
+# DOWNLOAD
+# ============================================================
+
+def download_csv():
+
+    print()
+    print("=" * 80)
+    print("DOWNLOADING XAU/USD 5-MINUTE DATA")
+    print("=" * 80)
+
+    print()
+    print(
+        "Source : Public XAUUSD historical dataset"
+    )
+
+    print(
+        "Symbol : XAUUSD"
+    )
+
+    print(
+        "Frame  : 5 minutes"
+    )
+
+    print()
+
+    response = SESSION.get(
+        DOWNLOAD_URL,
+        timeout=60
+    )
+
+    response.raise_for_status()
+
+    if not response.content:
+
+        raise RuntimeError(
+            "Downloaded file is empty."
+        )
+
+    CSV_FILE.write_bytes(
+        response.content
+    )
+
+    print(
+        f"Downloaded : "
+        f"{len(response.content):,} bytes"
+    )
+
+    print(
+        f"Saved CSV  : "
+        f"{CSV_FILE.resolve()}"
+    )
+
+
+# ============================================================
+# READ CSV
+# ============================================================
+
+def read_csv():
+
+    print()
+    print("=" * 80)
+    print("READING XAU/USD CSV")
+    print("=" * 80)
+
+    text = CSV_FILE.read_text(
+        encoding="utf-8-sig"
+    )
+
+    reader = csv.DictReader(
+        io.StringIO(text)
+    )
+
+    if reader.fieldnames is None:
+
+        raise RuntimeError(
+            "CSV has no header."
+        )
+
+    print()
+    print(
+        "Columns:"
+    )
+
+    print(
+        reader.fieldnames
+    )
+
+    required = {
+        "datetime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    }
+
+    actual = set(
+        reader.fieldnames
+    )
+
+    missing = (
+        required - actual
+    )
+
+    if missing:
+
+        raise RuntimeError(
+            "Missing CSV columns: "
+            f"{sorted(missing)}"
+        )
+
+    rows = list(reader)
+
+    print(
+        f"Rows read : "
+        f"{len(rows):,}"
+    )
+
+    if not rows:
+
+        raise RuntimeError(
+            "CSV contains zero rows."
+        )
+
+    return rows
+
+
+# ============================================================
+# PARSE CANDLES
+# ============================================================
+
+def parse_candles(rows):
+
+    candles = []
+
+    for row_number, row in enumerate(
+        rows,
+        start=2
+    ):
+
+        try:
+
+            dt_text = (
+                row["datetime"]
+                .strip()
+            )
+
+            dt = (
+                datetime.fromisoformat(
+                    dt_text.replace(
+                        "Z",
+                        "+00:00"
+                    )
+                )
+            )
+
+            if dt.tzinfo is None:
+
+                dt = dt.replace(
+                    tzinfo=timezone.utc
+                )
+
+            dt = dt.astimezone(
+                timezone.utc
+            )
+
+            timestamp = int(
+                dt.timestamp()
+            )
+
+            candle = {
+
+                "instrument":
+                    INSTRUMENT,
+
+                "symbol":
+                    SYMBOL,
+
+                "timestamp":
+                    timestamp,
+
+                "datetime":
+                    dt.isoformat(),
+
+                "open":
+                    float(row["open"]),
+
+                "high":
+                    float(row["high"]),
+
+                "low":
+                    float(row["low"]),
+
+                "close":
+                    float(row["close"]),
+
+                "volume":
+                    float(row["volume"]),
+            }
+
+            candles.append(
+                candle
+            )
+
+        except Exception as error:
+
+            raise RuntimeError(
+                f"Invalid CSV row "
+                f"{row_number}: "
+                f"{error}"
+            )
+
+    return candles
+
+
+# ============================================================
+# OHLC VALIDATION
+# ============================================================
+
+def validate_ohlc(candle):
+
+    o = candle["open"]
+    h = candle["high"]
+    l = candle["low"]
+    c = candle["close"]
+
+    if o <= 0:
+        raise RuntimeError(
+            "OPEN <= 0"
+        )
+
+    if h <= 0:
+        raise RuntimeError(
+            "HIGH <= 0"
+        )
+
+    if l <= 0:
+        raise RuntimeError(
+            "LOW <= 0"
+        )
+
+    if c <= 0:
+        raise RuntimeError(
+            "CLOSE <= 0"
+        )
+
+    if h < l:
+        raise RuntimeError(
+            "HIGH < LOW"
+        )
+
+    if h < o:
+        raise RuntimeError(
+            "HIGH < OPEN"
+        )
+
+    if h < c:
+        raise RuntimeError(
+            "HIGH < CLOSE"
+        )
+
+    if l > o:
+        raise RuntimeError(
+            "LOW > OPEN"
+        )
+
+    if l > c:
+        raise RuntimeError(
+            "LOW > CLOSE"
+        )
+
+
+# ============================================================
+# CORPUS VALIDATION
+# ============================================================
+
+def validate_corpus(candles):
+
+    print()
+    print("=" * 80)
+    print("CORPUS VALIDATION")
+    print("=" * 80)
+
+    if not candles:
+
+        raise RuntimeError(
+            "No candles."
+        )
+
+    duplicates = []
+
+    out_of_order = []
+
+    seen = set()
+
+    previous = None
+
+    for index, candle in enumerate(
+        candles
+    ):
+
+        validate_ohlc(
+            candle
+        )
+
+        timestamp = (
+            candle["timestamp"]
+        )
+
+        if timestamp in seen:
+
+            duplicates.append(
+                timestamp
+            )
+
+        seen.add(
+            timestamp
+        )
+
+        if (
+            previous is not None
+            and timestamp <= previous
+        ):
+
+            out_of_order.append(
+                (
+                    previous,
+                    timestamp
+                )
+            )
+
+        previous = timestamp
+
+    print()
+    print(
+        f"Candles checked      : "
+        f"{len(candles):,}"
+    )
+
+    print(
+        f"Duplicates            : "
+        f"{len(duplicates)}"
+    )
+
+    print(
+        f"Out of order          : "
+        f"{len(out_of_order)}"
+    )
+
+    if duplicates:
+
+        raise RuntimeError(
+            "Duplicate timestamps detected."
+        )
+
+    if out_of_order:
+
+        raise RuntimeError(
+            "Out-of-order candles detected."
+        )
+
+    print()
+    print(
+        "OHLC validation       : PASS"
+    )
+
+    print(
+        "Duplicate validation  : PASS"
+    )
+
+    print(
+        "Chronology validation : PASS"
+    )
+
+
+# ============================================================
+# 5-MINUTE INTERVAL AUDIT
+# ============================================================
+
+def audit_intervals(candles):
+
+    print()
+    print("=" * 80)
+    print("5-MINUTE INTERVAL AUDIT")
+    print("=" * 80)
+
+    expected = 300
+
+    normal = 0
+
+    gaps = []
+
+    for i in range(
+        1,
+        len(candles)
+    ):
+
+        previous = (
+            candles[i - 1]
+            ["timestamp"]
+        )
+
+        current = (
+            candles[i]
+            ["timestamp"]
+        )
+
+        difference = (
+            current - previous
+        )
+
+        if difference == expected:
+
+            normal += 1
+
+        elif difference > expected:
+
+            missing = (
+                difference
+                // expected
+            ) - 1
+
+            gaps.append(
+                {
+                    "previous":
+                        candles[i - 1]
+                        ["datetime"],
+
+                    "current":
+                        candles[i]
+                        ["datetime"],
+
+                    "difference_seconds":
+                        difference,
+
+                    "missing_5m_bars":
+                        missing,
+                }
+            )
+
+        elif difference < expected:
+
+            raise RuntimeError(
+                "Timestamp interval "
+                "less than 5 minutes."
+            )
+
+    print()
+    print(
+        f"Expected interval : "
+        f"{expected} seconds"
+    )
+
+    print(
+        f"Normal intervals  : "
+        f"{normal:,}"
+    )
+
+    print(
+        f"Gaps              : "
+        f"{len(gaps):,}"
+    )
+
+    if gaps:
+
+        print()
+        print(
+            "Gaps detected in supplied data."
+        )
+
+        print(
+            "NO candles will be manufactured."
+        )
+
+        print()
+        print(
+            "First 10 gaps:"
+        )
+
+        for gap in gaps[:10]:
+
+            print(
+                f"{gap['previous']} -> "
+                f"{gap['current']} | "
+                f"missing="
+                f"{gap['missing_5m_bars']}"
+            )
+
+    return {
+        "expected_seconds":
+            expected,
+
+        "normal_intervals":
+            normal,
+
+        "gap_count":
+            len(gaps),
+
+        "gaps":
+            gaps,
+    }
+
+
+# ============================================================
+# CANDLE ANALYSIS
+# ============================================================
+
+def analyse_candle(candle):
+
+    o = candle["open"]
+    h = candle["high"]
+    l = candle["low"]
+    c = candle["close"]
+
+    candle_range = (
+        h - l
+    )
+
+    body = abs(
+        c - o
+    )
+
+    upper_wick = (
+        h - max(o, c)
+    )
+
+    lower_wick = (
+        min(o, c) - l
+    )
+
+    if candle_range > 0:
+
+        body_ratio = (
+            body
+            / candle_range
+        )
+
+        upper_ratio = (
+            upper_wick
+            / candle_range
+        )
+
+        lower_ratio = (
+            lower_wick
+            / candle_range
+        )
+
+    else:
+
+        body_ratio = 0.0
+        upper_ratio = 0.0
+        lower_ratio = 0.0
+
+    if c > o:
+
+        direction = "bullish"
+
+    elif c < o:
+
+        direction = "bearish"
+
+    else:
+
+        direction = "neutral"
+
+    if body_ratio < 0.10:
+
+        candle_type = "doji_like"
+
+    elif body_ratio > 0.70:
+
+        candle_type = "strong_body"
+
+    elif lower_ratio > 0.50:
+
+        candle_type = "lower_rejection"
+
+    elif upper_ratio > 0.50:
+
+        candle_type = "upper_rejection"
+
+    else:
+
+        candle_type = "normal"
+
+    result = dict(
+        candle
+    )
+
+    result.update(
+        {
+            "direction":
+                direction,
+
+            "candle_type":
+                candle_type,
+
+            "range":
+                candle_range,
+
+            "body":
+                body,
+
+            "upper_wick":
+                upper_wick,
+
+            "lower_wick":
+                lower_wick,
+
+            "body_to_range":
+                body_ratio,
+
+            "upper_wick_to_range":
+                upper_ratio,
+
+            "lower_wick_to_range":
+                lower_ratio,
+        }
+    )
+
+    return result
+
+
+# ============================================================
+# BUILD PACKAGE
+# ============================================================
+
+def build_package(
+    candles,
+    analysed,
+    interval_audit
+):
+
+    return {
+
+        "mlai_version":
+            "XAUUSD-1.0",
+
+        "dataset_type":
+            "XAU/USD_SPOT",
+
+        "instrument":
+            INSTRUMENT,
+
+        "symbol":
+            SYMBOL,
+
+        "timeframe":
+            TIMEFRAME,
+
+        "created_at":
+            datetime.now(
+                timezone.utc
+            ).isoformat(),
+
+        "source":
+            {
+                "provider":
+                    "XAUUSD historical "
+                    "OHLCV dataset",
+
+                "provider_symbol":
+                    "XAUUSD",
+
+                "instrument":
+                    "XAU/USD SPOT",
+
+                "is_gc_f":
+                    False,
+
+                "is_synthetic":
+                    False,
+
+                "is_fabricated":
+                    False,
+
+                "timeframe":
+                    "5m",
+            },
+
+        "validation":
+            {
+                "ohlc":
+                    "PASS",
+
+                "duplicates":
+                    "PASS",
+
+                "chronology":
+                    "PASS",
+
+                "interval_audit":
+                    interval_audit,
+            },
+
+        "candles":
+            analysed,
+    }
+
+
+# ============================================================
+# SAVE BIN
+# ============================================================
+
+def save_bin(package):
+
+    with open(
+        OUTPUT_FILE,
+        "wb"
+    ) as f:
+
+        pickle.dump(
+            package,
+            f,
+            protocol=pickle.HIGHEST_PROTOCOL
+        )
+
+    print()
+    print("=" * 80)
+    print("BINARY DATASET CREATED")
+    print("=" * 80)
+
+    print()
+    print(
+        f"File : "
+        f"{OUTPUT_FILE.resolve()}"
+    )
+
+    print(
+        f"Size : "
+        f"{OUTPUT_FILE.stat().st_size:,} bytes"
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def main():
+
+    print()
+    print("=" * 80)
+    print("MLAI XAU/USD DATA GENERATOR")
+    print("=" * 80)
+
+    print()
+    print(
+        "Instrument : XAU/USD SPOT"
+    )
+
+    print(
+        "Symbol     : XAUUSD"
+    )
+
+    print(
+        "Timeframe  : 5m"
+    )
+
+    print()
+    print(
+        "NO GC=F"
+    )
+
+    print(
+        "NO SYNTHETIC DATA"
+    )
+
+    print(
+        "NO FABRICATED DATA"
+    )
+
+    print(
+        "NO NODE"
+    )
+
+    print(
+        "NO NPM"
+    )
+
+    print(
+        "NO NPX"
+    )
+
+    # --------------------------------------------------------
+    # Download
+    # --------------------------------------------------------
+
+    download_csv()
+
+    # --------------------------------------------------------
+    # Read
+    # --------------------------------------------------------
+
+    rows = read_csv()
+
+    # --------------------------------------------------------
+    # Parse
+    # --------------------------------------------------------
+
+    candles = parse_candles(
+        rows
+    )
+
+    print()
+    print(
+        f"Parsed candles : "
+        f"{len(candles):,}"
+    )
+
+    # --------------------------------------------------------
+    # Validate
+    # --------------------------------------------------------
+
+    validate_corpus(
+        candles
+    )
+
+    interval_audit = (
+        audit_intervals(
+            candles
+        )
+    )
+
+    # --------------------------------------------------------
+    # Analyse
+    # --------------------------------------------------------
+
+    print()
+    print("=" * 80)
+    print("ANALYSING CANDLES")
+    print("=" * 80)
+
+    analysed = []
+
+    for candle in candles:
+
+        analysed.append(
+            analyse_candle(
+                candle
+            )
+        )
+
+    print(
+        f"Analysed : "
+        f"{len(analysed):,}"
+    )
+
+    # --------------------------------------------------------
+    # Package
+    # --------------------------------------------------------
+
+    package = build_package(
+        candles=candles,
+        analysed=analysed,
+        interval_audit=
+            interval_audit
+    )
+
+    # --------------------------------------------------------
+    # Save
+    # --------------------------------------------------------
+
+    save_bin(
+        package
+    )
+
+    # --------------------------------------------------------
+    # Summary
+    # --------------------------------------------------------
+
+    first = candles[0]
+
+    last = candles[-1]
+
+    print()
+    print("=" * 80)
+    print("FINAL DATASET SUMMARY")
+    print("=" * 80)
+
+    print()
+    print(
+        f"Candles : "
+        f"{len(candles):,}"
+    )
+
+    print(
+        f"First   : "
+        f"{first['datetime']}"
+    )
+
+    print(
+        f"Last    : "
+        f"{last['datetime']}"
+    )
+
+    print()
+    print(
+        "FIRST CANDLE"
+    )
+
+    print(
+        json.dumps(
+            first,
+            indent=2
+        )
+    )
+
+    print()
+    print(
+        "LAST CANDLE"
+    )
+
+    print(
+        json.dumps(
+            last,
+            indent=2
+        )
+    )
+
+    print()
+    print("=" * 80)
+    print("SUCCESS")
+    print("=" * 80)
+
+    print()
+    print(
+        "MLAI can now use:"
+    )
+
+    print(
+        OUTPUT_FILE.resolve()
+    )
+
+
+# ============================================================
+# ENTRY POINT
+# ============================================================
+
+if __name__ == "__main__":
+
+    try:
+
+        main()
+
+    except requests.RequestException as error:
+
+        print()
+        print("=" * 80)
+        print("NETWORK ERROR")
+        print("=" * 80)
+
+        print()
+        print(error)
+
+        print()
+        print(
+            "NO .bin FILE WAS CREATED."
+        )
+
+    except Exception as error:
+
+        print()
+        print("=" * 80)
+        print("ERROR")
+        print("=" * 80)
+
+        print()
+        print(error)
+
+        print()
+        print(
+            "NO .bin FILE WAS CREATED."
+        )

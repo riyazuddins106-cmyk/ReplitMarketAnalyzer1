@@ -362,13 +362,125 @@ class QueryCache:
         self.horizon = horizon
         self.cache = {}
         self.baseline_cache = {}
+        self._numpy = None
+        try:
+            import numpy as np
+            self._numpy = np
+            self._record_arrays = {
+                "structure": np.asarray(
+                    [(r.state_key[0], r.structure_event, r.state_key[2],
+                      r.state_key[3]) for r in records], dtype=object),
+                "context": np.asarray(
+                    [(r.sequence_state, r.regime, r.location,
+                      r.momentum_state) for r in records], dtype=object),
+                "numeric": np.asarray(
+                    [(r.r1, r.r3, r.r8, r.r16, r.volatility_ratio,
+                      r.body_ratio, r.range_ratio) for r in records],
+                    dtype=float),
+                "paths": np.asarray([r.path_vector for r in records], dtype=float),
+            }
+        except (ImportError, ValueError):
+            self._record_arrays = None
+
+    def _vectorized_rows(self, query_index, eligible):
+        """Compute the same eight evidence families in array operations."""
+        np = self._numpy
+        if np is None or self._record_arrays is None:
+            return None
+        positions = {id(record): i for i, record in enumerate(self.records)}
+        ix = np.asarray([positions[id(r)] for r in eligible], dtype=int)
+        a = self._record_arrays
+        current = self.states[query_index]
+        s = a["structure"][ix]
+        c = a["context"][ix]
+        n = a["numeric"][ix]
+        eq = lambda values: (values == values[0]).astype(float)
+        structure = (
+            (s[:, 0] == current.trend).astype(float)
+            + (s[:, 1] == current.structure_event).astype(float)
+            + (s[:, 2] == current.high_label).astype(float)
+            + (s[:, 3] == current.low_label).astype(float)
+        ) / 4.0
+        sequence = (c[:, 0] == current.sequence_state).astype(float)
+        regime = (c[:, 1] == current.regime).astype(float)
+        location = (c[:, 2] == current.location).astype(float)
+        momentum = (c[:, 3] == current.momentum_state).astype(float)
+        volatility = np.exp(-np.abs(n[:, 4] - current.volatility_ratio) / .35)
+        candle = (
+            .45 * np.exp(-np.abs(n[:, 5] - current.body_ratio) / .75)
+            + .35 * np.exp(-np.abs(n[:, 6] - current.range_ratio) / .90)
+            + .20 * (a["paths"][ix, -1, 2] ==
+                     (1.0 if current.candle_direction == "UP"
+                      else -1.0 if current.candle_direction == "DOWN"
+                      else 0.0))
+        )
+        path = a["paths"][ix]
+        cur = np.asarray(current.path_vector, dtype=float)[-path.shape[1]:]
+        exp = lambda x, scale: np.exp(-np.abs(x) / scale)
+        returns = exp(cur[None, :, 0] - path[:, :, 0], .65)
+        ranges = exp(cur[None, :, 1] - path[:, :, 1], .80)
+        bodies = exp(cur[None, :, 3] - path[:, :, 3], .70)
+        dirs = (cur[None, :, 2] == path[:, :, 2]).astype(float)
+        cumulative = np.cumsum(cur[:, 0])[None, :] - np.cumsum(path[:, :, 0], axis=1)
+        shape = exp(cumulative, 1.25)
+        weights = np.asarray([v420.V416_PATH_DECAY ** (11 - i) for i in range(12)])
+        weighted = lambda x: np.sum(x * weights[None, :], axis=1) / weights.sum()
+        path_score = (
+            v420.V416_PATH_RETURN_WEIGHT * weighted(returns)
+            + v420.V416_PATH_SHAPE_WEIGHT * weighted(shape)
+            + v420.V416_PATH_CANDLE_WEIGHT * weighted(.65 * ranges + .35 * bodies)
+            + v420.V416_PATH_DIRECTION_WEIGHT * weighted(dirs)
+        )
+        values = np.column_stack(
+            (structure, sequence, regime, location, momentum, volatility,
+             candle, path_score)
+        )
+        nonzero = (values > 0.0).sum(axis=1) / 8.0
+        quality = np.clip(
+            .55 * nonzero + .45 * np.maximum(structure, np.maximum(sequence, regime)),
+            0.0, 1.0,
+        )
+        contradiction = np.maximum.reduce([
+            np.where((c[:, 1] != current.regime) & (regime < .25), 1.0, 0.0),
+            np.where((s[:, 1] != current.structure_event) & (structure < .25), 1.0, 0.0),
+            np.where((c[:, 0] != current.sequence_state) & (sequence < .25), .7, 0.0),
+            np.where((c[:, 3] != current.momentum_state) & (momentum < .25), .5, 0.0),
+        ])
+        return [
+            (record, {key: float(value) for key, value in zip(FEATURES, row)}
+             | {"quality": float(q), "_contradiction": float(x)})
+            for record, row, q, x in zip(eligible, values, quality, contradiction)
+        ]
 
     def rows_for(self, query_index):
         if query_index in self.cache:
             return self.cache[query_index]
 
         current = self.states[query_index]
-        eligible = causal_records(self.records, query_index, self.horizon)
+        # Use the same causal coarse gate as the preserved v4.20 retrieval
+        # implementation. It only compares state known at query time and falls
+        # back to the complete causal pool when the context is sparse.
+        eligible = v420.coarse_filter(current, self.records, query_index)
+        eligible = [
+            record for record in eligible
+            if getattr(record, "horizon", self.horizon) == self.horizon
+            and direction(record) in CLASSES
+        ]
+        vectorized = self._vectorized_rows(query_index, eligible)
+        if vectorized is not None:
+            rows = [
+                (record, values, {
+                    "balanced": similarity_from_components(
+                        values, self.horizon, "balanced"
+                    )
+                })
+                for record, values in vectorized
+            ]
+            # Holdout queries are processed once; retaining every query's
+            # 30k-row materialization would exhaust memory on long tests.
+            self.cache.clear()
+            self.cache[query_index] = rows
+            return rows
         rows = []
         for record in eligible:
             try:
@@ -380,6 +492,7 @@ class QueryCache:
                 rows.append((record, values, sims))
             except Exception:
                 continue
+        self.cache.clear()
         self.cache[query_index] = rows
         return rows
 
@@ -422,11 +535,11 @@ def retrieve(
 
         # Respect V4.2 contradiction logic when available.
         try:
-            contradiction = v420._v420_contradiction(
-                current,
-                record,
-                values,
-            )
+            contradiction = values.get("_contradiction")
+            if contradiction is None:
+                contradiction = v420._v420_contradiction(
+                    current, record, values
+                )
             if (
                 contradiction
                 > float(getattr(v420, "V420_MAX_CONTRADICTION", 0.42))
